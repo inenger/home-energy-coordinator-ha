@@ -96,6 +96,11 @@ def settings():
     cfg['analytics_enabled'] = options.get('analytics_enabled', True) is True
     cfg['github_auto_update'] = options.get('github_auto_update', False) is True
     cfg['github_token'] = options.get('github_token') or None
+    cfg['shadow_ev'] = {
+        'ac_kwh_per_soc_pct': options.get('shadow_ev_ac_kwh_per_soc_pct', 0),
+        'charge_power_kw': options.get('shadow_ev_charge_power_kw', 0),
+        'ready_by_local': options.get('shadow_ev_ready_by_local', ''),
+    }
     cfg['weather_enabled']=options.get('weather_enabled',True) is True
     cfg['weather_interval_seconds']=max(1800,int(options.get('weather_interval_seconds',3600)))
     cfg['weather_types']=['hourly','daily']

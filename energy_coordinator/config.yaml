@@ -1,5 +1,5 @@
 name: "Energetický koordinátor"
-version: "0.4.1"
+version: "0.5.0"
 slug: energy_coordinator
 description: "Lokální energetická analytika: počasí, široká telemetrie, ceny, trendy a simulace. Bez ovládání spotřebičů."
 arch:
@@ -30,6 +30,9 @@ options:
   weather_interval_seconds: 3600
   weather_reference: sensor.current_outdoor_temperature_bt1_30002
   github_auto_update: false
+  shadow_ev_ac_kwh_per_soc_pct: 0
+  shadow_ev_charge_power_kw: 0
+  shadow_ev_ready_by_local: ""
 schema:
   mode: list(observe_only)
   interval_seconds: int(60,300)
@@ -42,3 +45,6 @@ schema:
   weather_reference: str?
   github_auto_update: bool
   github_token: password?
+  shadow_ev_ac_kwh_per_soc_pct: float(0,1.5)
+  shadow_ev_charge_power_kw: float(0,11.04)
+  shadow_ev_ready_by_local: str?

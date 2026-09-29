@@ -29,3 +29,12 @@ configuration:
   weather_reference:
     name: Referenční venkovní teplota
     description: Místní fyzické čidlo; ne aktuální teplota z internetové předpovědi.
+  shadow_ev_ac_kwh_per_soc_pct:
+    name: Auto – dodaná AC energie na 1 % SOC
+    description: Ověřená hodnota v kWh na procentní bod baterie auta. Nula vypíná číselný scénář.
+  shadow_ev_charge_power_kw:
+    name: Auto – výkon pro stínový scénář v kW
+    description: Ověřený výkon wallboxu, jen pro výpočet; aplikace ho nikdy nenastaví.
+  shadow_ev_ready_by_local:
+    name: Auto – připravené do (Praha)
+    description: Místní čas HH:MM příštího odjezdu. Návrh předpokládá připojení auta do té doby.

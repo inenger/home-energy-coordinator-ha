@@ -1,8 +1,35 @@
-# Energetický koordinátor 0.4.0
+# Energetický koordinátor 0.5.0
 
 Lokální aplikace Home Assistant OS pro Raspberry Pi 4 (aarch64). Runtime, data,
 modely a přehledy zůstávají uvnitř HA. Režim je výhradně `observe_only`.
 Žádný tento modul neovládá wallbox, baterii, vytápění ani staré automatizace.
+
+## Stínový scénář 0.5
+
+Přehled **Stínový plán** zobrazuje skutečný výkon domu a podmíněný výpočet
+spotřeby domu při jiném čase nabíjení auta. Pokud je auto potvrzeně připojené,
+algoritmus porovná hodinovou předpověď Solcastu, historický profil domu a
+archivované nákupní ceny do zadaného času odjezdu. Všední den ani noční okno
+nejsou tvrdým pravidlem: výrazný předpovězený přebytek může vyhrát i při
+home office. Čas, kdy bude auto příště doma, systém nepředpovídá; scénář
+předpokládá, že od chvíle výpočtu zůstane připojené do odjezdu.
+
+Pro číselný návrh jsou potřeba tři **ověřené** hodnoty v možnostech aplikace:
+`shadow_ev_ac_kwh_per_soc_pct` (dodaná AC kWh na jeden procentní bod SOC),
+`shadow_ev_charge_power_kw` (dostupný výkon wallboxu v kW) a
+`shadow_ev_ready_by_local` (čas HH:MM v Europe/Prague). Výchozí nuly/prázdný čas
+nepředstírají kalibraci; graf do nastavení zobrazuje pouze naměřenou část a
+důvod, proč nelze vydat scénář. Cíl SOC se čte z auta a zpřesňuje potřebu energie.
+
+Plán se ukládá jako neměnný záznam s časem vydání a dostupností předpovědi.
+Historický profil potřebuje aspoň dvě pokryté hodiny pro daný typ dne a hodinu;
+neúplné tarify, neplatné stavy či stará data plán zablokují. Odhad přebytku
+neověřuje, že ho domácí baterie nepohltí, ani cenu prodeje. Stínový scénář
+nesmí být vydáván za prokázanou úsporu nebo bezpečný limit jističe. Jednou za
+ukončený týden se porovná jeden archivovaný návrh za den s pokrytým měřením;
+odchylka je popisná a nezměří úsporu. Hloubková AI analýza, návrhy automatizací
+a společná optimalizace baterie a tepla vyžadují další kalibraci a nejsou
+součástí 0.5.0.
 
 ## Co přidává 0.4
 

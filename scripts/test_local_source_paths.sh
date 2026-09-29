@@ -2,6 +2,7 @@
 # Simulates the SSH app's /local_apps mount and Supervisor catalog refresh.
 set -Eeuo pipefail
 repo=$(cd "$(dirname "$0")/.." && pwd)
+version=$(sed -n 's/^version: "\([^"]*\)"/\1/p' "$repo/energy_coordinator/config.yaml" | head -1)
 tmp=$(mktemp -d)
 trap 'rm -rf -- "$tmp"' EXIT
 mkdir -p "$tmp/bin" "$tmp/local_apps/energy_coordinator" "$tmp/addons/energy_coordinator" "$tmp/share"
@@ -54,8 +55,8 @@ export FAKE_INSTALLED_VERSION="$tmp/installed-version"
 export HEC_HISTORY_ROOT="$tmp/share/hec-upgrades"
 tar -czf "$tmp/app.tar.gz" -C "$repo/energy_coordinator" .
 sha=$(sha256sum "$tmp/app.tar.gz" | awk '{print $1}')
-bash "$repo/scripts/upgrade_local_app.sh" "$tmp/app.tar.gz" "$sha" 0.4.1 > "$tmp/upgrade.log"
-test "$(cat "$tmp/installed-version")" = '0.4.1'
+bash "$repo/scripts/upgrade_local_app.sh" "$tmp/app.tar.gz" "$sha" "$version" > "$tmp/upgrade.log"
+test "$(cat "$tmp/installed-version")" = "$version"
 test "$(cat "$tmp/state")" = 'started'
 test "$(find "$HEC_HISTORY_ROOT" -name previous-source -type d | wc -l)" = 1
 # A failure after the version update must update back to the saved 0.3.1 source.
@@ -64,7 +65,7 @@ printf '0.3.1\n' > "$tmp/installed-version"
 printf 'started\n' > "$tmp/state"
 export FAKE_FAIL_START_ONCE="$tmp/fail-start-once"
 touch "$FAKE_FAIL_START_ONCE"
-if bash "$repo/scripts/upgrade_local_app.sh" "$tmp/app.tar.gz" "$sha" 0.4.1 > "$tmp/failed-upgrade.log" 2>&1; then
+if bash "$repo/scripts/upgrade_local_app.sh" "$tmp/app.tar.gz" "$sha" "$version" > "$tmp/failed-upgrade.log" 2>&1; then
   printf 'Expected a simulated start failure\n' >&2
   exit 1
 fi
@@ -78,8 +79,8 @@ printf '0.3.1\n' > "$tmp/installed-version"
 printf 'stopped\n' > "$tmp/state"
 bash "$repo/scripts/recover_missing_local_source.sh" > "$tmp/log"
 test -f "$tmp/local_apps/energy_coordinator/energy/runtime.py"
-test "$(cat "$tmp/installed-version")" = '0.4.1'
+test "$(cat "$tmp/installed-version")" = "$version"
 test "$(cat "$tmp/state")" = 'started'
 test "$(sed -n 's/^version: "\([^"]*\)"/\1/p' "$tmp/addons/energy_coordinator/config.yaml")" = '0.4.1'
 test "$(find "$tmp/share/hec-recovery" -name previous-source -type d | wc -l)" = 1
-printf 'PASS: upgrade and recovery use /local_apps, stale /addons untouched, app started on 0.4.1\n'
+printf 'PASS: upgrade and recovery use /local_apps, stale /addons untouched, app started on %s\n' "$version"

@@ -4,7 +4,7 @@
 set -Eeuo pipefail
 umask 077
 
-VERSION="0.4.1"
+VERSION="0.5.0"
 SLUG="local_energy_coordinator"
 PUBLIC_REPO="https://github.com/inenger/home-energy-coordinator-ha"
 PUBLIC_COMMIT="f8c88c9e2b3536ec47cdb5a9737f96cd86d12e78"
@@ -222,7 +222,7 @@ fi
 printf '3/7 Zastavuji aplikaci a čekám na skutečný stav stopped...\n'
 stop_app || fail 'Aplikace se do 120 s nepotvrdila jako stopped.'
 
-printf '4/7 Obnovuji lokální source 0.4.1 do %s...\n' "$DEST"
+printf '4/7 Obnovuji lokální source %s do %s...\n' "$VERSION" "$DEST"
 if [[ "$LEGACY_WRONG_DEST" != "$DEST" && -d "$LEGACY_WRONG_DEST" ]]; then
   mv -- "$LEGACY_WRONG_DEST" "$BACKUP_DIR/legacy-wrong-source"
 fi

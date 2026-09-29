@@ -1,3 +1,9 @@
+# 0.5.0
+- Stínový scénář nabíjení auta porovnává slunečné všední dny, víkendy a noční tarif podle dostupných hodinových předpovědí a cen. Nemá pevně zakódované okno 03:00–05:00.
+- Nový graf zobrazuje naměřený výkon domu a podmíněný scénář. Návrhy se ukládají s časem vydání a původem předpovědi; nejde o změřenou úsporu ani celé řízení baterie.
+- Jednou za ukončený týden se archivované návrhy porovnají s překrývajícími se měřeními. Odchylka je popisná, nikoli výpočet úspory.
+- Bez potvrzeného připojení, SOC, cíle auta, profilu domu a explicitních parametrů se číselný scénář nevytvoří. Žádná akční služba ani automatizace nepřibyla.
+
 # 0.4.1
 - Oprava zobrazení UTC časů v UI na Europe/Prague včetně DST regresních testů.
 - Interní GitHub runtime updater je ve výchozím stavu vypnutý; cílem je jediný update kanál přes Home Assistant Supervisor.

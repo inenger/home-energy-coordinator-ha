@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 umask 077
 
-VERSION="0.4.1"
+VERSION="0.5.0"
 REPO="https://github.com/inenger/home-energy-coordinator-ha"
 APP_ROOT="${HEC_APP_ROOT:-/local_apps}"
 WORK=""

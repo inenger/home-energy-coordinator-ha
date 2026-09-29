@@ -9,7 +9,7 @@ from .evmodel import analyze as analyze_ev
 from .batterymodel import analyze as analyze_battery
 from .pvmodel import calibrate as calibrate_pv, corrected_upcoming
 from .pricing import TariffBook
-from . import telemetry, weather
+from . import telemetry, weather, shadow
 
 
 def ensure_schema(db):
@@ -117,6 +117,9 @@ def build(store,now=None,cfg=None):
     pvrows=_rows(store.db,"SELECT * FROM pv_obs WHERE at>=? ORDER BY at",(cutoff45,))
     pvc=calibrate_pv(_forecast_rows(store.db,cutoff45),pvrows,now)
     pvc["upcoming"]=corrected_upcoming(_latest_forecasts(store.db),pvc,now)
+    try: scenario=shadow.build(store,now,cfg,pvc,tariff)
+    except Exception as error:
+        scenario={'status':'unavailable','candidate':{'status':'unavailable','error_code':type(error).__name__},'actual':[]}
     appliances=summarize_appliances(byapp,now,tariff,cfg.get("appliance_overrides",{}))
     anomalies=[]
     for aid,a in appliances.items():
@@ -124,9 +127,9 @@ def build(store,now=None,cfg=None):
         if tr is not None and abs(tr)>=35 and a.get("energy_7d_kwh",0)>=0.5:
             anomalies.append({"type":"appliance_trend","appliance_id":aid,"label":a["label"],"change_pct":tr})
     return {"schema_version":1,"calculated_at":now.isoformat(),"mode":"observe_only",
-        "daily":_daily_overview(store.db,now),"pv":pvc,"battery":battery,"ev":ev,
+        "daily":_daily_overview(store.db,now),"pv":pvc,"battery":battery,"ev":ev,"shadow":scenario,
         "appliances":appliances,"anomalies":anomalies,
         "environment":telemetry.summary(store,now),
         "weather":weather.summary(store,now,cfg.get('weather_reference','sensor.current_outdoor_temperature_bt1_30002')),
-        "versions":{"software":"0.4.0","pricing":"interval_split_v1","pv":"hourly_holdout_v1"},
+        "versions":{"software":"0.5.0","pricing":"interval_split_v1","pv":"hourly_holdout_v1","shadow":"ev_scenario_v1"},
         "quality":{"derived_from_minute_observations":True,"control_actions":0}}
