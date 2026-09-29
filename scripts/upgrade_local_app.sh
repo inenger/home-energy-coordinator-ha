@@ -5,7 +5,7 @@
 set -Eeuo pipefail
 umask 077
 
-APP_ROOT="${HEC_APP_ROOT:-/addons}"
+APP_ROOT="${HEC_APP_ROOT:-/local_apps}"
 SLUG="${HEC_LOCAL_SLUG:-local_energy_coordinator}"
 HISTORY="${HEC_HISTORY_ROOT:-/share/hec-upgrades}"
 ARCHIVE=${1:-}
@@ -149,6 +149,12 @@ done
   fail 'Neplatný balíček, kontrolní součet nebo verze.'
 [[ $(sha256sum "$ARCHIVE" | awk '{print $1}') == "$EXPECTED_SHA" ]] ||
   fail 'Nesouhlasí SHA-256. Nic nezměněno.'
+
+[[ -d "$APP_ROOT" && ! -L "$APP_ROOT" ]] || fail "Chybí adresář lokálních aplikací $APP_ROOT. Nic neměním."
+if [[ -z ${HEC_APP_ROOT:-} ]]; then
+  awk -v path="$APP_ROOT" '$5 == path { found=1 } END { exit !found }' /proc/self/mountinfo ||
+    fail "$APP_ROOT není připojený adresář lokálních aplikací. Nic neměním."
+fi
 
 CANDIDATES=()
 for candidate in "$APP_ROOT"/*; do
