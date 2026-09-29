@@ -5,7 +5,7 @@
 set -Eeuo pipefail
 umask 077
 
-APP_ROOT="${HEC_APP_ROOT:-/addons/local}"
+APP_ROOT="${HEC_APP_ROOT:-/addons}"
 SLUG="${HEC_LOCAL_SLUG:-local_energy_coordinator}"
 HISTORY="${HEC_HISTORY_ROOT:-/share/hec-upgrades}"
 ARCHIVE=${1:-}
