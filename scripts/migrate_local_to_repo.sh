@@ -64,7 +64,7 @@ for _ in $(seq 1 90); do
         -s /share/home-energy-coordinator/evidence.json ]]; then
     printf '\nHOTOVO. Portable databáze je připravena.\n'
     printf 'DALŠÍ KROK: přidej do HA App Store repository:\n%s\n' "$REPO"
-    printf 'Pak nainstaluj repo verzi 0.4.1. Starou local_energy_coordinator zatím nemaž.\n'
+    printf 'Před prvním startem repo verze zastav local_energy_coordinator; starou app zatím nemaž.\n'
     exit 0
   fi
   sleep 2
