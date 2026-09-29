@@ -4,6 +4,7 @@ umask 077
 
 VERSION="0.4.1"
 REPO="https://github.com/inenger/home-energy-coordinator-ha"
+APP_ROOT="${HEC_APP_ROOT:-/local_apps}"
 WORK=""
 trap '[[ -z "${WORK:-}" || ! -d "$WORK" ]] || rm -rf -- "$WORK"' EXIT
 
@@ -15,6 +16,12 @@ fail() {
 for c in curl tar sha256sum awk bash ha jq grep mktemp; do
   command -v "$c" >/dev/null || fail "Chybí příkaz $c. Nic nezměněno."
 done
+
+[[ -d "$APP_ROOT" && ! -L "$APP_ROOT" ]] || fail "Chybí adresář lokálních aplikací $APP_ROOT. Nic neměním."
+if [[ -z ${HEC_APP_ROOT:-} ]]; then
+  awk -v path="$APP_ROOT" '$5 == path { found=1 } END { exit !found }' /proc/self/mountinfo ||
+    fail "$APP_ROOT není připojený adresář lokálních aplikací. Nic neměním."
+fi
 
 WORK=$(mktemp -d /tmp/hec-migrate.XXXXXX)
 
@@ -38,7 +45,7 @@ tar -czf "$WORK/app.tar.gz" -C "$WORK/repo/energy_coordinator" .
 SHA=$(sha256sum "$WORK/app.tar.gz" | awk '{print $1}')
 
 FOUND=0
-for candidate in /addons/*; do
+for candidate in "$APP_ROOT"/*; do
   [[ -d "$candidate" && ! -L "$candidate" && -f "$candidate/config.yaml" ]] || continue
   if grep -Eq '^[[:space:]]*slug:[[:space:]]*"?energy_coordinator"?[[:space:]]*$' "$candidate/config.yaml"; then
     FOUND=$((FOUND+1))
