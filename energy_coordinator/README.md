@@ -31,7 +31,7 @@ modely a přehledy zůstávají uvnitř HA. Režim je výhradně `observe_only`.
 
 ## Nasazení
 
-Zdroj v terminálu SSH aplikace patří přímo do `/addons/energy_coordinator` se slugem
+Zdroj v aktuální terminálové aplikaci SSH patří do `/local_apps/energy_coordinator` se slugem
 `local_energy_coordinator`. Neodinstalovávat aplikaci a nemazat `/data/evidence`.
 Před změnou vytvořit zálohu aplikace v HA. Kompilace a testy běží v Docker buildu,
 ne v core-ssh, kde nemusí být Python. Změna GitHub větve sama nic v HA neinstaluje.
