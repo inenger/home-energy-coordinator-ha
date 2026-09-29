@@ -31,11 +31,22 @@ modely a přehledy zůstávají uvnitř HA. Režim je výhradně `observe_only`.
 
 ## Nasazení
 
-Zdroj patří do stejné lokální aplikace `/addons/energy_coordinator` se slugem
+Zdroj v terminálu SSH aplikace patří přímo do `/addons/energy_coordinator` se slugem
 `local_energy_coordinator`. Neodinstalovávat aplikaci a nemazat `/data/evidence`.
 Před změnou vytvořit zálohu aplikace v HA. Kompilace a testy běží v Docker buildu,
 ne v core-ssh, kde nemusí být Python. Změna GitHub větve sama nic v HA neinstaluje.
-`release.json` tento vývojový kandidát nepublikuje pro automatický updater.
+Interní GitHub updater je vypnutý; aktualizace repo aplikace obstará Supervisor.
+
+Přechod ze staré lokální aplikace vyžaduje dvě instalace s odlišnými Supervisor ID.
+Po ověřeném spuštění lokální verze 0.4.1 počkej na konzistentní zálohu
+`/share/home-energy-coordinator/evidence.sqlite` a `evidence.json`. Přidej
+`https://github.com/inenger/home-energy-coordinator-ha` do HA App Store.
+Před prvním startem nové repo aplikace zastav `local_energy_coordinator`, aby
+oba procesy současně nezapisovaly monitorovací entity a sdílenou portable zálohu.
+Nainstaluj repo verzi a spusť ji; při prázdném novém volume sama převezme portable
+databázi. V logu ověř `portable_restore` se stavem `restored`, verzi 0.4.1 a čerstvý sběr.
+Teprve po ověření dat zapni automatické aktualizace u repo aplikace v HA.
+Původní lokální aplikaci zatím neodinstalovávej; její Supervisor backup uchovej.
 
 Nová karta v `dashboard/automatizace_v040.yaml` patří do záložky **Automatizace**
 jako jedna ruční karta, nikoli do `configuration.yaml`. Grafy jsou v Ingress.
