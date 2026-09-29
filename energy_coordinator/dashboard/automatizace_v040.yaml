@@ -1,0 +1,35 @@
+type: vertical-stack
+cards:
+  - type: entities
+    title: Koordinátor 0.4 — širší data a počasí
+    show_header_toggle: false
+    entities:
+      - entity: sensor.energie_v3_sber_stav
+        name: Stav sběru
+      - entity: sensor.energie_v3_posledni_sber
+        name: Poslední sběr
+      - entity: sensor.energie_v4_telemetrie_pocet
+        name: Objevená čidla
+      - entity: sensor.energie_v4_data_kvalita
+        name: Čidla s dostupnou hodnotou
+      - entity: sensor.energie_v4_teploty_pocet
+        name: Teplotní čidla včetně technologií
+      - entity: sensor.energie_v4_pocasi_stav
+        name: Počasí — stav porovnání
+      - entity: sensor.energie_v4_pocasi_pocet_paru
+        name: Počasí — vyhodnocené páry
+  - type: markdown
+    title: Teploty — samostatná čidla
+    content: >-
+      {% set sensors = state_attr('sensor.energie_v4_teploty_pocet', 'sensors') or [] %}
+      {% for s in sensors %}
+      **{{ s.label | e }}**: {{ s.value if s.value is not none else 'nedostupné' }} {{ s.unit or '' }}
+
+      {{ s.zone or s.area_name or 'Oblast neověřena' }} · {{ s.role }}
+
+      {% endfor %}
+  - type: markdown
+    content: >-
+      Podrobné grafy počasí, teplot, FVE, spotřebičů a cen jsou ve webovém rozhraní
+      Energetického koordinátoru (Ingress). Toto je stavová karta pro záložku Automatizace.
+      Režim je stále pouze pozorování; neověřené role čidel nemění řízení domu.

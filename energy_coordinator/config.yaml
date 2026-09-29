@@ -1,0 +1,44 @@
+name: "Energetický koordinátor"
+version: "0.4.1"
+slug: energy_coordinator
+description: "Lokální energetická analytika: počasí, široká telemetrie, ceny, trendy a simulace. Bez ovládání spotřebičů."
+arch:
+  - aarch64
+startup: application
+boot: auto
+stage: experimental
+backup: cold
+init: true
+homeassistant_api: true
+hassio_api: false
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:home-lightning-bolt
+panel_title: Energetický koordinátor
+panel_admin: true
+map:
+  - type: share
+    read_only: false
+options:
+  mode: observe_only
+  interval_seconds: 60
+  storage_limit_mb: 2048
+  minimum_free_mb: 1024
+  self_calibration: true
+  analytics_enabled: true
+  weather_enabled: true
+  weather_interval_seconds: 3600
+  weather_reference: sensor.current_outdoor_temperature_bt1_30002
+  github_auto_update: false
+schema:
+  mode: list(observe_only)
+  interval_seconds: int(60,300)
+  storage_limit_mb: int(128,8192)
+  minimum_free_mb: int(256,8192)
+  self_calibration: bool
+  analytics_enabled: bool
+  weather_enabled: bool?
+  weather_interval_seconds: int(1800,21600)?
+  weather_reference: str?
+  github_auto_update: bool
+  github_token: password?

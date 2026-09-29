@@ -1,0 +1,641 @@
+{
+  "house_power": {
+    "entity_id": "sensor.solax_house_load",
+    "label_cs": "Příkon celého domu včetně řízených spotřebičů",
+    "unit": "W",
+    "min": 0,
+    "max": null,
+    "required_for_quality": true,
+    "note": "Nejde o odběr ze sítě. Při simulaci auta odečíst jeho měřený příkon; teplo zatím zachovat."
+  },
+  "pv_power": {
+    "entity_id": "sensor.solax_pv_power_total",
+    "label_cs": "DC výkon panelů",
+    "unit": "W",
+    "min": 0,
+    "max": null,
+    "required_for_quality": true,
+    "note": "Není přímo AC výkon k odečtení od příkonu domu; omezená výroba není neomezený potenciál FVE."
+  },
+  "inverter_ac_power": {
+    "entity_id": "sensor.solax_inverter_power",
+    "label_cs": "Výkon měniče AC",
+    "unit": "W",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "grid_import_power": {
+    "entity_id": "sensor.solax_grid_import",
+    "label_cs": "Odběr ze sítě",
+    "unit": "W",
+    "min": 0,
+    "max": null,
+    "required_for_quality": true,
+    "note": ""
+  },
+  "grid_export_power": {
+    "entity_id": "sensor.solax_grid_export",
+    "label_cs": "Přetok do sítě",
+    "unit": "W",
+    "min": 0,
+    "max": null,
+    "required_for_quality": true,
+    "note": ""
+  },
+  "grid_signed_power": {
+    "entity_id": "sensor.solax_measured_power",
+    "label_cs": "Podepsaný výkon elektroměru",
+    "unit": "W",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": "V dosavadním auditu kladné=přetok, záporné=odběr; před řízením ověřit v obou směrech."
+  },
+  "grid_phase_1_power": {
+    "entity_id": "sensor.solax_measured_power_l1",
+    "label_cs": "Podepsaný výkon elektroměru L1",
+    "unit": "W",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": "Činný výkon sám neprokazuje efektivní proud fáze ani rezervu jističe."
+  },
+  "inverter_phase_1_voltage": {
+    "entity_id": "sensor.solax_inverter_voltage_l1",
+    "label_cs": "Napětí měniče L1",
+    "unit": "V",
+    "min": 0,
+    "max": 300,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "ev_phase_1_current": {
+    "entity_id": "sensor.solax_api_charge_current_l1",
+    "label_cs": "Proud wallboxu L1",
+    "unit": "A",
+    "min": 0,
+    "max": 40,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "grid_phase_2_power": {
+    "entity_id": "sensor.solax_measured_power_l2",
+    "label_cs": "Podepsaný výkon elektroměru L2",
+    "unit": "W",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": "Činný výkon sám neprokazuje efektivní proud fáze ani rezervu jističe."
+  },
+  "inverter_phase_2_voltage": {
+    "entity_id": "sensor.solax_inverter_voltage_l2",
+    "label_cs": "Napětí měniče L2",
+    "unit": "V",
+    "min": 0,
+    "max": 300,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "ev_phase_2_current": {
+    "entity_id": "sensor.solax_api_charge_current_l2",
+    "label_cs": "Proud wallboxu L2",
+    "unit": "A",
+    "min": 0,
+    "max": 40,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "grid_phase_3_power": {
+    "entity_id": "sensor.solax_measured_power_l3",
+    "label_cs": "Podepsaný výkon elektroměru L3",
+    "unit": "W",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": "Činný výkon sám neprokazuje efektivní proud fáze ani rezervu jističe."
+  },
+  "inverter_phase_3_voltage": {
+    "entity_id": "sensor.solax_inverter_voltage_l3",
+    "label_cs": "Napětí měniče L3",
+    "unit": "V",
+    "min": 0,
+    "max": 300,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "ev_phase_3_current": {
+    "entity_id": "sensor.solax_api_charge_current_l3",
+    "label_cs": "Proud wallboxu L3",
+    "unit": "A",
+    "min": 0,
+    "max": 40,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "battery_soc": {
+    "entity_id": "sensor.solax_battery_capacity",
+    "label_cs": "Nabití domácí baterie",
+    "unit": "%",
+    "min": 0,
+    "max": 100,
+    "required_for_quality": true,
+    "note": ""
+  },
+  "battery_power": {
+    "entity_id": "sensor.solax_battery_power_charge",
+    "label_cs": "DC výkon baterie",
+    "unit": "W",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": "Kladné=nabíjení, záporné=vybíjení podle auditu. Ověřit před řízením; nejde o AC výkon."
+  },
+  "battery_voltage": {
+    "entity_id": "sensor.solax_battery_voltage_charge",
+    "label_cs": "Napětí baterie",
+    "unit": "V",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "battery_current": {
+    "entity_id": "sensor.solax_battery_current_charge",
+    "label_cs": "Proud baterie",
+    "unit": "A",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "battery_temperature": {
+    "entity_id": "sensor.solax_battery_temperature",
+    "label_cs": "Teplota baterie",
+    "unit": "°C",
+    "min": -40,
+    "max": 100,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "ev_soc": {
+    "entity_id": "sensor.tesla_model_y_juniper_uroven_baterie",
+    "label_cs": "Nabití auta",
+    "unit": "%",
+    "min": 0,
+    "max": 100,
+    "required_for_quality": true,
+    "note": ""
+  },
+  "ev_power": {
+    "entity_id": "sensor.solax_api_charge_power_total",
+    "label_cs": "AC příkon wallboxu",
+    "unit": "W",
+    "min": 0,
+    "max": 25000,
+    "required_for_quality": true,
+    "note": ""
+  },
+  "ev_connected": {
+    "entity_id": "binary_sensor.tesla_model_y_juniper_nabijeci_kabel",
+    "label_cs": "Připojení kabelu auta",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": true,
+    "note": ""
+  },
+  "ev_state": {
+    "entity_id": "sensor.solax_api_charging_status",
+    "label_cs": "Stav wallboxu",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "ev_remaining_energy": {
+    "entity_id": "sensor.tesla_model_y_juniper_zbyvajici_energie",
+    "label_cs": "Hlášená energie baterie auta",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": "Definice není kalibrována; nepoužívat k odhadu kapacity bez ověření."
+  },
+  "buy_price": {
+    "entity_id": "sensor.cez_indi_dynamicka_nakupni_cena",
+    "label_cs": "ČEZ INDI skutečný model nákupu",
+    "unit": "Kč/kWh",
+    "min": null,
+    "max": null,
+    "required_for_quality": true,
+    "note": ""
+  },
+  "sell_price": {
+    "entity_id": "sensor.current_sell_electricity_price",
+    "label_cs": "Výkupní cena dle HA",
+    "unit": "Kč/kWh",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": "Čistý smluvní výpočet a časové rozlišení výkupu nejsou potvrzené."
+  },
+  "spot_price": {
+    "entity_id": "sensor.current_spot_electricity_price",
+    "label_cs": "Spotová cena – není nákupní cena",
+    "unit": "Kč/kWh",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "workday": {
+    "entity_id": "binary_sensor.workday_sensor",
+    "label_cs": "Pracovní den dle HA",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": true,
+    "note": ""
+  },
+  "hdo_live": {
+    "entity_id": "binary_sensor.nizky_tarif",
+    "label_cs": "Živý signál HDO – při auditu nefunkční",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "communication_health": {
+    "entity_id": "sensor.solax_inverter_communication_health",
+    "label_cs": "Komunikační zdraví měniče",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": true,
+    "note": ""
+  },
+  "forecast_last_polled": {
+    "entity_id": "sensor.solcast_pv_forecast_api_last_polled",
+    "label_cs": "Čas načtení Solcastu; nikoli garantovaný čas vydání prognózy",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "house_energy_today": {
+    "entity_id": "sensor.energie_v2_dum_spotreba_dnes",
+    "label_cs": "Denní spotřeba domu V2; první den neúplný",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "house_energy_total": {
+    "entity_id": "sensor.energie_v2_dum_spotreba_celkem",
+    "label_cs": "Integrál příkonu domu V2",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "pv_energy_today": {
+    "entity_id": "sensor.solax_today_s_solar_energy",
+    "label_cs": "Denní energie FVE",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "grid_import_energy_today": {
+    "entity_id": "sensor.solax_today_s_import_energy",
+    "label_cs": "Denní odběr ze sítě",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "grid_export_energy_today": {
+    "entity_id": "sensor.solax_today_s_export_energy",
+    "label_cs": "Denní přetoky",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "battery_charge_energy_today": {
+    "entity_id": "sensor.solax_battery_input_energy_today",
+    "label_cs": "Denní energie do baterie",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "battery_discharge_energy_today": {
+    "entity_id": "sensor.solax_battery_output_energy_today",
+    "label_cs": "Denní energie z baterie",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "ev_energy_total": {
+    "entity_id": "sensor.solax_api_charge_added_total",
+    "label_cs": "Kumulativní energie wallboxu",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "heat_pump_energy_total": {
+    "entity_id": "sensor.shellypro3em_c8f09e87a590_total_active_energy",
+    "label_cs": "Elektrická energie měření TČ",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "immersion_energy_total": {
+    "entity_id": "sensor.shellypro3em_ec62609762d0_total_active_energy",
+    "label_cs": "Elektrická energie měření patrony",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "heat_pump_power": {
+    "entity_id": "sensor.tepelne_cerpadlo",
+    "label_cs": "Příkon TČ",
+    "unit": "W",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "immersion_power": {
+    "entity_id": "sensor.fve_patrona",
+    "label_cs": "Příkon patrony",
+    "unit": "W",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "tank_control_temp": {
+    "entity_id": "sensor.hot_water_charging_bt6_30010",
+    "label_cs": "Bojler BT6",
+    "unit": "°C",
+    "min": -50,
+    "max": 110,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "tank_top_temp": {
+    "entity_id": "sensor.hot_water_top_bt7_30009",
+    "label_cs": "Bojler BT7",
+    "unit": "°C",
+    "min": -50,
+    "max": 110,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "room_temp": {
+    "entity_id": "sensor.shelly_h_t_kuchyne_temperature",
+    "label_cs": "Teplota kuchyně",
+    "unit": "°C",
+    "min": -50,
+    "max": 110,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "outdoor_temp": {
+    "entity_id": "sensor.current_outdoor_temperature_bt1_30002",
+    "label_cs": "Venkovní teplota",
+    "unit": "°C",
+    "min": -50,
+    "max": 110,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "floor_supply_temp": {
+    "entity_id": "sensor.external_supply_line_bt25_30040",
+    "label_cs": "Topná voda do podlahy – nikoli pokojová teplota",
+    "unit": "°C",
+    "min": -50,
+    "max": 110,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "inverter_mode": {
+    "entity_id": "select.solax_charger_use_mode",
+    "label_cs": "Režim měniče",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "inverter_manual_mode": {
+    "entity_id": "select.solax_manual_mode_select",
+    "label_cs": "Ruční režim měniče",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "battery_backup_min": {
+    "entity_id": "number.solax_backup_discharge_min_soc",
+    "label_cs": "Pozorované minimum záložního režimu",
+    "unit": "%",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "battery_selfuse_min": {
+    "entity_id": "number.solax_selfuse_discharge_min_soc",
+    "label_cs": "Pozorované minimum vlastní spotřeby",
+    "unit": "%",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "ev_current_limit": {
+    "entity_id": "number.solax_api_max_charge_current_setting",
+    "label_cs": "Limit proudu wallboxu",
+    "unit": "A",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "ev_target_soc": {
+    "entity_id": "number.tesla_model_y_juniper_nabijeci_limit",
+    "label_cs": "Cíl auta",
+    "unit": "%",
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "ev_mode": {
+    "entity_id": "select.solax_api_charger_use_mode",
+    "label_cs": "Režim wallboxu",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "hot_water_mode": {
+    "entity_id": "select.hot_water_demand_mode_40057",
+    "label_cs": "Režim vody",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "heat_curve": {
+    "entity_id": "number.heating_curve_climate_system_1_40027",
+    "label_cs": "Křivka NIBE",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "heat_offset": {
+    "entity_id": "number.heating_offset_climate_system_1_40031",
+    "label_cs": "Posun křivky NIBE",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "heat_state": {
+    "entity_id": "sensor.nibe_stav",
+    "label_cs": "Vlastní interpretace NIBE – neověřené mapování",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "climate": {
+    "entity_id": "climate.climate_system_s1",
+    "label_cs": "Stav klimatického okruhu",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "old_ev_priority": {
+    "entity_id": "input_boolean.ev_nabijeni_priorita",
+    "label_cs": "Starý pomocník EV priority",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "old_grid_charge_enabled": {
+    "entity_id": "input_boolean.baterie_nabijeni_levny_proud_povoleno",
+    "label_cs": "Staré povolení síťového nabíjení",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "old_grid_charge_active": {
+    "entity_id": "input_boolean.baterie_nabijeni_levny_proud_aktivni",
+    "label_cs": "Staré síťové nabíjení aktivní",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "immersion_1": {
+    "entity_id": "switch.shellypro3_c8f09e88d410_switch_0",
+    "label_cs": "Patrona výstup 1",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "immersion_2": {
+    "entity_id": "switch.shellypro3_c8f09e88d410_switch_1",
+    "label_cs": "Patrona výstup 2",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "immersion_3": {
+    "entity_id": "switch.shellypro3_c8f09e88d410_switch_2",
+    "label_cs": "Patrona výstup 3",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "tank_pump": {
+    "entity_id": "switch.shellyplug_s_80646f83fffc",
+    "label_cs": "Čerpadlo bojleru",
+    "unit": null,
+    "min": null,
+    "max": null,
+    "required_for_quality": false,
+    "note": ""
+  },
+  "ev_odometer": {
+    "entity_id": "sensor.tesla_model_y_juniper_pocitadlo_kilometru",
+    "label_cs": "Odometr Tesly",
+    "unit": "km",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": "Používá se pouze pro trend jízdní spotřeby."
+  },
+  "ev_lifetime_energy": {
+    "entity_id": "sensor.tesla_model_y_juniper_spotreba_energie_za_celou_dobu_zivotnosti",
+    "label_cs": "Tesla lifetime energy",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": "Používá se v deltách s odometrem; definici senzoru nepovažovat za čistou trakční energii bez ověření."
+  },
+  "ev_delivered_energy": {
+    "entity_id": "sensor.tesla_model_y_juniper_dodana_energie_baterie",
+    "label_cs": "Tesla dodaná energie relace",
+    "unit": "kWh",
+    "min": 0,
+    "max": null,
+    "required_for_quality": false,
+    "note": "Doplňková validace nabíjecích relací."
+  }
+}

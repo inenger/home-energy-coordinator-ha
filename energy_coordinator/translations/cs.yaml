@@ -1,0 +1,31 @@
+configuration:
+  mode:
+    name: Režim
+    description: Tato verze umožňuje pouze pozorování. Spotřebiče neovládá.
+  interval_seconds:
+    name: Interval sběru v sekundách
+  storage_limit_mb:
+    name: Limit databáze v MiB
+  minimum_free_mb:
+    name: Minimální volné místo v MiB
+  self_calibration:
+    name: Samokalibrace odhadů nanečisto
+    description: Vytváří a testuje sezónní odhady; nemění priority ani limity.
+  analytics_enabled:
+    name: Analytika
+    description: Odvozené přehledy FVE, baterie, auta a spotřebičů.
+  github_auto_update:
+    name: Automatické runtime aktualizace
+    description: Pouze publikovaný kompatibilní release; tento vývojový kandidát release manifest nemění.
+  github_token:
+    name: GitHub přístup pro čtení
+    description: Token ponechte pouze v možnostech aplikace. Neposílejte jej do chatu ani do repozitáře.
+  weather_enabled:
+    name: Archiv předpovědi počasí
+    description: Načítá dostupné weather entity v HA; žádný další externí poskytovatel se nenastavuje.
+  weather_interval_seconds:
+    name: Interval načtení předpovědí
+    description: Obvykle 3600 sekund; při chybě se opakuje až po delší prodlevě.
+  weather_reference:
+    name: Referenční venkovní teplota
+    description: Místní fyzické čidlo; ne aktuální teplota z internetové předpovědi.
