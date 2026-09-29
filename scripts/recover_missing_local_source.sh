@@ -128,7 +128,14 @@ cleanup() {
     if [[ -d "$DEST" ]]; then mv -- "$DEST" "$BACKUP_DIR/failed-source" || true; fi
     if [[ ! -e "$DEST" ]]; then mv -- "$BACKUP_DIR/previous-source" "$DEST" || true; fi
     cli "$WORK/rollback-store.json" store reload || true
-    cli "$WORK/rollback-build.json" apps rebuild "$SLUG" --force || true
+    if app_info "$WORK/rollback-version.json"; then
+      local installed
+      installed=$(jq -r '.data.version // ""' "$WORK/rollback-version.json")
+      if [[ $installed != "$PREVIOUS_VERSION" ]]; then
+        cli "$WORK/rollback-update.json" apps update "$SLUG" ||
+          printf 'Rollback verze selhal; použij Supervisor backup %s.\n' "${BACKUP_SLUG:-unknown}" >&2
+      fi
+    fi
     start_previous_if_needed || true
     rc=1
   elif [[ $SUCCESS -ne 1 ]]; then
@@ -227,10 +234,10 @@ fi
 mkdir -p "$DEST"
 tar -xzf "$WORK/app.tar.gz" -C "$DEST"
 
-printf '5/7 Reload store -> čekám na version_latest=%s -> rebuild -> start...\n' "$VERSION"
+printf '5/7 Reload store -> čekám na version_latest=%s -> update -> start...\n' "$VERSION"
 cli "$WORK/store-reload.json" store reload || fail 'Store reload selhal.'
 wait_latest_version "$VERSION" 90 || fail 'Supervisor v local store nevidí nový source.'
-cli "$WORK/rebuild.json" apps rebuild "$SLUG" --force || fail 'Rebuild selhal; data zůstávají v Supervisor backupu.'
+cli "$WORK/update.json" apps update "$SLUG" || fail 'Update selhal; data zůstávají v Supervisor backupu.'
 cli "$WORK/start.json" apps start "$SLUG" || fail 'Start selhal.'
 
 printf '6/7 Ověřuji stabilní version=%s + started...\n' "$VERSION"
