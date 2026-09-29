@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Simulates the SSH app's /addons mount and Supervisor catalog refresh.
+# Simulates the SSH app's /local_apps mount and Supervisor catalog refresh.
 set -Eeuo pipefail
 repo=$(cd "$(dirname "$0")/.." && pwd)
 tmp=$(mktemp -d)
 trap 'rm -rf -- "$tmp"' EXIT
-mkdir -p "$tmp/bin" "$tmp/addons/local/energy_coordinator" "$tmp/share"
-printf 'version: "0.3.1"\nslug: energy_coordinator\n' > "$tmp/addons/local/energy_coordinator/config.yaml"
+mkdir -p "$tmp/bin" "$tmp/local_apps/energy_coordinator" "$tmp/addons/energy_coordinator" "$tmp/share"
+printf 'version: "0.3.1"\nslug: energy_coordinator\n' > "$tmp/local_apps/energy_coordinator/config.yaml"
+printf 'version: "0.4.1"\nslug: energy_coordinator\n' > "$tmp/addons/energy_coordinator/config.yaml"
 printf 'stopped\n' > "$tmp/state"
 printf '0.3.1\n' > "$tmp/installed-version"
 tar -czf "$tmp/source.tar.gz" --exclude=.git -C "$(dirname "$repo")" "$(basename "$repo")"
@@ -39,14 +40,24 @@ case "$1 ${2:-}" in
 esac
 HA
 chmod +x "$tmp/bin/ha"
-export PATH="$tmp/bin:$PATH" HEC_APP_ROOT="$tmp/addons" HEC_SHARE_ROOT="$tmp/share"
-export HEC_LEGACY_WRONG_DEST="$tmp/addons/local/energy_coordinator"
+export PATH="$tmp/bin:$PATH" HEC_APP_ROOT="$tmp/local_apps" HEC_SHARE_ROOT="$tmp/share"
 export HEC_SOURCE_TARBALL="$tmp/source.tar.gz" FAKE_STATE="$tmp/state"
 export FAKE_INSTALLED_VERSION="$tmp/installed-version"
-bash "$repo/scripts/recover_missing_local_source.sh" > "$tmp/log"
-test -f "$tmp/addons/energy_coordinator/energy/runtime.py"
+export HEC_HISTORY_ROOT="$tmp/share/hec-upgrades"
+tar -czf "$tmp/app.tar.gz" -C "$repo/energy_coordinator" .
+sha=$(sha256sum "$tmp/app.tar.gz" | awk '{print $1}')
+bash "$repo/scripts/upgrade_local_app.sh" "$tmp/app.tar.gz" "$sha" 0.4.1 > "$tmp/upgrade.log"
 test "$(cat "$tmp/installed-version")" = '0.4.1'
 test "$(cat "$tmp/state")" = 'started'
-test ! -e "$tmp/addons/local/energy_coordinator"
-test "$(find "$tmp/share/hec-recovery" -name legacy-wrong-source -type d | wc -l)" = 1
-printf 'PASS: root /addons source discovered, nested source archived, app started on 0.4.1\n'
+test "$(find "$HEC_HISTORY_ROOT" -name previous-source -type d | wc -l)" = 1
+# Reset the simulated installed source for the separate missing-source recovery case.
+printf 'version: "0.3.1"\nslug: energy_coordinator\n' > "$tmp/local_apps/energy_coordinator/config.yaml"
+printf '0.3.1\n' > "$tmp/installed-version"
+printf 'stopped\n' > "$tmp/state"
+bash "$repo/scripts/recover_missing_local_source.sh" > "$tmp/log"
+test -f "$tmp/local_apps/energy_coordinator/energy/runtime.py"
+test "$(cat "$tmp/installed-version")" = '0.4.1'
+test "$(cat "$tmp/state")" = 'started'
+test "$(sed -n 's/^version: "\([^"]*\)"/\1/p' "$tmp/addons/energy_coordinator/config.yaml")" = '0.4.1'
+test "$(find "$tmp/share/hec-recovery" -name previous-source -type d | wc -l)" = 1
+printf 'PASS: upgrade and recovery use /local_apps, stale /addons untouched, app started on 0.4.1\n'
