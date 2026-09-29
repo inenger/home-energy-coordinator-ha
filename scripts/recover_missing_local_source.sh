@@ -8,10 +8,10 @@ VERSION="0.4.1"
 SLUG="local_energy_coordinator"
 PUBLIC_REPO="https://github.com/inenger/home-energy-coordinator-ha"
 PUBLIC_COMMIT="f8c88c9e2b3536ec47cdb5a9737f96cd86d12e78"
-APP_ROOT="${HEC_APP_ROOT:-/addons}"
+APP_ROOT="${HEC_APP_ROOT:-/local_apps}"
 SHARE_ROOT="${HEC_SHARE_ROOT:-/share}"
 DEST="${HEC_DEST:-$APP_ROOT/energy_coordinator}"
-LEGACY_WRONG_DEST="${HEC_LEGACY_WRONG_DEST:-/addons/local/energy_coordinator}"
+LEGACY_WRONG_DEST="${HEC_LEGACY_WRONG_DEST:-}"
 HISTORY="$SHARE_ROOT/hec-recovery"
 PORTABLE="$SHARE_ROOT/home-energy-coordinator/evidence.sqlite"
 PORTABLE_META="$SHARE_ROOT/home-energy-coordinator/evidence.json"
@@ -145,12 +145,19 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-for x in ha jq tar sha256sum mktemp grep awk date cp mv mkdir sleep curl; do
+for x in ha jq tar sha256sum mktemp grep awk date cp mv mkdir dirname sleep curl; do
   command -v "$x" >/dev/null || fail "Chybí příkaz $x. Nic nezměněno."
 done
 
 WORK=$(mktemp -d /tmp/hec-recover.XXXXXX)
 mkdir -p "$WORK/stage" "$HISTORY"
+
+[[ -d "$APP_ROOT" && ! -L "$APP_ROOT" ]] || fail "Chybí adresář lokálních aplikací $APP_ROOT. Nic neměním."
+if [[ -z ${HEC_APP_ROOT:-} ]]; then
+  awk -v path="$APP_ROOT" '$5 == path { found=1 } END { exit !found }' /proc/self/mountinfo ||
+    fail "$APP_ROOT není připojený adresář lokálních aplikací. Nic neměním."
+fi
+[[ $(dirname "$DEST") == "$APP_ROOT" ]] || fail 'Cíl musí být přímým podadresářem lokálních aplikací.'
 
 printf '0/7 Ověřuji HA OS a stávající aplikaci...\n'
 cli "$WORK/system.json" info || fail 'Home Assistant CLI nekomunikuje se Supervisorem.'
