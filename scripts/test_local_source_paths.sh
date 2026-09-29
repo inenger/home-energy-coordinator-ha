@@ -27,9 +27,17 @@ case "$1 ${2:-}" in
   'backups info') printf '{"result":"ok","data":{"apps":[{"slug":"local_energy_coordinator"}]}}\n' ;;
   'apps stop') printf 'stopped\n' > "$FAKE_STATE"; printf '{"result":"ok"}\n' ;;
   'apps rebuild')
+    printf '{"result":"error","message":"Local and store versions differ, use Update instead of Rebuild"}\n'
+    exit 1 ;;
+  'apps update')
     sed -n 's/^version: "\([^"]*\)"/\1/p' "$HEC_APP_ROOT/energy_coordinator/config.yaml" > "$FAKE_INSTALLED_VERSION"
     printf '{"result":"ok"}\n' ;;
   'apps start')
+    if [[ -n ${FAKE_FAIL_START_ONCE:-} && -f $FAKE_FAIL_START_ONCE ]]; then
+      rm "$FAKE_FAIL_START_ONCE"
+      printf '{"result":"error","message":"simulated start failure"}\n'
+      exit 1
+    fi
     printf 'started\n' > "$FAKE_STATE"
     mkdir -p "$HEC_SHARE_ROOT/home-energy-coordinator"
     printf 'test' > "$HEC_SHARE_ROOT/home-energy-coordinator/evidence.sqlite"
@@ -50,6 +58,20 @@ bash "$repo/scripts/upgrade_local_app.sh" "$tmp/app.tar.gz" "$sha" 0.4.1 > "$tmp
 test "$(cat "$tmp/installed-version")" = '0.4.1'
 test "$(cat "$tmp/state")" = 'started'
 test "$(find "$HEC_HISTORY_ROOT" -name previous-source -type d | wc -l)" = 1
+# A failure after the version update must update back to the saved 0.3.1 source.
+printf 'version: "0.3.1"\nslug: energy_coordinator\n' > "$tmp/local_apps/energy_coordinator/config.yaml"
+printf '0.3.1\n' > "$tmp/installed-version"
+printf 'started\n' > "$tmp/state"
+export FAKE_FAIL_START_ONCE="$tmp/fail-start-once"
+touch "$FAKE_FAIL_START_ONCE"
+if bash "$repo/scripts/upgrade_local_app.sh" "$tmp/app.tar.gz" "$sha" 0.4.1 > "$tmp/failed-upgrade.log" 2>&1; then
+  printf 'Expected a simulated start failure\n' >&2
+  exit 1
+fi
+test "$(cat "$tmp/installed-version")" = '0.3.1'
+test "$(cat "$tmp/state")" = 'started'
+test "$(sed -n 's/^version: "\([^"]*\)"/\1/p' "$tmp/local_apps/energy_coordinator/config.yaml")" = '0.3.1'
+unset FAKE_FAIL_START_ONCE
 # Reset the simulated installed source for the separate missing-source recovery case.
 printf 'version: "0.3.1"\nslug: energy_coordinator\n' > "$tmp/local_apps/energy_coordinator/config.yaml"
 printf '0.3.1\n' > "$tmp/installed-version"
