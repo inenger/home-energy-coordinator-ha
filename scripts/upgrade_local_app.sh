@@ -124,7 +124,14 @@ cleanup() {
     if [[ -d "$DEST" ]]; then mv -- "$DEST" "$BACKUP_DIR/failed-source" || true; fi
     if [[ ! -e "$DEST" ]]; then mv -- "$BACKUP_DIR/previous-source" "$DEST" || true; fi
     cli "$WORK/rollback-store.json" store reload || true
-    cli "$WORK/rollback-build.json" apps rebuild "$SLUG" --force || true
+    if app_info "$WORK/rollback-version.json"; then
+      local installed
+      installed=$(jq -r '.data.version // ""' "$WORK/rollback-version.json")
+      if [[ $installed != "$PREVIOUS_VERSION" ]]; then
+        cli "$WORK/rollback-update.json" apps update "$SLUG" ||
+          printf 'Rollback verze selhal; použij Supervisor backup %s.\n' "${BACKUP_SLUG:-unknown}" >&2
+      fi
+    fi
     start_previous_if_needed || true
     rc=1
   elif [[ $SUCCESS -ne 1 && $STOPPED -eq 1 ]]; then
@@ -218,7 +225,7 @@ mv -- "$WORK/stage" "$DEST"
 printf '4/6 Načítám local store a čekám, až Supervisor uvidí verzi %s...\n' "$VERSION"
 cli "$WORK/store-reload.json" store reload || fail 'Store reload selhal.'
 wait_latest_version "$VERSION" 90 || fail 'Supervisor v local store nevidí nový source.'
-cli "$WORK/rebuild.json" apps rebuild "$SLUG" --force || fail 'Rebuild selhal.'
+cli "$WORK/update.json" apps update "$SLUG" || fail 'Update selhal.'
 
 printf '5/6 Spouštím novou verzi...\n'
 cli "$WORK/start.json" apps start "$SLUG" || fail 'Start selhal.'
