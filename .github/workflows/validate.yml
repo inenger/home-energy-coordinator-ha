@@ -1,0 +1,20 @@
+name: validate-distribution
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate shell and app metadata
+        run: |
+          bash -n scripts/migrate_local_to_repo.sh
+          bash -n scripts/recover_missing_local_source.sh
+          bash -n scripts/upgrade_local_app.sh
+          grep -Fxq 'version: "0.4.1"' energy_coordinator/config.yaml
+          grep -Fxq 'slug: energy_coordinator' energy_coordinator/config.yaml
+          test -f repository.yaml
