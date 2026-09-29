@@ -8,9 +8,10 @@ VERSION="0.4.1"
 SLUG="local_energy_coordinator"
 PUBLIC_REPO="https://github.com/inenger/home-energy-coordinator-ha"
 PUBLIC_COMMIT="f8c88c9e2b3536ec47cdb5a9737f96cd86d12e78"
-APP_ROOT="${HEC_APP_ROOT:-/addons}"
+APP_ROOT="${HEC_APP_ROOT:-/addons/local}"
 SHARE_ROOT="${HEC_SHARE_ROOT:-/share}"
 DEST="${HEC_DEST:-$APP_ROOT/energy_coordinator}"
+LEGACY_WRONG_DEST="${HEC_LEGACY_WRONG_DEST:-/addons/energy_coordinator}"
 HISTORY="$SHARE_ROOT/hec-recovery"
 PORTABLE="$SHARE_ROOT/home-energy-coordinator/evidence.sqlite"
 PORTABLE_META="$SHARE_ROOT/home-energy-coordinator/evidence.json"
@@ -198,11 +199,20 @@ if [[ -e "$DEST" ]]; then
   HAD_SOURCE=1
   tar -czf "$BACKUP_DIR/source-before.tar.gz" -C "$DEST" .
 fi
+if [[ "$LEGACY_WRONG_DEST" != "$DEST" && -e "$LEGACY_WRONG_DEST" ]]; then
+  [[ -d "$LEGACY_WRONG_DEST" && ! -L "$LEGACY_WRONG_DEST" ]] ||
+    fail "Starý chybný source $LEGACY_WRONG_DEST není běžný adresář."
+  tar -czf "$BACKUP_DIR/legacy-wrong-source.tar.gz" -C "$LEGACY_WRONG_DEST" .
+fi
 
 printf '3/7 Zastavuji aplikaci a čekám na skutečný stav stopped...\n'
 stop_app || fail 'Aplikace se do 120 s nepotvrdila jako stopped.'
 
-printf '4/7 Obnovuji lokální source 0.4.1...\n'
+printf '4/7 Obnovuji lokální source 0.4.1 do /addons/local...\n'
+if [[ "$LEGACY_WRONG_DEST" != "$DEST" && -d "$LEGACY_WRONG_DEST" ]]; then
+  mv -- "$LEGACY_WRONG_DEST" "$BACKUP_DIR/legacy-wrong-source"
+fi
+mkdir -p "$APP_ROOT"
 if [[ $HAD_SOURCE -eq 1 ]]; then
   mv -- "$DEST" "$BACKUP_DIR/previous-source"
   SOURCE_MOVED=1
