@@ -8,10 +8,10 @@ VERSION="0.4.1"
 SLUG="local_energy_coordinator"
 PUBLIC_REPO="https://github.com/inenger/home-energy-coordinator-ha"
 PUBLIC_COMMIT="f8c88c9e2b3536ec47cdb5a9737f96cd86d12e78"
-APP_ROOT="${HEC_APP_ROOT:-/addons/local}"
+APP_ROOT="${HEC_APP_ROOT:-/addons}"
 SHARE_ROOT="${HEC_SHARE_ROOT:-/share}"
 DEST="${HEC_DEST:-$APP_ROOT/energy_coordinator}"
-LEGACY_WRONG_DEST="${HEC_LEGACY_WRONG_DEST:-/addons/energy_coordinator}"
+LEGACY_WRONG_DEST="${HEC_LEGACY_WRONG_DEST:-/addons/local/energy_coordinator}"
 HISTORY="$SHARE_ROOT/hec-recovery"
 PORTABLE="$SHARE_ROOT/home-energy-coordinator/evidence.sqlite"
 PORTABLE_META="$SHARE_ROOT/home-energy-coordinator/evidence.json"
@@ -208,7 +208,7 @@ fi
 printf '3/7 Zastavuji aplikaci a čekám na skutečný stav stopped...\n'
 stop_app || fail 'Aplikace se do 120 s nepotvrdila jako stopped.'
 
-printf '4/7 Obnovuji lokální source 0.4.1 do /addons/local...\n'
+printf '4/7 Obnovuji lokální source 0.4.1 do %s...\n' "$DEST"
 if [[ "$LEGACY_WRONG_DEST" != "$DEST" && -d "$LEGACY_WRONG_DEST" ]]; then
   mv -- "$LEGACY_WRONG_DEST" "$BACKUP_DIR/legacy-wrong-source"
 fi
@@ -237,7 +237,7 @@ for ((i=1;i<=90;i++)); do
     printf 'Supervisor backup: %s\n' "$BACKUP_SLUG"
     printf 'Portable DB: %s\n' "$PORTABLE"
     printf 'DALŠÍ KROK: přidej do HA Store repository %s\n' "$PUBLIC_REPO"
-    printf 'Repo verzi teprve potom nainstaluj; starou lokální app zatím nemaž.\n'
+    printf 'Před prvním startem repo aplikace zastav local_energy_coordinator; starou app zatím nemaž.\n'
     exit 0
   fi
   sleep 2
