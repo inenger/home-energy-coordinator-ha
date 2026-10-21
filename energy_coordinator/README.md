@@ -1,4 +1,4 @@
-# Energetický koordinátor 0.5.0
+# Energetický koordinátor 0.5.1
 
 Lokální aplikace Home Assistant OS pro Raspberry Pi 4 (aarch64). Runtime, data,
 modely a přehledy zůstávají uvnitř HA. Režim je výhradně `observe_only`.
@@ -95,6 +95,13 @@ není důkaz kalibrace čidla. API přístup má technicky širší práva než 
 Původní tabulky zůstávají. Migrace pouze přidává tabulky; automatické mazání není
 implementováno. Celý kontext se komprimuje, předpovědi/mapování deduplikují;
 teplotní graf používá jednou zachycené hlášení, ne minutu starou kopii jako nový vzorek.
+Od 0.5.1 se plný soupis širší telemetrie archivuje nejvýše po pěti minutách
+(nebo okamžitě při změně mapování). Hlavních 71 signálů zůstává v minutových
+vzorcích a jednotlivá hlášení teplot se dál deduplikují podle času zdroje.
+Historická data se nemažou; změna pouze zpomalí další růst databáze.
+Kalibrace základní spotřeby používá úzkou toleranci −5 až 0 W pro záporný
+klidový šum měřiče patrony. Platí jen pro tento model, nikoli pro zdrojová
+měření nebo řízení.
 Limit DB zůstává 2 GiB a lze jej zvýšit v možnostech aplikace. Po dosažení limitu
 se sběr zastaví s chybou, data se nemažou. Dlouhodobá automatická archivace,
 událostní rychlý sběr a import staré HA historie jsou další práce, ne hotové funkce.

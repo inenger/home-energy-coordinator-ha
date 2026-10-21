@@ -74,12 +74,19 @@ test "$(cat "$tmp/state")" = 'started'
 test "$(sed -n 's/^version: "\([^"]*\)"/\1/p' "$tmp/local_apps/energy_coordinator/config.yaml")" = '0.3.1'
 unset FAKE_FAIL_START_ONCE
 # Reset the simulated installed source for the separate missing-source recovery case.
+# Rescue is pinned to its historical 0.5.0 source, independently of the new
+# repository release being tested above.
+mkdir -p "$tmp/recovery-repo"
+cp -a "$repo/." "$tmp/recovery-repo/"
+sed -i 's/^version: "[^"]*"/version: "0.5.0"/' "$tmp/recovery-repo/energy_coordinator/config.yaml"
+tar -czf "$tmp/recovery.tar.gz" -C "$tmp" recovery-repo
+export HEC_SOURCE_TARBALL="$tmp/recovery.tar.gz"
 printf 'version: "0.3.1"\nslug: energy_coordinator\n' > "$tmp/local_apps/energy_coordinator/config.yaml"
 printf '0.3.1\n' > "$tmp/installed-version"
 printf 'stopped\n' > "$tmp/state"
 bash "$repo/scripts/recover_missing_local_source.sh" > "$tmp/log"
 test -f "$tmp/local_apps/energy_coordinator/energy/runtime.py"
-test "$(cat "$tmp/installed-version")" = "$version"
+test "$(cat "$tmp/installed-version")" = '0.5.0'
 test "$(cat "$tmp/state")" = 'started'
 test "$(sed -n 's/^version: "\([^"]*\)"/\1/p' "$tmp/addons/energy_coordinator/config.yaml")" = '0.4.1'
 test "$(find "$tmp/share/hec-recovery" -name previous-source -type d | wc -l)" = 1

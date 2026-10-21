@@ -58,6 +58,16 @@ class CalibrationTests(unittest.TestCase):
     def test_missing_not_zero(self):
         x=sample('2026-09-28T12:00:00+00:00');x['signals'].pop('ev_power')
         self.assertIsNone(residual_w(x))
+    def test_bounded_negative_immersion_noise_only_in_model(self):
+        x=sample('2026-09-28T12:00:00+00:00')
+        signal=x['signals']['immersion_power']
+        signal.update(quality='out_of_range',value=None,raw_state='-4.9',unit='W')
+        self.assertEqual(residual_w(x),500)
+        self.assertEqual(signal['raw_state'],'-4.9')
+        signal['raw_state']='-5.1'
+        self.assertIsNone(residual_w(x))
+        signal['raw_state']='-4.9';signal['quality']='unavailable'
+        self.assertIsNone(residual_w(x))
     def test_big_negative_rejected(self):self.assertIsNone(residual_w(sample('2026-09-28T12:00:00+00:00',house=100)))
     def test_stale_rejected(self):
         x=sample('2026-09-28T12:00:00+00:00');x['signals']['house_power']['last_reported']='2026-09-28T11:00:00+00:00'

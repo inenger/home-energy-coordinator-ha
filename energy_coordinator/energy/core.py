@@ -6,7 +6,7 @@ import math
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-VERSION = '0.5.0'
+VERSION = '0.5.1'
 TZ = ZoneInfo('Europe/Prague')
 BAD_STATES = {'unknown', 'unavailable', 'none', ''}
 

@@ -8,6 +8,9 @@ from .core import TZ, instant, season_context, digest
 from .store import pack, unpack
 
 CLASSES = frozenset('temperature humidity pressure atmospheric_pressure illuminance irradiance wind_speed wind_direction precipitation precipitation_intensity carbon_dioxide carbon_monoxide pm1 pm25 pm10 volatile_organic_compounds power energy energy_storage current voltage power_factor apparent_power reactive_power frequency water volume_flow_rate gas'.split())
+# The 71 core energy signals remain minute-by-minute. Broad sensor snapshots
+# are large and mostly repeat unchanged values and metadata.
+SNAPSHOT_INTERVAL_SECONDS = 300
 UNITS = {'°C':'temperature','°F':'temperature','K':'temperature','W':'power','kW':'power',
     'Wh':'energy','kWh':'energy','MWh':'energy','V':'voltage','A':'current','VA':'apparent_power',
     'var':'reactive_power','kvar':'reactive_power','W/m²':'irradiance','W/m2':'irradiance',
@@ -131,10 +134,13 @@ def ensure_schema(db):
 def record(store, context):
     ensure_schema(store.db)
     with store.db:
-        store.db.execute('INSERT OR IGNORE INTO environment_samples VALUES(?,?)',(context['at'],pack(context)))
+        last = store.db.execute('SELECT at FROM environment_samples ORDER BY at DESC LIMIT 1').fetchone()
+        snapshot_due = last is None or (instant(context['at']) - instant(last[0])).total_seconds() >= SNAPSHOT_INTERVAL_SECONDS
+        mapping_changed = False
         for eid,p in context['points'].items():
             meta={k:p.get(k) for k in ('entity_id','label','quantity','unit','role','role_verified','zone','device_id','area_id','area_name','source_kind')}
-            store.db.execute('INSERT OR IGNORE INTO telemetry_mappings VALUES(?,?,?)',(p['mapping_hash'],context['at'],pack(meta)))
+            inserted = store.db.execute('INSERT OR IGNORE INTO telemetry_mappings VALUES(?,?,?)',(p['mapping_hash'],context['at'],pack(meta)))
+            mapping_changed |= inserted.rowcount > 0
             if p['quantity']!='temperature' or p['quality']!='valid' or not finite(p['value']): continue
             try:
                 report=instant(p['last_reported']).astimezone(timezone.utc)
@@ -142,6 +148,8 @@ def record(store, context):
             except (KeyError,ValueError,TypeError,AttributeError): continue
             store.db.execute('INSERT OR IGNORE INTO temperature_observations VALUES(?,?,?,?)',
                 (eid,report.isoformat(),context['at'],p['value']))
+        if snapshot_due or mapping_changed:
+            store.db.execute('INSERT OR IGNORE INTO environment_samples VALUES(?,?)',(context['at'],pack(context)))
 
 
 def summary(store, now):
