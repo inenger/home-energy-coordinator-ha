@@ -67,14 +67,25 @@ class TelemetryTests(unittest.TestCase):
     def test_actual_sensor_reports_deduplicated(self):
         with tempfile.TemporaryDirectory() as td:
             st=Store(Path(td)/'x.sqlite')
-            for t in (NOW,NOW+timedelta(minutes=1)): telemetry.record(st,telemetry.discover([state()],t.isoformat()))
+            for t in (NOW,NOW+timedelta(minutes=1),NOW+timedelta(minutes=5)):
+                telemetry.record(st,telemetry.discover([state()],t.isoformat()))
             self.assertEqual(st.db.execute('SELECT COUNT(*) FROM temperature_observations').fetchone()[0],1)
             self.assertEqual(st.db.execute('SELECT COUNT(*) FROM environment_samples').fetchone()[0],2);st.close()
     def test_role_changes_versioned(self):
         with tempfile.TemporaryDirectory() as td:
             st=Store(Path(td)/'x.sqlite');telemetry.record(st,telemetry.discover([state()],NOW.isoformat()))
             telemetry.record(st,telemetry.discover([state()],(NOW+timedelta(minutes=1)).isoformat(),{'mappings':{'sensor.room':{'role':'room','zone':'Office'}}}))
-            self.assertEqual(st.db.execute('SELECT COUNT(*) FROM telemetry_mappings').fetchone()[0],2);st.close()
+            self.assertEqual(st.db.execute('SELECT COUNT(*) FROM telemetry_mappings').fetchone()[0],2)
+            self.assertEqual(st.db.execute('SELECT COUNT(*) FROM environment_samples').fetchone()[0],2);st.close()
+    def test_new_temperature_report_is_kept_between_snapshots(self):
+        with tempfile.TemporaryDirectory() as td:
+            st=Store(Path(td)/'x.sqlite')
+            telemetry.record(st,telemetry.discover([state()],NOW.isoformat()))
+            newer=state(value='23');newer['last_reported']=(NOW+timedelta(minutes=1)).isoformat()
+            telemetry.record(st,telemetry.discover([newer],newer['last_reported']))
+            self.assertEqual(st.db.execute('SELECT COUNT(*) FROM environment_samples').fetchone()[0],1)
+            self.assertEqual(st.db.execute('SELECT COUNT(*) FROM temperature_observations').fetchone()[0],2)
+            st.close()
 
 class WeatherTests(unittest.TestCase):
     def forecasts(self,kind='hourly',available=None):

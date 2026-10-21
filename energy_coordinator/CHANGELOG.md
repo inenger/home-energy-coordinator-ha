@@ -1,3 +1,8 @@
+# 0.5.1
+- Široká telemetrie ukládá plný snímek nejvýše každých pět minut a okamžitě při změně mapování. Nové teplotní zprávy, 71 hlavních energetických signálů a předpovědi se dál zaznamenávají v dosavadním taktu.
+- Dosavadní archiv se nemaže ani zpětně neupravuje. Jde o omezení růstu nových dat; limit 2 GiB zůstává a vyžaduje provozní kontrolu.
+- Kandidátní model základní spotřeby toleruje pouze šum měřiče patrony −5 až 0 W. Naměřené záporné hodnoty zůstávají v archivu označené jako neplatné; větší záporné hodnoty či výpadek se stále odmítají.
+
 # 0.5.0
 - Stínový scénář nabíjení auta porovnává slunečné všední dny, víkendy a noční tarif podle dostupných hodinových předpovědí a cen. Nemá pevně zakódované okno 03:00–05:00.
 - Nový graf zobrazuje naměřený výkon domu a podmíněný scénář. Návrhy se ukládají s časem vydání a původem předpovědi; nejde o změřenou úsporu ani celé řízení baterie.

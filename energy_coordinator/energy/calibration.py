@@ -17,10 +17,27 @@ def valid_value(sample, key):
     v = x.get('value')
     return v if x.get('quality') == 'valid' and isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) else None
 
+def immersion_for_baseline(sample):
+    value = valid_value(sample, 'immersion_power')
+    if value is not None:
+        return value
+    signal = sample.get('signals', {}).get('immersion_power', {})
+    # The installed meter reports -0.2..-4.9 W while the element is idle.
+    # Keep the original out-of-range evidence, but treat only this bounded
+    # measurement noise as zero in the observational residual model.
+    if signal.get('quality') != 'out_of_range' or signal.get('unit') != 'W':
+        return None
+    try:
+        raw = float(signal['raw_state'])
+    except (ValueError, TypeError, KeyError):
+        return None
+    return 0.0 if math.isfinite(raw) and -5.0 <= raw < 0 else None
+
 def residual_w(sample):
     health=sample.get('signals',{}).get('communication_health',{})
     if health.get('quality')!='valid' or health.get('value')!='Healthy': return None
-    values=[valid_value(sample,k) for k in ('house_power','ev_power','heat_pump_power','immersion_power')]
+    values=[valid_value(sample,k) for k in ('house_power','ev_power','heat_pump_power')]
+    values.append(immersion_for_baseline(sample))
     if any(v is None or v<0 for v in values): return None
     reported=sample.get('signals',{}).get('house_power',{}).get('last_reported')
     try:
@@ -109,5 +126,6 @@ def calibrate(store,cfg,now=None):
     result=train_candidate(points,now,cfg)
     result['last_complete_day']=days[-1] if days else None
     result['source']='house_power - ev_power - heat_pump_power - immersion_power'
+    result['measurement_noise_policy']='Only immersion_power out_of_range in [-5,0) W is zero for this residual model; raw evidence is unchanged.'
     result['not_implemented']=['battery_capacity_fit','battery_efficiency_fit','pv_forecast_bias_fit','thermal_model_fit','autonomous_control']
     return result
