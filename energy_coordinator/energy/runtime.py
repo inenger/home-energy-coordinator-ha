@@ -4,15 +4,15 @@ The HTTP interface is read-only and available via authenticated HA Ingress.
 No host ports, actuator endpoint, scheduling service or external AI dependency.
 """
 from __future__ import annotations
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, date, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json, os, signal, threading, time, urllib.parse
-from .collector import DATA, collect, settings, atomic_json
+from .collector import DATA, collect, settings, atomic_json, ReadOnlyHA, storage_check
 from .store import Store
 from .calibration import calibrate
 from .publish_status import main as publish
-from .core import VERSION
-from . import telemetry
+from .core import VERSION, TZ
+from . import telemetry, night
 from .store import pack
 from .analytics import build as build_analytics
 from .webui import PAGE
@@ -45,6 +45,13 @@ class Handler(BaseHTTPRequestHandler):
                 try:payload=store.export(day)
                 finally:store.close()
                 self.send_json(payload);return
+            if path.path=='/night':
+                requested=urllib.parse.parse_qs(path.query).get('date',[''])[0]
+                day=date.fromisoformat(requested).isoformat() if requested else None
+                store=Store(DATA/'evidence.sqlite')
+                try:payload=night.recent(store,day)
+                finally:store.close()
+                self.send_json(payload);return
             if path.path!='/':
                 self.send_json({'error':'NOT_FOUND'},404);return
             body=PAGE.encode()
@@ -75,6 +82,31 @@ def analytics_once(cfg=None):
     finally:store.close()
     atomic_json(DATA/'analytics.json',result)
 
+def night_loop(cfg):
+    """Independent short reads during the night; never writes to HA devices."""
+    client=ReadOnlyHA(cfg['ha_base_url'],cfg['token_file'])
+    summarized=set()
+    while not STOP.is_set():
+        began=time.monotonic()
+        now=datetime.now(timezone.utc)
+        local=now.astimezone(TZ)
+        try:
+            if night.window(now.isoformat()):
+                storage_check(cfg)
+                states=client.get('/api/states')
+                at=datetime.now(timezone.utc).isoformat()
+                store=Store(DATA/'evidence.sqlite')
+                try:night.record(store,states,at)
+                finally:store.close()
+            elif local.hour*60+local.minute>=305 and local.date().isoformat() not in summarized:
+                store=Store(DATA/'evidence.sqlite')
+                try:night.summarize(store,local.date().isoformat())
+                finally:store.close()
+                summarized.add(local.date().isoformat())
+        except Exception as error:
+            print(json.dumps({'night_collection':'failed','error_code':type(error).__name__}),flush=True)
+        STOP.wait(max(1,night.INTERVAL-(time.monotonic()-began)) if night.window(now.isoformat()) else 60)
+
 def main():
     os.umask(0o077)
     DATA.mkdir(mode=0o700,parents=True,exist_ok=True)
@@ -86,6 +118,7 @@ def main():
     except OSError:pass
     server=ThreadingHTTPServer(('0.0.0.0',8099),Handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    night_thread=threading.Thread(target=night_loop,args=(cfg,),daemon=True);night_thread.start()
     print(json.dumps({'version':VERSION,'runtime':'home_assistant_app','mode':'observe_only','device_actions':0}),flush=True)
     next_cal=0.0
     next_analytics=0.0
@@ -128,6 +161,7 @@ def main():
             except Exception as e:print(json.dumps({'publication':'failed','error_code':type(e).__name__}),flush=True)
             STOP.wait(max(1,cfg['interval_seconds']-(time.monotonic()-started)))
     finally:
+        STOP.set();night_thread.join(timeout=20)
         server.shutdown();server.server_close()
         print(json.dumps({'runtime':'stopped','device_actions':0}),flush=True)
 
