@@ -1,4 +1,16 @@
-# Energetický koordinátor 0.5.1
+# Energetický koordinátor 0.5.2
+
+## Noční stínová relace 0.5.2
+
+Samostatné pozorování na RPi čte HA každých 15 sekund od 02:55 do 05:05 místního
+času. SQLite tabulky `night_samples`, `night_sessions`, `night_summaries` ukládají
+měření domu, auta, měniče a elektroměru po fázích, stavy baterie, stáří reportů,
+modelovou rezervu a důvod stínového návrhu. První dostupná hodnota předpovědi po
+03:00 je zmrazená s **časem zachycení**, nikoli vydávána za přesný stav ve 03:00.
+Při restartu později v noci se čas zachycení nezamlčuje. Souhrn po 05:05 integruje
+jen platné intervaly do 30 sekund, zvlášť AC a DC energie a označuje nepokrytou
+část 120minutového okna. Historie HA se nemaže. V Ingress je graf a souhrn noci.
+Výpočet 22 A/fáze a účiník 0,9 není ochrana jističe ani měřená úspora.
 
 Lokální aplikace Home Assistant OS pro Raspberry Pi 4 (aarch64). Runtime, data,
 modely a přehledy zůstávají uvnitř HA. Režim je výhradně `observe_only`.

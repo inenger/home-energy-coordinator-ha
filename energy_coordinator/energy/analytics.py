@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 import json, math
-from .core import instant, TZ
+from .core import instant, TZ, VERSION
 from .appliances import summarize as summarize_appliances
 from .evmodel import analyze as analyze_ev
 from .batterymodel import analyze as analyze_battery
@@ -131,5 +131,5 @@ def build(store,now=None,cfg=None):
         "appliances":appliances,"anomalies":anomalies,
         "environment":telemetry.summary(store,now),
         "weather":weather.summary(store,now,cfg.get('weather_reference','sensor.current_outdoor_temperature_bt1_30002')),
-        "versions":{"software":"0.5.1","pricing":"interval_split_v1","pv":"hourly_holdout_v1","shadow":"ev_scenario_v1"},
+        "versions":{"software":VERSION,"pricing":"interval_split_v1","pv":"hourly_holdout_v1","shadow":"ev_scenario_v1"},
         "quality":{"derived_from_minute_observations":True,"control_actions":0}}

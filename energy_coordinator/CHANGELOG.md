@@ -1,3 +1,7 @@
+# 0.5.2
+- Pozorovací noční relace 02:55–05:05: 15s vzorky fází, auta, baterie a kvality vstupů; první dostupná předpověď po 03:00 se uloží s reálným časem zachycení.
+- Po 05:05 samostatný souhrn pokrytí, energie AC/DC, závazné fáze a důvodů stínového návrhu. Bez změn režimu či výkonu zařízení a bez mazání historie.
+
 # 0.5.1
 - Široká telemetrie ukládá plný snímek nejvýše každých pět minut a okamžitě při změně mapování. Nové teplotní zprávy, 71 hlavních energetických signálů a předpovědi se dál zaznamenávají v dosavadním taktu.
 - Dosavadní archiv se nemaže ani zpětně neupravuje. Jde o omezení růstu nových dat; limit 2 GiB zůstává a vyžaduje provozní kontrolu.
