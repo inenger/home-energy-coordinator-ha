@@ -100,7 +100,11 @@ def night_loop(cfg):
                 finally:store.close()
             elif local.hour*60+local.minute>=305 and local.date().isoformat() not in summarized:
                 store=Store(DATA/'evidence.sqlite')
-                try:night.summarize(store,local.date().isoformat())
+                try:
+                    night.ensure_schema(store.db)
+                    day=local.date().isoformat()
+                    if not store.db.execute('SELECT 1 FROM night_summaries WHERE day=?',(day,)).fetchone():
+                        night.summarize(store,day)
                 finally:store.close()
                 summarized.add(local.date().isoformat())
         except Exception as error:

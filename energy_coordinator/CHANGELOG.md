@@ -1,3 +1,8 @@
+# 0.5.3
+- Denní prognóza se zmrazí podle stejného místního data a archivované dostupnosti před rozhodnutím; neměnný HA stav se již neodmítá jen kvůli hodinové hranici. Čas vydání prognózy providerem zůstává neověřený.
+- Stínové vyhodnocení rozlišuje časově stabilní SOC a nastavení od rychlého měření fází. Není to zpřísnění ochrany jističe ani potvrzení fyzického heartbeat senzoru.
+- Noční souhrn počítá energii a pokrytí jednotlivých veličin nezávisle na dostupnosti stínového návrhu. Již uložený souhrn se po restartu zpětně nepřepisuje.
+
 # 0.5.2
 - Pozorovací noční relace 02:55–05:05: 15s vzorky fází, auta, baterie a kvality vstupů; první dostupná předpověď po 03:00 se uloží s reálným časem zachycení.
 - Po 05:05 samostatný souhrn pokrytí, energie AC/DC, závazné fáze a důvodů stínového návrhu. Bez změn režimu či výkonu zařízení a bez mazání historie.

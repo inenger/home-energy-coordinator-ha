@@ -1,4 +1,14 @@
-# Energetický koordinátor 0.5.2
+# Energetický koordinátor 0.5.3
+
+## Opravy nočního vyhodnocení 0.5.3
+
+Předpověď pro dnešní den se přijímá pouze při zachyceném HA hlášení ze stejného
+místního dne a archivované verzi dostupné před časem zmrazení. Čas skutečného
+vydání u providera není ověřen. SOC a nastavení s neměnnou hodnotou mají jinou
+mez stáří než rychlé měření fází; stáří stále zůstává viditelné ve vzorku.
+Souhrn zapisuje pokrytí každé energetické řady zvlášť a neodvozuje nulu ze
+scházejícího návrhu. Historické noční relace a již vytvořené souhrny se
+zpětně neupravují. Model nikdy nepřebírá funkci ochrany jističe.
 
 ## Noční stínová relace 0.5.2
 
