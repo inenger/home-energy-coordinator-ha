@@ -85,6 +85,11 @@ def valid(points, key, age=90):
             and p['age_seconds'] is not None and 0 <= p['age_seconds'] < age)
 
 
+def stable_state(points, key, max_age):
+    """A known HA state is usable for a descriptive plan, not proof of a live device."""
+    return valid(points, key, max_age)
+
+
 def target_for(kwh):
     return 90 if kwh < 5 else 80 if kwh < 10 else 70 if kwh < 15 else 0
 
@@ -93,14 +98,28 @@ def capture_session(store, day, at, points):
     """Freeze the first available forecast after 03:00, never backdate it."""
     if store.db.execute('SELECT 1 FROM night_sessions WHERE day=?', (day,)).fetchone(): return
     forecast = points['forecast_today']
-    if valid(points, 'forecast_today', 3600) and forecast['value'] >= 0:
+    archived = store.available_forecast(IDS['forecast_today'], at)
+    archived_value = None
+    if archived:
+        try: archived_value = float(archived['payload']['state'])
+        except (ValueError, TypeError, KeyError): pass
+    reported = forecast.get('last_reported')
+    same_day = False
+    try: same_day = instant(reported).astimezone(TZ).date().isoformat() == day
+    except (ValueError, TypeError, AttributeError): pass
+    known = (archived is not None and instant(archived['available_at']) <= instant(at)
+             and instant(archived['available_at']).astimezone(TZ).date().isoformat() == day)
+    if (known and same_day and forecast['quality'] == 'valid'
+            and isinstance(forecast['value'], (int, float)) and 0 <= forecast['value'] < 100
+            and archived_value == forecast['value']):
         value = forecast['value']; target = target_for(value); status = 'captured'
     else:
         value = target = None; status = 'missing_forecast_at_capture'
     session = {'schema_version': 1, 'day': day, 'captured_at': at, 'policy_version': VERSION,
                'forecast_kwh': value, 'target_soc_pct': target, 'forecast_state_last_reported': forecast.get('last_reported'),
+               'forecast_archived_available_at': archived['available_at'] if known else None,
                'forecast_polled_state': points['forecast_polled']['value'], 'status': status,
-               'note': 'First observation at or after 03:00; capture time is not provider issue time.'}
+               'note': 'HA today state observed on this local date; archive availability precedes capture. Provider issue time is unverified.'}
     with store.db:
         store.db.execute('INSERT OR IGNORE INTO night_sessions VALUES(?,?)', (day, pack(session)))
 
@@ -122,7 +141,9 @@ def derive(points, at, session):
     target = session.get('target_soc_pct') if session else None
     reason = 'outside_charge_window' if not active else 'missing_frozen_forecast' if target is None else None
     if reason is None and room is None: reason = 'invalid_phase_input'
-    if reason is None and not all(valid(points, k) for k in ('battery_soc','battery_v','battery_limit_a')):
+    if reason is None and not (stable_state(points,'battery_soc',3*3600)
+                               and stable_state(points,'battery_v',2*3600)
+                               and stable_state(points,'battery_limit_a',7*86400)):
         reason = 'invalid_battery_input'
     if reason is None and not 100 < points['battery_v']['value'] < 500:reason = 'invalid_battery_voltage'
     if reason is None and not 0 <= points['battery_limit_a']['value'] <= 100:reason = 'invalid_battery_limit'
@@ -137,7 +158,7 @@ def derive(points, at, session):
         proposed = 0
     return {'phase': rows, 'binding_phase': binding, 'model_room_w': room,
             'proposed_ac_w': proposed, 'reason': reason, 'target_soc_pct': target,
-            'assumption': '22 A per phase, power factor 0.9, DC/AC factor 0.9; not breaker protection'}
+            'assumption': '22 A per phase, power factor 0.9, DC/AC factor 0.9; unchanged HA states are not device heartbeats; not breaker protection'}
 
 
 def record(store, states, at):
@@ -166,29 +187,31 @@ def summarize(store, day):
     session = unpack(session_row[0]) if session_row else None
     active = [r for r in rows if 180 <= (instant(r['at']).astimezone(TZ).hour*60+instant(r['at']).astimezone(TZ).minute) < 300]
     energy = {k:0.0 for k in ('house_kwh','ev_kwh_ac','battery_kwh_dc','grid_import_kwh_ac','proposed_kwh_ac')}
-    covered = 0.0
+    coverage = {k:0.0 for k in energy}
     for a,b in zip(active,active[1:]):
         dt=(instant(b['at'])-instant(a['at'])).total_seconds()
         if not 0 < dt <= 30:continue
-        pa=a['points'];sh=a['shadow'];required=('house_w','ev_w','battery_dc_w','grid_l1_w','grid_l2_w','grid_l3_w')
-        if not all(valid(pa,k) for k in required) or sh['proposed_ac_w'] is None:continue
-        covered += dt
-        values={'house_kwh':pa['house_w']['value'],'ev_kwh_ac':pa['ev_w']['value'],
-                'battery_kwh_dc':pa['battery_dc_w']['value'],
-                'grid_import_kwh_ac':max(0,-sum(pa[f'grid_l{i}_w']['value'] for i in (1,2,3))),
-                'proposed_kwh_ac':sh['proposed_ac_w']}
-        for key,value in values.items():energy[key]+=value*dt/3600000
-    soc=[(r['at'],r['points']['battery_soc']['value']) for r in active if valid(r['points'],'battery_soc')]
+        pa=a['points'];sh=a['shadow'];values={}
+        for key,point_key in (('house_kwh','house_w'),('ev_kwh_ac','ev_w'),('battery_kwh_dc','battery_dc_w')):
+            if valid(pa,point_key):values[key]=pa[point_key]['value']
+        if all(valid(pa,f'grid_l{i}_w') for i in (1,2,3)):
+            values['grid_import_kwh_ac']=max(0,-sum(pa[f'grid_l{i}_w']['value'] for i in (1,2,3)))
+        if sh['proposed_ac_w'] is not None:values['proposed_kwh_ac']=sh['proposed_ac_w']
+        for key,value in values.items():
+            energy[key]+=value*dt/3600000
+            coverage[key]+=dt
+    soc=[(r['at'],r['points']['battery_soc']['value']) for r in active if stable_state(r['points'],'battery_soc',3*3600)]
     phase_min={f'L{i}':min((r['shadow']['phase'][i-1]['model_room_w'] for r in active
                             if r['shadow']['phase'][i-1]['model_room_w'] is not None),default=None) for i in (1,2,3)}
     result={'schema_version':1,'day':day,'sample_count':len(rows),'active_sample_count':len(active),
-            'covered_minutes':round(covered/60,2),'charge_window_minutes':120,
+            'covered_minutes':round(coverage['house_kwh']/60,2),'coverage_minutes':{k:round(v/60,2) for k,v in coverage.items()},
+            'charge_window_minutes':120,
             'phase_min_room_w':phase_min,'battery_soc_first_last':(soc[0],soc[-1]) if soc else None,
             'frozen_session':session,'energy':{k:round(v,4) for k,v in energy.items()},
             'reason_counts':{k:sum(r['shadow']['reason']==k for r in active)
                              for k in {r['shadow']['reason'] for r in active}},
             'limitations':['Descriptive shadow, not observed savings or breaker protection.',
-                           'Integrator uses valid 15-second intervals only; gaps are excluded.',
+                           'Each energy series has its own valid 15-second coverage; gaps and unchanged power reports older than 90 seconds are excluded.',
                            'AC and DC energies are separate.']}
     with store.db:
         store.db.execute('INSERT OR REPLACE INTO night_summaries VALUES(?,?)',(day,pack(result)))
