@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "mode": "observe_only",
+  "interval_seconds": 60,
+  "storage_limit_bytes": 2147483648,
+  "minimum_free_bytes": 2147483648,
+  "timezone": "Europe/Prague",
+  "metadata": {
+    "main_breaker_a_per_phase": 25,
+    "phases": 3,
+    "export_limit_w": 10000,
+    "pv_installed_wp": 10200,
+    "pv_forecast_wp": 10120,
+    "battery_model": "2x SolaX Triple Power T58 V1",
+    "provenance": "user_confirmed"
+  },
+  "missing_approvals": {
+    "battery_min_reserve_soc": null,
+    "ev_usable_capacity_kwh": null,
+    "ev_departure_requirements": null,
+    "ev_low_pv_days": null,
+    "ev_low_pv_daily_threshold_kwh": null,
+    "ev_low_pv_target_soc": null,
+    "phase_current_mapping_verified": false,
+    "sell_price_formula_verified": false
+  },
+  "ev_low_pv_rule": {
+    "enabled": false,
+    "activation_soc": 50,
+    "days": null,
+    "daily_pv_threshold_kwh": null,
+    "target_soc": null,
+    "allowed_hours_local": [
+      3,
+      4
+    ]
+  },
+  "seasonal_profiles": {
+    "spring": {
+      "status": "not_calibrated",
+      "overrides": {},
+      "note_cs": "Jaro: proměnlivé vytápění, kapacita pro FVE."
+    },
+    "summer": {
+      "status": "not_calibrated",
+      "overrides": {},
+      "note_cs": "Léto: auto a voda; bez samoúčelného předehřevu domu."
+    },
+    "autumn": {
+      "status": "not_calibrated",
+      "overrides": {},
+      "note_cs": "Podzim: večerní rezerva a slabé solární dny."
+    },
+    "winter": {
+      "status": "not_calibrated",
+      "overrides": {},
+      "note_cs": "Zima: souběh odběrů a potřeba vytápění."
+    }
+  },
+  "runtime": "home_assistant_app_raspberrypi4",
+  "calibration": {
+    "enabled": true,
+    "mode": "candidate_only",
+    "min_complete_days": 14,
+    "history_days": 45,
+    "holdout_days": 4,
+    "half_life_days": 14,
+    "minimum_improvement_fraction": 0.03,
+    "max_correction_fraction": 0.15
+  },
+  "analytics_enabled": true,
+  "hardware_model": {
+    "battery": {
+      "model": "SolaX T-BAT H 11.5 (2× T58 V1)",
+      "nominal_kwh": 11.5,
+      "usable_kwh": 10.4,
+      "roundtrip_efficiency": 0.95,
+      "dod": 0.9,
+      "source": "SolaX T-BAT SYS-HV-5.8 technical data"
+    }
+  },
+  "update": {
+    "mode": "github_private_runtime",
+    "repository": "inenger/home-energy-coordinator",
+    "release_manifest_path": "release.json",
+    "auto_update": false,
+    "token_required_for_private_repo": true
+  }
+}

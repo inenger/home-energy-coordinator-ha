@@ -1,0 +1,22 @@
+type: entities
+title: Koordinátor na RPi4 — sběr a samokalibrace
+show_header_toggle: false
+entities:
+  - entity: sensor.energie_v3_sber_stav
+    name: Stav sběru
+  - entity: sensor.energie_v3_posledni_sber
+    name: Poslední úspěšné měření
+  - entity: sensor.energie_v3_pocet_vzorku
+    name: Počet vzorků
+  - entity: sensor.energie_v3_profil
+    name: Sezóna domácnosti
+  - type: section
+    label: Samokalibrace pouze nanečisto
+  - entity: sensor.energie_v3_samokalibrace
+    name: Stav učení
+  - entity: sensor.energie_v3_kalibrace_pocet_dni
+    name: Dostatečně pokryté dny
+  - entity: sensor.energie_v3_kalibrace_zlepseni
+    name: Zlepšení chyby modelu, nikoli úspora
+  - entity: sensor.energie_v3_pripravenost_porovnani
+    name: Připravenost porovnání
