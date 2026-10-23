@@ -3,6 +3,12 @@
 Aktualizace: 23. 10. 2026. Tento soubor je verzovaný pracovní kontext;
 nenahrazuje čerstvé ověření zařízení, GitHubu ani konfigurace.
 
+Dokončená publikace ověřena 23. 10. 2026: [PR #4](https://github.com/inenger/home-energy-coordinator-ha/pull/4)
+je sloučený do `main`, merge commit `841921123c9a1da41c9923c6338334bdf8a90f9a`.
+CI PR i [CI hlavní větve](https://github.com/inenger/home-energy-coordinator-ha/actions/runs/40006366562)
+prošly. V main ověřeny dokumentace, paměť a katalog shadow 0.6.2.
+Tato publikace neprovedla migraci ani restart běžících HA doplňků.
+
 ## Stav a zdroje
 
 | Oblast | Poslední ověřený stav | Pravidlo |
@@ -10,7 +16,7 @@ nenahrazuje čerstvé ověření zařízení, GitHubu ani konfigurace.
 | Původní doplněk | RPi: `6696af1a_energy_coordinator`, 0.5.3, běží | Při vývoji nového stínového doplňku jej neaktualizovat |
 | Stínový doplněk | RPi: `local_energy_priority_shadow`, 0.6.2, běží, observe_only | Počítá návrhy; fyzické povely se neposílají |
 | Repo | `inenger/home-energy-coordinator-ha`, veřejné | Kód a obecná dokumentace; soukromá evidence zůstává na RPi |
-| Integrace | `main`, dodávka přes [PR #4](https://github.com/inenger/home-energy-coordinator-ha/pull/4) | Samostatný kompletní balíček `priority_shadow/`, původní balíček beze změny; skutečný merge ověřit na GitHubu |
+| Integrace | `main`, [PR #4 sloučený](https://github.com/inenger/home-energy-coordinator-ha/pull/4) | Samostatný kompletní balíček `priority_shadow/`, původní balíček beze změny; dnešní nový head vždy ověřit |
 | Zdroj před publikací | Lokální integrační commit `e469e51` | Obsahoval i privátní auditní zprávy; celá tato historie se veřejně neposílá |
 | Veřejné zdroje | `priority_shadow/{energy,config,tests,dashboard}` | Autoritativní adresář dalšího vývoje stínového balíčku |
 
