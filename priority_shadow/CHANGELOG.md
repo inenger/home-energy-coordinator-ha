@@ -1,5 +1,6 @@
 # 0.6.2
 
+- Complete Czech architecture, algorithm, operations, data/AI, automation and delivery documentation; persistent project memory and contributor rules. Documentation changes do not alter runtime behavior.
 - Strict plan validation also covers orphan legacy sessions; active legacy models remain frozen.
 - EV calibration requires continuous observed inactive-to-active sessions.
 - PV-to-EV AC flow and common inverter AC limits are accounted per event.

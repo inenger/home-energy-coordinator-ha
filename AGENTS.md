@@ -10,3 +10,5 @@
 8. Rozliš lokální commit, ověřenou GitHub větev, CI a nasazení na RPi. Nikdy nevydávej jednu z těchto věcí za ostatní. Před změnou main zvaž automatické aktualizace HA a rozsah uživatelova zadání.
 9. Při opětovném auditu nepřepisuj starý nález ani jeho důkazy; přidej novou verzi výsledku a test pro nově objevený protipříklad.
 10. Záměrně zastavenou službu ani ukončení SIGTERM/143 samo o sobě neoznačuj za novou poruchu; nejprve ověř požadovaný režim a nový důkaz chyby.
+11. Pokud uživatel zadal dokončení v main, po kontrolách dokonči merge a ověř obsah main i CI. Draft PR sám není dokončená dodávka. Neměň tím automaticky zdroj běžící lokální HA instalace.
+12. Změna pouze dokumentace nemění runtime verzi. Udržuj dokumentaci podle skutečné implementace a jasně odděluj již implementované chování od budoucího návrhu.

@@ -10,7 +10,7 @@ nenahrazuje čerstvé ověření zařízení, GitHubu ani konfigurace.
 | Původní doplněk | RPi: `6696af1a_energy_coordinator`, 0.5.3, běží | Při vývoji nového stínového doplňku jej neaktualizovat |
 | Stínový doplněk | RPi: `local_energy_priority_shadow`, 0.6.2, běží, observe_only | Počítá návrhy; fyzické povely se neposílají |
 | Repo | `inenger/home-energy-coordinator-ha`, veřejné | Kód a obecná dokumentace; soukromá evidence zůstává na RPi |
-| Publikační větev | `publish/shadow-062-memory` | Samostatný kompletní balíček `priority_shadow/`, původní balíček beze změny |
+| Integrace | `main`, dodávka přes [PR #4](https://github.com/inenger/home-energy-coordinator-ha/pull/4) | Samostatný kompletní balíček `priority_shadow/`, původní balíček beze změny; skutečný merge ověřit na GitHubu |
 | Zdroj před publikací | Lokální integrační commit `e469e51` | Obsahoval i privátní auditní zprávy; celá tato historie se veřejně neposílá |
 | Veřejné zdroje | `priority_shadow/{energy,config,tests,dashboard}` | Autoritativní adresář dalšího vývoje stínového balíčku |
 
@@ -81,7 +81,10 @@ relaci a jiné návaznosti. Netvrdit absenci všech chyb jen z počtu testů.
   reakce starých souběžných automatizací a realizovanou validaci.
 - Dosavadní lokální commity a nasazení nebyly automaticky publikací na
   GitHubu. Od nynějška ověřit GitHub head/PR a CI zvlášť a uvést přesný stav.
-- Main ani HA zdroj doplňku se samotným uložením této větve nemění.
+- Uživatel 23. 10. výslovně zadal dokončit sloučení do `main` a kompletní
+  dokumentaci s pamětí. Nenechávat hotovou dodávku pouze v draft PR. Merge
+  ověřit přes stav PR, obsah `main` a CI; změna zdroje lokálního HA doplňku
+  není součástí tohoto sloučení.
 - Původní balíček má již na main starší `pyproject`/`__init__` metadata 0.5.2,
   zatímco runtime a katalog jsou 0.5.3. Tato větev do původního balíčku
   nezasahuje; nový stínový balíček má verze sjednocené a kontrolované CI.
@@ -96,3 +99,24 @@ relaci a jiné návaznosti. Netvrdit absenci všech chyb jen z počtu testů.
    runtime, čerstvý návrh a zachování starých dat.
 6. Aktualizovat paměť/changelog, publikovat povolený obsah do pracovní větve,
    ověřit GitHub/CI. Nezaměnit commit, PR, merge a skutečné nasazení.
+
+## Dokumentace a dokončování dodávky
+
+- Rozcestník je v kořenovém README; technická dokumentace v
+  `priority_shadow/docs/{ARCHITECTURE,ALGORITHM,OPERATIONS,DATA,AUTOMATIONS,DEVELOPMENT}.md`.
+- Paměť je soubor v repozitáři, nikoli příslib automatické paměti všech AI.
+  Každý další agent ji musí nejprve načíst spolu s pravidly.
+- Východ slunce je dnes zaznamenaný kontext. Výpočet spotřeby před využitelnou
+  FVE řeší časový profil výroby; nepřisuzovat sunrise samostatnou rozhodovací
+  podmínku, která v kódu není.
+- Tabulka ≥15 kWh → 30 % je reference, ne tvrdý limit scénářového návrhu.
+- `config/settings.example.json` je sdílený historický příklad, nikoli
+  provozní nastavení tohoto entrypointu. Aktivní volby určuje `config.yaml`.
+- `scripts/migrate_local_to_repo.sh` je starý postup pro původní doplněk
+  s pevnou verzí 0.5.0; není migrací stínového doplňku. Shadow při startu
+  automaticky neobnovuje `/data` z portable kopie v `/share`.
+- Poučení z této dodávky: „na GitHubu“ není „v main“. Při zadání dokončit
+  publikaci provést také autorizovaný merge a ověřit hlavní větev; uvést
+  přesný dosažený stav a zbývající provozní kroky.
+- Dokumentační doplnění nemění runtime 0.6.2; nevydávat kvůli němu novou
+  provozní verzi doplňku. Původní automatizace ani data se tím neupravují.

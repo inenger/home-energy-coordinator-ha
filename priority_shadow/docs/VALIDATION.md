@@ -20,3 +20,18 @@ Režim zůstává observe_only. Sledují se různé druhy důkazů odděleně:
 
 
 Historii opravených případů najdete v `FIX_HISTORY.md`; aktuální stav v kořenovém `MEMORY.md`.
+
+## Publikační ověření 0.6.2
+
+- Shadow: 285 syntetických testů; původní balíček: 158 testů.
+- Samostatný build context a verze ověřuje `scripts/validate_versions.py`.
+- Shell simulace ověřuje `/local_apps`, zachování starého `/addons` a start
+  původního 0.5.3. Neprovádí migraci shadow ani živý upgrade RPi.
+- Syntaxe JS ověřena přes `node --check`; skutečné vizuální ověření
+  v prohlížeči zůstává otevřené.
+- Kompletní dokumentace včetně HA záložky Dokumentace (`DOCS.md`),
+  provozního postupu a paměti je součástí PR #4.
+
+Zelené CI po merge dokládá veřejný zdroj, nikoli automatické nasazení
+tohoto zdroje do lokálního doplňku. Otevřené fyzické předpoklady a další
+práce jsou v [DEVELOPMENT.md](DEVELOPMENT.md).

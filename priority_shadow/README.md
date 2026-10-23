@@ -40,3 +40,13 @@ Testy používají syntetická data. Soukromá ověření na skutečné historii
 pouze na RPi. Výsledek modelu není naměřená úspora ani jističová ochrana.
 Před další prací číst [`../MEMORY.md`](../MEMORY.md),
 [`docs/FIX_HISTORY.md`](docs/FIX_HISTORY.md) a [`docs/VALIDATION.md`](docs/VALIDATION.md).
+
+## Podrobná příručka
+
+[Architektura](docs/ARCHITECTURE.md) · [Algoritmus](docs/ALGORITHM.md) ·
+[Provoz a obnova](docs/OPERATIONS.md) · [Data a AI](docs/DATA.md) ·
+[Automatizace 03–05](docs/AUTOMATIONS.md) · [Vývoj a vydání](docs/DEVELOPMENT.md).
+
+Dokumentace odpovídá runtime 0.6.2. `config/settings.example.json` obsahuje
+historické nastavení společných modulů; aktivní nastavení tohoto doplňku
+určují výhradně volby v `config.yaml` načítané z `/data/options.json`.
