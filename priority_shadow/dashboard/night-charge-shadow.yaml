@@ -1,0 +1,131 @@
+# Stínový model nočního nabíjení. Pouze senzory; žádná akce na SolaX ani EV.
+# Výkon pro limit 22 A/fázi počítá konzervativně s účiníkem 0,90.
+# Hrubá zátěž domu/fáze = výkon měniče - měřený výkon přívodu
+# (u měřiče SolaX je import záporný). Při přechodu z vybíjení baterie
+# na nabíjení tak rezerva počítá i s výpadkem její dosavadní dodávky.
+triggers:
+  - trigger: time_pattern
+    seconds: "/15"
+conditions:
+  - condition: template
+    value_template: >
+      {% set m = now().hour * 60 + now().minute %}
+      {{ (175 <= m < 305) or (now().minute % 5 == 0 and now().second < 15) }}
+sensor:
+  - name: "Noční stínová rezerva L1"
+    unique_id: nocni_stinova_rezerva_l1
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    availability: >
+      {% set ids = ['sensor.solax_measured_power_l1', 'sensor.solax_inverter_power_l1', 'sensor.solax_inverter_voltage_l1'] %}
+      {{ is_number(states(ids[0])) and is_number(states(ids[1])) and is_number(states(ids[2]))
+         and (now() - states[ids[0]].last_reported).total_seconds() < 90
+         and (now() - states[ids[1]].last_reported).total_seconds() < 90
+         and (now() - states[ids[2]].last_reported).total_seconds() < 90
+         and states(ids[2]) | float(0) > 180 }}
+    state: >
+      {% set v=states('sensor.solax_inverter_voltage_l1')|float(0) %}
+      {% set house=[0,states('sensor.solax_inverter_power_l1')|float(0)-states('sensor.solax_measured_power_l1')|float(0)]|max %}
+      {{ [0, 22*v*0.90-house]|max|round(0,'floor')|int }}
+  - name: "Noční stínová rezerva L2"
+    unique_id: nocni_stinova_rezerva_l2
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    availability: >
+      {% set ids = ['sensor.solax_measured_power_l2', 'sensor.solax_inverter_power_l2', 'sensor.solax_inverter_voltage_l2'] %}
+      {{ is_number(states(ids[0])) and is_number(states(ids[1])) and is_number(states(ids[2]))
+         and (now() - states[ids[0]].last_reported).total_seconds() < 90
+         and (now() - states[ids[1]].last_reported).total_seconds() < 90
+         and (now() - states[ids[2]].last_reported).total_seconds() < 90
+         and states(ids[2]) | float(0) > 180 }}
+    state: >
+      {% set v=states('sensor.solax_inverter_voltage_l2')|float(0) %}
+      {% set house=[0,states('sensor.solax_inverter_power_l2')|float(0)-states('sensor.solax_measured_power_l2')|float(0)]|max %}
+      {{ [0, 22*v*0.90-house]|max|round(0,'floor')|int }}
+  - name: "Noční stínová rezerva L3"
+    unique_id: nocni_stinova_rezerva_l3
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    availability: >
+      {% set ids = ['sensor.solax_measured_power_l3', 'sensor.solax_inverter_power_l3', 'sensor.solax_inverter_voltage_l3'] %}
+      {{ is_number(states(ids[0])) and is_number(states(ids[1])) and is_number(states(ids[2]))
+         and (now() - states[ids[0]].last_reported).total_seconds() < 90
+         and (now() - states[ids[1]].last_reported).total_seconds() < 90
+         and (now() - states[ids[2]].last_reported).total_seconds() < 90
+         and states(ids[2]) | float(0) > 180 }}
+    state: >
+      {% set v=states('sensor.solax_inverter_voltage_l3')|float(0) %}
+      {% set house=[0,states('sensor.solax_inverter_power_l3')|float(0)-states('sensor.solax_measured_power_l3')|float(0)]|max %}
+      {{ [0, 22*v*0.90-house]|max|round(0,'floor')|int }}
+  - name: "Noční stínová rezerva celkem"
+    unique_id: nocni_stinova_rezerva_celkem
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    availability: >
+      {{ is_number(states('sensor.nocni_stinova_rezerva_l1'))
+         and is_number(states('sensor.nocni_stinova_rezerva_l2'))
+         and is_number(states('sensor.nocni_stinova_rezerva_l3')) }}
+    state: >
+      {% set x=[states('sensor.nocni_stinova_rezerva_l1')|float(0),
+                states('sensor.nocni_stinova_rezerva_l2')|float(0),
+                states('sensor.nocni_stinova_rezerva_l3')|float(0)] %}
+      {{ (3 * (x|min))|round(0,'floor')|int }}
+  - name: "Noční stínový cíl baterie"
+    unique_id: nocni_stinovy_cil_baterie
+    unit_of_measurement: "%"
+    state_class: measurement
+    availability: >
+      {{ is_number(states('sensor.solcast_pv_forecast_forecast_today'
+         if 3 <= now().hour < 5 else 'sensor.solcast_pv_forecast_forecast_tomorrow')) }}
+    state: >
+      {% set f=states('sensor.solcast_pv_forecast_forecast_today'
+         if 3 <= now().hour < 5 else 'sensor.solcast_pv_forecast_forecast_tomorrow')|float(99) %}
+      {{ 90 if f < 5 else 80 if f < 10 else 70 if f < 15 else 30 }}
+  - name: "Noční stínový návrh výkonu"
+    unique_id: nocni_stinovy_navrh_vykonu
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    availability: >
+      {{ is_number(states('sensor.nocni_stinova_rezerva_celkem'))
+         and is_number(states('sensor.nocni_stinovy_cil_baterie'))
+         and is_number(states('sensor.solax_battery_capacity'))
+         and is_number(states('sensor.solax_battery_voltage_charge'))
+         and is_number(states('number.solax_battery_charge_max_current')) }}
+    state: >
+      {% set target=states('sensor.nocni_stinovy_cil_baterie')|float(0) %}
+      {% set soc=states('sensor.solax_battery_capacity')|float(100) %}
+      {% set reserve=states('sensor.nocni_stinova_rezerva_celkem')|float(0) %}
+      {% set cap=states('number.solax_battery_charge_max_current')|float(0)
+                 * states('sensor.solax_battery_voltage_charge')|float(0) / 0.90 %}
+      {% if 3 <= now().hour < 5 and target > 0 and soc < target %}
+        {{ (([0,[reserve,cap]|min]|max) / 100)|round(0,'floor')|int * 100 }}
+      {% else %}0{% endif %}
+  - name: "Noční stínový návrh proudu baterie"
+    unique_id: nocni_stinovy_navrh_proudu_baterie
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    availability: >
+      {{ is_number(states('sensor.nocni_stinovy_navrh_vykonu'))
+         and is_number(states('sensor.solax_battery_voltage_charge'))
+         and states('sensor.solax_battery_voltage_charge')|float(0) > 100 }}
+    state: >
+      {{ (states('sensor.nocni_stinovy_navrh_vykonu')|float(0)*0.90 /
+          states('sensor.solax_battery_voltage_charge')|float(1))|round(1) }}
+  - name: "Noční stínový stav"
+    unique_id: nocni_stinovy_stav
+    state: >
+      {% if 3 > now().hour or now().hour >= 5 %}Mimo okno
+      {% elif not is_number(states('sensor.nocni_stinova_rezerva_celkem')) %}Chybí měření
+      {% elif not is_number(states('sensor.nocni_stinovy_cil_baterie')) %}Chybí předpověď
+      {% elif not is_number(states('sensor.solax_battery_capacity')) %}Chybí stav baterie
+      {% elif states('sensor.nocni_stinovy_cil_baterie')|float(0) == 0 %}Bez dobíjení dle předpovědi
+      {% elif states('sensor.solax_battery_capacity')|float(100) >= states('sensor.nocni_stinovy_cil_baterie')|float(0) %}Cíl dosažen
+      {% elif not is_number(states('sensor.nocni_stinovy_navrh_vykonu')) %}Chybí nastavení baterie
+      {% elif states('sensor.nocni_stinovy_navrh_vykonu')|float(0) == 0 %}Není rezerva
+      {% else %}Nanečisto: návrh nabíjení{% endif %}

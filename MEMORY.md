@@ -1,0 +1,98 @@
+# Projektová paměť · Home Assistant / energie
+
+Aktualizace: 23. 10. 2026. Tento soubor je verzovaný pracovní kontext;
+nenahrazuje čerstvé ověření zařízení, GitHubu ani konfigurace.
+
+## Stav a zdroje
+
+| Oblast | Poslední ověřený stav | Pravidlo |
+|---|---|---|
+| Původní doplněk | RPi: `6696af1a_energy_coordinator`, 0.5.3, běží | Při vývoji nového stínového doplňku jej neaktualizovat |
+| Stínový doplněk | RPi: `local_energy_priority_shadow`, 0.6.2, běží, observe_only | Počítá návrhy; fyzické povely se neposílají |
+| Repo | `inenger/home-energy-coordinator-ha`, veřejné | Kód a obecná dokumentace; soukromá evidence zůstává na RPi |
+| Publikační větev | `publish/shadow-062-memory` | Samostatný kompletní balíček `priority_shadow/`, původní balíček beze změny |
+| Zdroj před publikací | Lokální integrační commit `e469e51` | Obsahoval i privátní auditní zprávy; celá tato historie se veřejně neposílá |
+| Veřejné zdroje | `priority_shadow/{energy,config,tests,dashboard}` | Autoritativní adresář dalšího vývoje stínového balíčku |
+
+Starší integrační větve měly nový kód ve sdíleném `energy_coordinator/energy`;
+na RPi se balíček sestavoval jeho kopírováním. Před další úpravou vždy ověř
+větev a skutečný build context. Pouhé tři soubory v `priority_shadow/` nestačily
+pro instalaci z GitHubu. Nový veřejný balíček obsahuje potřebné zdroje přímo.
+Jedinou úpravou Python modulu při zabalení je sjednocení `energy.__version__`
+s existujícím `core.VERSION`; funkční moduly odpovídají ověřené 0.6.2.
+
+Publikační větev sama nepřepíná RPi na repozitářový doplněk. Repozitářová
+instalace má jiný Supervisor slug a oddělené `/data`. Před migrací jsou nutné
+záloha, kontrolovaný přenos evidence a ověření, že neběží dva publishery
+stejných monitorovacích entit. Existující lokální doplněk se tímto PR nemění.
+
+## Cíl a neměnné podmínky
+
+- Dobít SolaX během levného okna 03:00–05:00 Europe/Prague na účelný cíl;
+  zachovat prostor pro pozdější FVE. Celodenní soběstačnost není požadavek.
+- Zohlednit SOC, načasování využitelné výroby, hodinovou prognózu FVE,
+  sezónní spotřebu domu bez EV, potřebu auta a známý nákupní tarif.
+- Tarif byl uživatelem potvrzen. Nevytvářet paralelní odhad tarifu ani měnit
+  jeho kalendář podle počasí.
+- Srovnávací tabulka od verze 0.5.9: pod 5/10/15 kWh cíle 90/80/70 %;
+  od 15 kWh včetně 30 %. Primární návrh nové verze je scénářový optimalizátor.
+- Referenčních 15 % není schválená provozní rezerva. Účinnost AC→DC,
+  BMS, topologie měniče a mapování fází nejsou automaticky ověřené.
+- `live_ready=false`, žádný fyzický akční adaptér. Syntetický test není
+  naměřená úspora a skutečný SOC není realizovaný výsledek neprovedeného plánu.
+
+## Poučení z oprav
+
+1. Předpověď musí být zachycená nejpozději při rozhodnutí. Při holdoutu
+   nepoužívat skutečnou budoucí teplotu místo tehdy dostupné prognózy.
+2. Plánovač a replay sdílejí okamžitou alokaci. Auto má nulový nebo přípustný
+   minimální proud; krátká relace musí mít skutečný časový úsek.
+3. Síť a PV sdílejí DC nabíjecí port. PV a vybíjení sdílejí potvrzený AC
+   limit měniče. Nabíjení a vybíjení mají nezávislé registry.
+4. Fázový rozpočet není ekonomická AC bilance. PV pro auto se musí odečíst
+   od skutečného nákupu a nesmí se současně vykázat jako stejný přetok.
+5. Ověřovat poslední návrh, TTL, hash i úplný horizont. Nový neplatný návrh
+   odvolává starý. Osiřelá legacy relace není již rozběhnutý legacy model.
+6. Po výpadku nepřipojit znovu předchozí vzorek do nové EV relace. Pro
+   kalibraci potřebujeme souvisle pozorovaný začátek a konec.
+7. Kvalita domu/EV, PV čítače a znalosti omezení jsou samostatné masky.
+   Neznámé omezení není False; neúplné podklady nejsou nula.
+8. PV předpověď i skutečnost integrovat na stejných pozorovaných intervalech.
+   Replay a review potřebují stejné brány platnosti návrhu.
+9. DST testovat přes celou cestu review, nikoli pouze časovou pomocnou funkci.
+   Pět reálných minut před 03:00 počítat v UTC.
+10. Hash plného rozhodnutí vytvořit až po metadatech, bez pole samotného hashe.
+    Graf SOC má výchozí bod a skutečné koncové časy úseků.
+
+Konkrétní regresní mapování: `priority_shadow/docs/FIX_HISTORY.md`.
+První závěr „vše opraveno“ byl příliš široký; další audit odhalil obnovenou
+relaci a jiné návaznosti. Netvrdit absenci všech chyb jen z počtu testů.
+
+## Poslední ověření a otevřené věci
+
+- 0.6.2 na RPi: 285 testů, sedm opakovaných nezávislých reprodukcí opraveno,
+  5 000 kontrol bilance baterie; po nasazení zdravé sběry, čerstvý návrh,
+  ověřené hashe a zachovaná historie. Jde o stav ověřený 23. 10., ne trvalý slib.
+- Karta: HTTP/hash a renderer s náhradním DOM ověřeny. Vizuální kontrola
+  skutečným prohlížečem dosud není doložená.
+- Úplná společná ekonomická validace EV a baterie v reálných nocích stále
+  chybí; historický replay bez EV ji nenahrazuje.
+- Před ostrým řízením vyřešit potvrzené rezervy, fyzické limity, fáze,
+  reakce starých souběžných automatizací a realizovanou validaci.
+- Dosavadní lokální commity a nasazení nebyly automaticky publikací na
+  GitHubu. Od nynějška ověřit GitHub head/PR a CI zvlášť a uvést přesný stav.
+- Main ani HA zdroj doplňku se samotným uložením této větve nemění.
+- Původní balíček má již na main starší `pyproject`/`__init__` metadata 0.5.2,
+  zatímco runtime a katalog jsou 0.5.3. Tato větev do původního balíčku
+  nezasahuje; nový stínový balíček má verze sjednocené a kontrolované CI.
+
+## Postup další práce
+
+1. Přečíst paměť a pravidla; zjistit branch, verze a poslední GitHub/HA stav.
+2. Reprodukovat problém před opravou a zachovat původní důkaz.
+3. Opravit relevantní celek a přidat regresní protipříklad.
+4. Spustit přiměřené syntetické kontroly; skutečná data zpracovat jen na RPi.
+5. Při schváleném nasazení ověřit zálohu, aktuální konfiguraci, source hash,
+   runtime, čerstvý návrh a zachování starých dat.
+6. Aktualizovat paměť/changelog, publikovat povolený obsah do pracovní větve,
+   ověřit GitHub/CI. Nezaměnit commit, PR, merge a skutečné nasazení.

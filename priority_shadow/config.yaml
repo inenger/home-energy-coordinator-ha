@@ -1,0 +1,29 @@
+name: "Noční nabíjení · stínové priority"
+version: "0.6.2"
+slug: energy_priority_shadow
+description: "Porovnává priority elektromobil / baterie, fáze a noční statistiky. Pouze nanečisto, bez ovládání zařízení."
+arch:
+  - aarch64
+startup: application
+boot: auto
+stage: experimental
+backup: cold
+init: true
+homeassistant_api: true
+hassio_api: false
+ingress: false
+map:
+  - type: share
+    read_only: false
+options:
+  mode: observe_only
+  planner_enabled: true
+  planner_approved_reserve_soc: ""
+  planner_inverter_ac_limit_kw: ""
+  storage_limit_mb: 2048
+schema:
+  mode: list(observe_only)
+  planner_enabled: bool?
+  planner_approved_reserve_soc: str?
+  planner_inverter_ac_limit_kw: str?
+  storage_limit_mb: int(512,8192)?

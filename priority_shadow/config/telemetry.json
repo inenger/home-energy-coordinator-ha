@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "include": [],
+  "exclude": ["switch.nibe_relay_relay"],
+  "mappings": {
+    "sensor.shelly_h_t_kuchyne_temperature": {"role": "room", "zone": "Kuchyně", "verified": true},
+    "sensor.shelly_h_t_kuchyne_humidity": {"role": "room", "zone": "Kuchyně", "verified": true},
+    "sensor.sbht_003c_af38_temperature": {"role": "room_candidate", "zone": "Koupelna horní (HA oblast)", "verified": false},
+    "sensor.7c_c6_b6_57_4e_f5_4ef5_temperature": {"role": "room_candidate", "zone": "Koupelna horní (HA oblast)", "verified": false},
+    "sensor.current_outdoor_temperature_bt1_30002": {"role": "outdoor_reference", "zone": "NIBE BT1", "verified": false},
+    "sensor.hot_water_top_bt7_30009": {"role": "hot_water", "zone": "Bojler", "verified": true},
+    "sensor.hot_water_charging_bt6_30010": {"role": "hot_water", "zone": "Bojler", "verified": true},
+    "sensor.external_supply_line_bt25_30040": {"role": "heating_water", "zone": "Výstup do podlahy", "verified": true},
+    "sensor.solax_battery_temperature": {"role": "equipment_temperature", "zone": "Baterie", "verified": true},
+    "sensor.solax_inverter_temperature": {"role": "equipment_temperature", "zone": "Měnič", "verified": true}
+  },
+  "appliances": {}
+}
