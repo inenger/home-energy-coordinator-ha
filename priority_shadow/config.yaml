@@ -1,5 +1,5 @@
 name: "Noční nabíjení · stínové priority"
-version: "0.6.2"
+version: "0.6.3"
 slug: energy_priority_shadow
 description: "Porovnává priority elektromobil / baterie, fáze a noční statistiky. Pouze nanečisto, bez ovládání zařízení."
 arch:

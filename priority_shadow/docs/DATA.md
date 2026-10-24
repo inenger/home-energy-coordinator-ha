@@ -88,3 +88,18 @@ AI zlepšení přijímat jako změnu kódu s reprodukcí, odděleným holdoutem
 a regresí. Runtime neprovádí libovolné AI návrhy a sám nepřepíná politiku.
 `plan_executed=false`, `measured_savings_czk=null` jsou záměrné: skutečný
 SOC původních automatizací není chybou plánu, který se fyzicky neprovedl.
+
+## Evidence od 0.6.3
+
+Také odmítnuté plány uchovávají `input_snapshot`, `forecast_versions`,
+zdroj historie a po dostupnosti modelu `calibration_context`, mapu baterie
+s předpoklady a vypočtené `forecast_periods`. Ty obsahují predikce spotřeby,
+FVE a ceny používané v simulaci. Výjimka před získáním vstupů je ukládá jako
+nedostupné, nevymýšlí je. Starší chybějící snímky se zpětně nedoplňují.
+
+`scripts/replay_partial_night.py` provádí pouze rekonstrukci na RPi přes
+SQLite `mode=ro`. Pro staré odmítnuté plány výslovně uvádí přenesená pole,
+čas základního snímku a shodu domácího profilu s původním manifestem.
+Odděluje as-of scénářový plán od následného replay na skutečně pozorovaných
+výkonech. Výstupy ukládá do nového privátního adresáře; není to tehdy vydané
+rozhodnutí a nelze z něj vyvozovat naměřené úspory.

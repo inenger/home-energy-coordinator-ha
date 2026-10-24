@@ -9,7 +9,7 @@ from .power_allocation import allocate_power
 
 HELPER='input_select.nocni_stinova_priorita'
 LABELS={'Elektromobil':'ev','Baterie SolaX':'battery'}
-POLICY='night-priority-v8-strict-session-recovery'
+POLICY='night-priority-v9-partial-dual-targets'
 ASSUMPTIONS={'phase_limit_a':22,'breaker_a':25,'power_factor':.9,
              'charge_efficiency':.9,'battery_usable_kwh':10.4,
              'ev_min_phase_a':6,'fast_report_limit_seconds':90,
@@ -17,7 +17,7 @@ ASSUMPTIONS={'phase_limit_a':22,'breaker_a':25,'power_factor':.9,
              'ev_request_source':'measured_wallbox_power_no_future_demand',
              'phase_balance_tolerance_w':500,
              'grid_model':'house_without_ev_plus_allocated_ev_and_battery_no_generation_credit'}
-EXTRA={'forecast_tomorrow':'sensor.solcast_pv_forecast_forecast_tomorrow',
+EXTRA={'inverter_run_mode':'sensor.solax_run_mode','forecast_tomorrow':'sensor.solcast_pv_forecast_forecast_tomorrow',
        'priority':HELPER,'ev_energy_total':'sensor.solax_api_charge_added_total',
        'battery_out_today':'sensor.solax_battery_output_energy_today',
        'battery_in_today':'sensor.solax_battery_input_energy_today'}
@@ -115,6 +115,9 @@ def effective_session(store,day,at,points,require_soc_plan=False):
                 'target_soc_pct':proposal['target_soc_pct'],'soc_plan_decision_hash':proposal['decision_hash'],
                 'soc_plan_issued_at':proposal['issued_at'],'battery_energy_model':new_model,
                 'soc_plan_status':proposal['status'],'soc_plan_valid':True,
+                'ev_deficit_ac_kwh':proposal.get('ev_deficit_ac_kwh'),
+                'demand_fully_met':proposal.get('demand_fully_met'),
+                'priority_alternatives':proposal.get('priority_alternatives'),
                 'reserve_soc_approved':proposal['assumptions'].get('reserve_soc_approved')}
     saved=_get(store,'priority_sessions',day)
     if saved:return planned(saved) if require_soc_plan or saved.get('planning_source') else saved
@@ -140,6 +143,11 @@ def allocate(points,at,session,model_soc,priority):
     active=180<=local.hour*60+local.minute<300
     forecast=session.get('forecast_kwh') if session else None
     target=session.get('target_soc_pct') if session else None
+    alternative=(session.get('priority_alternatives') or {}).get(priority) if session else None
+    alternative_valid=True
+    if alternative is not None:
+        target=alternative.get('target_soc_pct')
+        alternative_valid=alternative.get('status') in ('conditional_shadow_plan','partial_shadow_plan') and alternative.get('horizon_complete') is True
     energy_model=session.get('battery_energy_model') if session else None
     forbid=forecast is None or forecast<30
     rows=[];bad=[]
@@ -177,7 +185,7 @@ def allocate(points,at,session,model_soc,priority):
          'missing_inputs':sorted(set(bad)),'ev_ready_by_status':'not_estimated_without_calibrated_energy_model'}
     if energy_model:out['battery_energy_model']=energy_model
     reason='outside_window' if not active else 'missing_frozen_forecast' if forecast is None else None
-    if active and session and session.get('soc_plan_valid') is False:reason='invalid_soc_plan'
+    if active and session and (session.get('soc_plan_valid') is False or not alternative_valid):reason='invalid_soc_plan'
     if reason is None and (bad or any(r['house_w'] is None for r in rows)):reason='invalid_phase_input'
     if reason is None and any(r['house_balance_w'] < -ASSUMPTIONS['phase_balance_tolerance_w'] for r in rows):reason='inconsistent_house_balance'
     if reason is None and (not numeric(points,'ev_w') or any(not numeric(points,f'ev_l{i}_w') for i in (1,2,3))):reason='invalid_ev_input'
@@ -275,7 +283,10 @@ def comparison_status(models):
 
 
 def comparison_context(session):
-    if not session or session.get('target_soc_pct') is None:return 'missing_forecast'
+    if not session:return 'missing_forecast'
+    if session.get('target_soc_pct') is None:
+        return 'missing_forecast' if session.get('forecast_kwh') is None else 'invalid_soc_plan'
+    if session.get('soc_plan_status')=='partial_shadow_plan':return 'partial_ev_service'
     return 'battery_no_request' if session['target_soc_pct']==0 else 'battery_target_present'
 
 
@@ -362,7 +373,7 @@ def observe(store,states,at,require_soc_plan=False):
             'active':active,'collecting_window':night.window(at),'selected':variants['selected'],
             'alternatives':{k:v for k,v in variants.items() if k!='selected'},
             'input_quality':input_quality(points,at),'actual':{k:value(points,k) for k in ('house_w','ev_w','ev_soc','ev_target_soc','ev_connected',
-                      'battery_soc','battery_dc_w','battery_v','battery_a','battery_limit_a','inverter_mode','manual_mode',
+                      'battery_soc','battery_dc_w','battery_v','battery_a','battery_limit_a','inverter_mode','inverter_run_mode','manual_mode',
                       'main_breaker_limit_a','battery_out_today','battery_in_today')},
             'next_forecast_kwh':next_f,'next_target_soc_pct':night.target_for(next_f) if next_f is not None else None,
             'session':session,'progress':row,'history':history,'assumptions':run.get('assumptions',ASSUMPTIONS) if run else ASSUMPTIONS,

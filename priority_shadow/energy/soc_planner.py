@@ -1,6 +1,7 @@
 """Pure 03-05 SOC optimizer. Scenario regret, conserved energy, no actuator API."""
 from datetime import datetime, time, timedelta, timezone
 import math
+from copy import deepcopy
 from .core import TZ, instant, digest
 from .pricing import valid
 from .soc_energy import Battery
@@ -8,7 +9,8 @@ from .soc_calibration import correction, season
 from .power_allocation import allocate_power
 from .soc_evidence import seal
 
-POLICY='soc-energy-scenarios-v3-conserved-ac-flows'
+POLICY='soc-energy-scenarios-v4-partial-demand'
+PLAN_STATUSES=('conditional_shadow_plan','partial_shadow_plan')
 
 
 def window(now):
@@ -127,6 +129,7 @@ def simulate(rows,inputs,model,target,scenario,night_start,night_end,terminal_pr
     eta_grid=model.get('grid_efficiency_range',[.85,.95])[0 if stress else 1] if stress or bright else model.get('grid_efficiency',.9)
     eta_ac=model.get('ac_discharge_efficiency',.977);eta_solar=model.get('solar_ac_dc_efficiency',.966)
     soc=inputs['soc'];reserve=inputs['reserve_soc'];ev_remaining=inputs['ev_need_ac_kwh']
+    ev_import_cost=0.
     import_kwh=cost=grid_charge=solar_to_battery=solar_to_ev=discharged=spill=stored_loss=0.
     profile=[];soc03=soc05=None;first_cover=None;cover_start=None
     charge_limit=inputs['battery_charge_max_dc_kw'];discharge_limit=inputs['battery_discharge_max_dc_kw']
@@ -190,7 +193,7 @@ def simulate(rows,inputs,model,target,scenario,night_start,night_end,terminal_pr
             solar_to_battery+=dc*eta_solar;surplus-=dc*eta_solar;stored_loss+=loss
             pv_charge_ac=dc*eta_solar
         bought=max(0.,deficit)+charge_ac+ev_grid_ac
-        import_kwh+=bought;cost+=bought*row['price'];spill+=max(0.,surplus)
+        import_kwh+=bought;cost+=bought*row['price'];ev_import_cost+=ev_grid_ac*row['price'];spill+=max(0.,surplus)
         if row['end']>=night_end.timestamp() and soc05 is None:soc05=soc
         cover=t>=night_end.timestamp() and pv>=house
         if cover and cover_start is None:cover_start=t
@@ -209,9 +212,11 @@ def simulate(rows,inputs,model,target,scenario,night_start,night_end,terminal_pr
     terminal=max(0.,battery.available(soc)-battery.available(reserve))*eta_ac*terminal_price
     # Same terminal valuation and fulfilled EV need for every candidate within
     # each scenario. This score is not a measured bill or a savings claim.
-    feasible=ev_remaining<=.05 and soc05 is not None and soc05>=reserve-.5
-    if target and (soc05 is None or soc05<target-.5):feasible=False
-    return {'scenario':scenario,'feasible':feasible,'import_cost_czk':cost,'import_ac_kwh':import_kwh,
+    battery_feasible=soc05 is not None and soc05>=reserve-.5
+    if target and (soc05 is None or soc05<target-.5):battery_feasible=False
+    feasible=ev_remaining<=.05 and battery_feasible
+    return {'scenario':scenario,'feasible':feasible,'battery_feasible':battery_feasible,
+            'ev_import_cost_czk':ev_import_cost,'house_battery_adjusted_cost_czk':cost-terminal-ev_import_cost,'import_cost_czk':cost,'import_ac_kwh':import_kwh,
             'terminal_inventory_credit_czk':terminal,'inventory_adjusted_cost_czk':cost-terminal,
             'grid_charge_ac_kwh':grid_charge,'pv_to_battery_ac_equivalent_kwh':solar_to_battery,
             'pv_to_ev_ac_kwh':solar_to_ev,
@@ -224,10 +229,15 @@ def simulate(rows,inputs,model,target,scenario,night_start,night_end,terminal_pr
 
 def _plan(now,inputs,history,pv_models,household,versions):
     day,start,end,horizon=window(now)
-    result={'schema_version':2,'policy':POLICY,'issued_at':now.isoformat(),'day':day,
+    result={'schema_version':3,'policy':POLICY,'issued_at':now.isoformat(),'day':day,
             'mode':'observe_only','device_actions':0,'live_ready':False,'target_soc_pct':None,
             'window_start':start.isoformat(),'window_end':end.isoformat(),'status':'waiting_for_inputs',
-            'warnings':[],'assumptions':{'export_revenue_not_valued':True,'no_measured_savings':True,
+            'warnings':[],'input_snapshot':deepcopy(inputs),'history_source':deepcopy(history.get('source')),
+            'forecast_versions':deepcopy(versions),
+            'ev_requirement':{'desired_ac_kwh':inputs.get('ev_need_ac_kwh'),
+                'minimum_ac_kwh':None,'departure_at':None,
+                'semantics':'desired_target_not_confirmed_departure_requirement'},
+            'assumptions':{'export_revenue_not_valued':True,'no_measured_savings':True,
             'house_includes_heat_and_immersion':True,'reserve_soc_approved':inputs.get('reserve_soc_approved'),
             'reserve_reference_soc':inputs.get('reserve_soc'),'phase_mapping_verified':False,
             'ev_presence_assumed_until_05':True,'battery_held_during_cheap_window':True}}
@@ -243,9 +253,12 @@ def _plan(now,inputs,history,pv_models,household,versions):
         result['missing_inputs']=['soc_range'];return result
     if not history.get('battery_model'):
         result['missing_inputs']=['battery_calibration'];return result
+    result['battery_energy_model']=Battery(history['battery_model']).snapshot()
+    result['calibration_context']={'pv_models':deepcopy(pv_models),'house_source_hash':getattr(household,'source_hash',None),'house_last_day':household.last_day}
     solar=solar_periods(versions.get('solar',[]),now);tariff=prices(versions.get('tariff',[]),now)
     rows,warnings,stop=slots(now,inputs,household,pv_models,solar,tariff,horizon)
     result['warnings']=warnings
+    result['forecast_periods']=deepcopy(rows)
     if not rows or rows[-1]['end']<end.timestamp()+12*3600:
         result['missing_inputs']=[stop or 'insufficient_horizon'];return result
     result['horizon_end']=datetime.fromtimestamp(rows[-1]['end'],timezone.utc).isoformat()
@@ -263,24 +276,36 @@ def _plan(now,inputs,history,pv_models,household,versions):
                            'feasible_all_scenarios':all(v['feasible'] for v in variants.values())})
     feasible=[r for r in candidates if r['feasible_all_scenarios']]
     compact=lambda r:{**r,'scenarios':{s:{k:v for k,v in x.items() if k!='timeline'} for s,x in r['scenarios'].items()}}
+    partial=not feasible
+    if partial:
+        feasible=[r for r in candidates if all(v['battery_feasible'] for v in r['scenarios'].values())]
+        if feasible and inputs['priority']=='ev':
+            deficit=lambda r:max(v['unserved_ev_ac_kwh'] for v in r['scenarios'].values())
+            least=min(deficit(r) for r in feasible)
+            feasible=[r for r in feasible if deficit(r)<=least+.05]
     if not feasible:
         result.update(status='no_comparable_feasible_plan',candidates=[compact(r) for r in candidates],
                       missing_inputs=['combined_battery_and_ev_needs_not_feasible_in_window']);return result
-    best={s:min(r['scenarios'][s]['inventory_adjusted_cost_czk'] for r in feasible) for s in scenarios}
+    score='house_battery_adjusted_cost_czk' if partial else 'inventory_adjusted_cost_czk'
+    best={s:min(r['scenarios'][s][score] for r in feasible) for s in scenarios}
     for r in feasible:
-        r['max_regret_czk']=max(r['scenarios'][s]['inventory_adjusted_cost_czk']-best[s] for s in scenarios)
+        r['max_regret_czk']=max(r['scenarios'][s][score]-best[s] for s in scenarios)
     winner=min(feasible,key=lambda r:(round(r['max_regret_czk'],6),
+               round(max(v['unserved_ev_ac_kwh'] for v in r['scenarios'].values()),6),
                round(r['scenarios']['central']['grid_charge_ac_kwh'],6),r['target_soc_pct']))
     central=winner['scenarios']['central'];model_snapshot=Battery(model).snapshot()
     reference_forecast=sum(r['raw_pv_kw']*r['hours'] for r in rows
                            if datetime.fromtimestamp(r['start'],TZ).date().isoformat()==day)
     corrections={r['solar_model']:r['solar_factor'] for r in rows if r['solar_model']}
-    result.update(status='conditional_shadow_plan',target_soc_pct=winner['target_soc_pct'],
+    result.update(status='partial_shadow_plan' if partial else 'conditional_shadow_plan',
+                  demand_fully_met=not partial,economic_comparison='unequal_ev_service_no_savings_claim' if partial else 'equal_ev_service',
+                  allocation_policy=('ev_deficit_then_battery_regret' if inputs['priority']=='ev' else 'battery_regret_then_ev_deficit') if partial else 'full_demand_minimax',
+                  ev_deficit_ac_kwh={s:v['unserved_ev_ac_kwh'] for s,v in winner['scenarios'].items()},target_soc_pct=winner['target_soc_pct'],
                   night_plan_eligible=result['horizon_complete'],
                   decision_reason='skip_grid_charge' if winner['target_soc_pct']==0 else 'minimum_scenario_regret',
                   reference_forecast_day_kwh=reference_forecast,
                   objective='grid_import_cost_with_common_terminal_inventory_value',
-                  selection_method='minimax_regret_no_assumed_scenario_probabilities',
+                  selection_method='partial_service_lexicographic' if partial else 'minimax_regret_no_assumed_scenario_probabilities',
                   terminal_price_czk_kwh=terminal_price,season=season(start),
                   current_soc=inputs['soc'],soc_at_03_estimate=central['soc_at_03'],soc_at_05_estimate=central['soc_at_05'],
                   night_charge_ac_kwh=central['grid_charge_ac_kwh'],first_sustained_pv_cover_at=central['first_sustained_pv_cover_at'],
@@ -288,7 +313,7 @@ def _plan(now,inputs,history,pv_models,household,versions):
                   corrections=corrections,selected=compact(winner),
                   candidates=[compact(r) for r in candidates],timeline=central['timeline'],
                   forecast_periods=[dict(r) for r in rows],
-                  input_snapshot=inputs,history_source=history.get('source'),
+                  input_snapshot=deepcopy(inputs),history_source=deepcopy(history.get('source')),
                   model_hash=digest({'battery':model,'pv':pv_models,'house_data_hash':getattr(household,'source_hash',None),'house_last_day':household.last_day}))
     if inputs.get('reserve_soc_approved') is None:result['warnings'].append('reserve_15pct_is_modelling_reference_not_approved_control_policy')
     result['warnings']+=['grid_charge_conversion_not_independently_calibrated','future_phase_loads_not_verified',
@@ -298,4 +323,11 @@ def _plan(now,inputs,history,pv_models,household,versions):
 
 
 def plan(now,inputs,history,pv_models,household,versions):
-    return seal(_plan(now,inputs,history,pv_models,household,versions))
+    result=_plan(now,inputs,history,pv_models,household,versions)
+    if result.get('status') in PLAN_STATUSES:
+        other='battery' if inputs['priority']=='ev' else 'ev'
+        alternate=_plan(now,{**inputs,'priority':other},history,pv_models,household,versions)
+        fields=('status','target_soc_pct','ev_deficit_ac_kwh','demand_fully_met','economic_comparison','allocation_policy','selected','horizon_complete')
+        result['priority_alternatives']={inputs['priority']:{k:deepcopy(result.get(k)) for k in fields},
+                                       other:{k:deepcopy(alternate.get(k)) for k in fields}}
+    return seal(result)

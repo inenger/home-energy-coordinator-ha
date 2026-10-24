@@ -1,3 +1,11 @@
+# 0.6.3
+
+- Explicit partial-service planning when the desired EV target cannot fit in 03–05; no invented departure or minimum requirement.
+- EV priority minimizes worst remaining EV demand before battery regret. Battery priority minimizes household/battery regret before remaining EV demand; EV import costs are separated. Partial variants never claim equal service or measured savings.
+- Independent targets for both priority replays, retained deficits and full input/forecast/calibration provenance on rejected plans.
+- Distinct operating-state and charger-mode labels; invalid plan no longer misreported as missing forecast. Unknown model outcomes are published as unknown, preserving historical records.
+- Read-only RPi reconstruction tool, Python regressions and an executable card rendering check.
+
 # 0.6.2
 
 - Complete Czech architecture, algorithm, operations, data/AI, automation and delivery documentation; persistent project memory and contributor rules. Documentation changes do not alter runtime behavior.
