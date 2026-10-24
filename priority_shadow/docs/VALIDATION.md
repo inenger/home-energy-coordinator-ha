@@ -44,3 +44,16 @@ měniče, nevyhodnotitelné modely a absenci servisních volání při renderov�
 Nejde o vizuální kontrolu v reálném HA prohlížeči. Privátní rekonstrukce noci
 běží pouze na RPi, odděluje předokenní plán a replay skutečných výkonů a
 přiznává pole přenesená ze staršího snímku. Původní historie se nemění.
+
+## 0.6.4
+
+306 testů shadow, 158 původního balíčku; renderer, kontrola verzí a shell
+simulace prošly. Nové regrese pokrývají fázový rozpočet, časovou kauzalitu,
+chybějící/rozporné měření a zachování cíle s nedosaženým SOC. Finální
+zdroje byly přehrány na RPi s ověřenými SHA-256 všech 36 modulů.
+Privátní výsledky a původní důkazy zůstávají na RPi.
+
+Jde o jednu kompletní rekonstruovatelnou noc; pro předchozí noc chybí
+předokenní vstupy/modely. Vícedenní ekonomická validace a ostrá odezva
+regulace nejsou tímto dokončené. Empirická rezerva z řídkých vzorků není
+bezpečnostním důkazem. Vizuální kontrola v reálném prohlížeči není doložená.

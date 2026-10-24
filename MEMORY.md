@@ -154,3 +154,32 @@ prošlo; 296 testů shadow, 158 původního balíčku a spustitelný test karty.
 Finální zdroj byl znovu přehrán na RPi; soukromé důkazy jsou v recovery
 adresáři analýzy, nikoli ve veřejném repozitáři. Provozní addon ani dashboard
 nebyly touto dodávkou aktualizované; stále rozlišovat publikaci a nasazení.
+
+## 0.6.4 · maximální účelné využití přípojky
+
+Uživatel výslovně požaduje využívat přípojku 3×25 A, při prioritě auta
+ponechat EV požadovaný výkon a pro Solax využít zbytek až do účelného cíle.
+Původní závěr o nízkém cíli nelze vydávat za čistě ekonomické optimum:
+vyšší cíle byly předem vyřazené kvůli pevnému rozpočtu 22 A / 0,9 a
+povinnému dosažení cíle i v nepříznivém scénáři. Nově jsou požadovaný
+cíl a dosažitelné SOC oddělené; nedosažený cíl může být ekonomicky vybrán.
+
+Nový modul `phase_budget.py` počítá kandidáta z předchozích nočních měření
+U/P/I a domu bez EV; archivuje zdroj a počty vzorků. Používá 25 A minus
+pozorované kladné skoky zátěže a odhad účiníku; explicitní starý fallback
+zůstává pouze při nedostatku měření. Rozpočet sdílí plán, relace a replay.
+Nesmí být prezentován jako certifikovaná jističová ochrana: vzorkování
+neověřuje rychlé špičky, latenci ani nový spotřebič a model zůstává
+observe_only. Ověření rezerv, AC limitu a fyzického řízení zůstává otevřené.
+
+Validace: 306 syntetických testů shadow, 158 původního balíčku, renderer
+karty, metadata a simulace upgrade cest. Read-only přehrání finálních
+zdrojů na RPi uchovává staré důkazy a vlastní manifest 36 modulů. Dostupná
+historie neobsahuje předokenní vstupy pro plnou rekonstrukci další starší
+noci; nepoužívat pozdější návrhy jako tehdy dostupné vstupy. Výsledek je
+rekonstrukce, ne uskutečněné nabíjení ani prokázaná úspora.
+
+Při této práci ověřeno: runtime lokálního shadow stále 0.6.2, původní
+doplněk 0.5.3; žádná aktualizace, restart ani změna starých automatizací.
+Publikaci 0.6.4 ověřit samostatně na GitHubu a CI; tato poznámka sama
+neznamená merge ani nasazení.

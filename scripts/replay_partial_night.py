@@ -29,6 +29,7 @@ def main():
     from energy.soc_runtime import _versions, weather_versions
     from energy.soc_evidence import verify
     from energy import priority
+    from energy.phase_budget import from_db
 
     now = instant(args.at)
     output = Path(args.output)
@@ -64,6 +65,9 @@ def main():
     weather=archived_weather(weather_versions(db,now),now)
     observation=unpack(db.execute('SELECT payload FROM soc_observations WHERE at<=? ORDER BY at DESC LIMIT 1',(args.at,)).fetchone()[0])
     inputs['outdoor_c']=observation.get('outdoor_c')
+    inputs['power_budget']=from_db(db,args.at)
+    inputs['ev_connected']=number('ev_connected') if points.get('ev_connected',{}).get('quality')=='valid' else points.get('ev_connected',{}).get('value')
+    inputs['ev_requirement_source']='reconstructed_desired_target_assuming_presence_until_05'
     inputs['sunrise']=None  # Informational value was not archived for rejected decisions.
     inputs['weather_rows']=(weather or {}).get('payload',{}).get('forecast',[])
     inputs['use_temperature']=manifest['house_validation']['use_temperature']
@@ -84,14 +88,14 @@ def main():
         assert verify(proposal)['verified']
         assert all(instant(v['available_at'])<=now for group in versions.values() for v in group)
         (output/(name+'-proposal.json')).write_text(json.dumps(proposal,ensure_ascii=False,indent=2))
-        summary={k:proposal.get(k) for k in ('status','target_soc_pct','horizon_complete','allocation_policy','ev_deficit_ac_kwh','soc_at_05_estimate','night_charge_ac_kwh','decision_hash')}
+        summary={k:proposal.get(k) for k in ('status','target_soc_pct','horizon_complete','allocation_policy','ev_deficit_ac_kwh','soc_at_05_estimate','night_charge_ac_kwh','decision_hash','attainable_soc_05','target_shortfall_soc_pct','power_budget')}
         # Independent measured-power replay with fixed reconstructed targets.
         if proposal['status'] in PLAN_STATUSES and proposal['horizon_complete']:
             model=priority.empty_model(inputs['soc'])
             session={'forecast_kwh':number('forecast_today'),
                      'target_soc_pct':proposal['target_soc_pct'],'soc_plan_valid':True,
-                     'battery_energy_model':proposal['battery_energy_model']}
-            previous=None;previous_at=None
+                     'battery_energy_model':proposal['battery_energy_model'],'power_budget':proposal.get('power_budget')}
+            previous=None;previous_at=None;reasons={};constraints={};peaks=[0.,0.,0.]
             for blob, in db.execute('SELECT payload FROM priority_samples WHERE day=? ORDER BY at',(proposal['day'],)):
                 row=unpack(blob)
                 if previous:
@@ -99,7 +103,11 @@ def main():
                     priority.advance(model,previous,dt,(previous_at,row['at']))
                 previous=priority.allocate(row['inputs'],row['at'],session,model['soc_pct'],name)
                 previous_at=row['at']
-            summary['measured_power_replay']=model
+                reasons[previous['reason']]=reasons.get(previous['reason'],0)+1
+                for factor in previous.get('limiting_factors',[]):constraints[factor]=constraints.get(factor,0)+1
+                for i,p in enumerate(previous['phase']):
+                    if p.get('planned_model_a') is not None:peaks[i]=max(peaks[i],p['planned_model_a'])
+            summary['measured_power_replay']={**model,'limiting_reasons_samples':reasons,'phase_peak_model_a':peaks,'limiting_factors_samples':constraints}
         result['variants'][name]=summary
     db.close()
     (output/'summary.json').write_text(json.dumps(result,ensure_ascii=False,indent=2))

@@ -13,6 +13,7 @@ from .soc_calibration import Household, fit_pv, validate_household, pre_window,a
 from .soc_history import read_gzip, atomic_gzip, minute_hours, fit_ev, covered_forecast
 from .soc_planner import plan, window, solar_periods, POLICY as SOC_POLICY, PLAN_STATUSES
 from .soc_evidence import seal,verify
+from .phase_budget import from_db as phase_budget_from_db
 
 SHARE=Path('/share/home-energy-priority-shadow')
 MAIN=Path('/share/home-energy-coordinator/evidence.sqlite')
@@ -237,6 +238,7 @@ class PlannerService:
             if time.monotonic()>=self.next_plan or force:
                 snapshot=inputs(states,at,self.ev_model,self.options,self.weather,self.house_validation.get('use_temperature',False))
                 snapshot['weather_provenance']=self.weather_meta
+                snapshot['power_budget']=phase_budget_from_db(store.db,at)
                 result=plan(now,snapshot,self.history,self.pv_models,self.household,_versions(store,at))
                 result['pre_window_capture']=freeze;result['model_version_hash']=self.model_key
                 result['house_validation']=self.house_validation
@@ -261,7 +263,7 @@ class PlannerService:
 
 def view(result):
     if not result:return {'status':'waiting_for_calculation','device_actions':0}
-    keys=('schema_version','policy','issued_at','day','status','target_soc_pct','decision_reason','warnings',
+    keys=('power_budget','attainable_soc_05','target_shortfall_soc_pct','target_reached_all_scenarios','target_semantics','schema_version','policy','issued_at','day','status','target_soc_pct','decision_reason','warnings',
           'window_start','window_end','horizon_end','horizon_complete','current_soc','soc_at_03_estimate','soc_at_05_estimate',
           'night_charge_ac_kwh','first_sustained_pv_cover_at','sunrise','objective','selection_method','season',
           'priority_alternatives','ev_requirement','ev_deficit_ac_kwh','demand_fully_met','allocation_policy','economic_comparison','model_hash','model_version_hash','decision_hash','decision_hash_schema','night_plan_eligible','assumptions','missing_inputs','corrections','pre_window_capture')
@@ -272,7 +274,7 @@ def view(result):
     selected=result.get('selected') or {}
     out['selected_scenarios']=selected.get('scenarios',{})
     out['candidates']=[{'target_soc_pct':r['target_soc_pct'],'feasible':r.get('feasible_all_scenarios'),
-         'regret_czk':r.get('max_regret_czk'),'ev_deficit_ac_kwh':r['scenarios']['central'].get('unserved_ev_ac_kwh'),'grid_charge_ac_kwh':r['scenarios']['central']['grid_charge_ac_kwh'],
+         'soc_at_05':r['scenarios']['central']['soc_at_05'],'target_reached_all_scenarios':all(v.get('target_reached',True) for v in r['scenarios'].values()),'regret_czk':r.get('max_regret_czk'),'ev_deficit_ac_kwh':r['scenarios']['central'].get('unserved_ev_ac_kwh'),'grid_charge_ac_kwh':r['scenarios']['central']['grid_charge_ac_kwh'],
          'import_cost_czk':r['scenarios']['central']['import_cost_czk'],
          'terminal_credit_czk':r['scenarios']['central']['terminal_inventory_credit_czk']} for r in result.get('candidates',[])]
     summary=result.get('calibration_summary') or {}

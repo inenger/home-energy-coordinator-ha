@@ -1,6 +1,6 @@
 # Noční nabíjení · stínové priority
 
-Verze 0.6.3 počítá návrh nabití SolaX pro levné okno 03:00–05:00,
+Verze 0.6.4 počítá návrh nabití SolaX pro levné okno 03:00–05:00,
 porovnává preference EV/baterie a uchovává důkazy na Raspberry Pi.
 Používá časový profil FVE, spotřebu domu, SOC, sezónu a již vypočtený tarif.
 Fyzické řízení zařízení ani změny provozních automatizací nejsou aktivní.

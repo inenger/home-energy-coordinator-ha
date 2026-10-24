@@ -48,3 +48,14 @@ Regrese jsou v `tests/test_partial_063.py` a `scripts/test_partial_card.mjs`.
   modelového pokrytí nepublikovat nulové energie ani výchozí SOC jako výsledek.
 - Staré důkazy zůstávají zachované; opravený diagnostický pohled na historický
   souhrn uchovává i jeho původní diagnostický kontext.
+
+## 0.6.4 · výkon a nedosažený cíl
+
+Pevný limit 22 A × účiník 0,9 snižoval rozpočet a přísné odmítnutí cíle
+v jediném scénáři zaměňovalo nedosažitelnost požadavku za ekonomickou
+nevýhodnost. Nový odhad po fázích má zdrojové období a explicitní fallback;
+vyšší cíle zůstávají v porovnání s dosaženým SOC a skutečně modelovanými
+náklady. `tests/test_phase_064.py` ověřuje časovou kauzalitu, chybějící
+a rozporné proudy, rezervy, nejslabší fázi, zbytek výkonu po EV, zachování
+cíle s deficitem, průchod do view a letní vynechání nabíjení. Renderer
+ověřuje rozdíl cíl/výsledek i zobrazení fázových rezerv.

@@ -9,7 +9,9 @@ from .power_allocation import allocate_power
 
 HELPER='input_select.nocni_stinova_priorita'
 LABELS={'Elektromobil':'ev','Baterie SolaX':'battery'}
-POLICY='night-priority-v9-partial-dual-targets'
+POLICY='night-priority-v10-observed-phase-budget'
+from .phase_budget import checked as checked_budget
+
 ASSUMPTIONS={'phase_limit_a':22,'breaker_a':25,'power_factor':.9,
              'charge_efficiency':.9,'battery_usable_kwh':10.4,
              'ev_min_phase_a':6,'fast_report_limit_seconds':90,
@@ -118,6 +120,7 @@ def effective_session(store,day,at,points,require_soc_plan=False):
                 'ev_deficit_ac_kwh':proposal.get('ev_deficit_ac_kwh'),
                 'demand_fully_met':proposal.get('demand_fully_met'),
                 'priority_alternatives':proposal.get('priority_alternatives'),
+                'power_budget':proposal.get('power_budget'),'attainable_soc_05':proposal.get('attainable_soc_05'),
                 'reserve_soc_approved':proposal['assumptions'].get('reserve_soc_approved')}
     saved=_get(store,'priority_sessions',day)
     if saved:return planned(saved) if require_soc_plan or saved.get('planning_source') else saved
@@ -150,22 +153,33 @@ def allocate(points,at,session,model_soc,priority):
         alternative_valid=alternative.get('status') in ('conditional_shadow_plan','partial_shadow_plan') and alternative.get('horizon_complete') is True
     energy_model=session.get('battery_energy_model') if session else None
     forbid=forecast is None or forecast<30
+    budget_context=checked_budget((session or {}).get('power_budget'))
     rows=[];bad=[]
     for i in (1,2,3):
         voltage_key=f'grid_voltage_l{i}_v' if f'grid_voltage_l{i}_v' in points and numeric(points,f'grid_voltage_l{i}_v') else f'voltage_l{i}_v'
         keys=[f'grid_l{i}_w',f'inverter_l{i}_w',voltage_key]
+        empirical=budget_context['status']=='empirical_shadow_candidate'
+        if empirical:keys.append(f'grid_l{i}_a')
         good=all(numeric(points,k) for k in keys)
         u=value(points,keys[2])
         good=good and u is not None and 180<u<260
         if good:
-            g,inv,u=(value(points,k) for k in keys)
+            g,inv,u=(value(points,k) for k in keys[:3])
             ev=value(points,f'ev_l{i}_w') if numeric(points,f'ev_l{i}_w') else None
             house=max(0,inv-g);base=max(0,house-max(0,ev)) if ev is not None else None
-            limit=22*u*.9
+            pf=budget_context['power_factor'][i-1]
+            if empirical:
+                amps=abs(value(points,f'grid_l{i}_a'))
+                measured_pf=abs(g)/(u*amps) if amps>=5 else None
+                if measured_pf is not None:
+                    if not .5<=measured_pf<=1.05:bad.append(f'grid_l{i}_a')
+                    else:pf=min(pf,measured_pf,1.)
+            limit=(25-budget_context['reserve_a'][i-1])*u*pf
             rows.append({'phase':i,'voltage_v':u,'house_w':round(house,1),'ev_w':ev,
                          'base_w':round(base,1) if base is not None else None,'house_balance_w':inv-g,'grid_w':g,'voltage_source':voltage_key,'room_w':round(max(0,limit-house),1),
                          'budget_w':max(0,limit-base) if base is not None else None,'grid_current_reported_a':value(points,f'grid_l{i}_a_reported'),
-                         'model_current_a':round(house/(u*.9),2),'report_age_s':max(points[k]['age_seconds'] for k in keys)})
+                         'limit_w':limit,'power_factor':pf,'limit_a':25-budget_context['reserve_a'][i-1],
+                         'model_current_a':round(house/(u*pf),2),'report_age_s':max(points[k]['age_seconds'] for k in keys)})
         else:
             bad.extend(k for k in keys if not numeric(points,k))
             rows.append({'phase':i,'voltage_v':u,'voltage_source':voltage_key,'house_w':None,'ev_w':value(points,f'ev_l{i}_w'),
@@ -176,10 +190,10 @@ def allocate(points,at,session,model_soc,priority):
         current=value(points,key) if numeric(points,key) else None
         if not isinstance(current,(int,float)) or not 0<=abs(current)<=100:current=None
         r['grid_current_a']=current
-        r['current_headroom_a']=round(22-abs(current),2) if current is not None else None
+        r['current_headroom_a']=round(25-budget_context['reserve_a'][r['phase']-1]-abs(current),2) if current is not None else None
         r['current_report_age_s']=points.get(key,{}).get('age_seconds')
         r['power_to_va_ratio']=round(abs(r['grid_w'])/(r['voltage_v']*abs(current)),3) if current and r.get('grid_w') is not None and r.get('voltage_v') else None
-    out={'priority':priority,'active':active,'phase':rows,'forecast_kwh':forecast,'target_soc_pct':target,
+    out={'power_budget':budget_context,'priority':priority,'active':active,'phase':rows,'forecast_kwh':forecast,'target_soc_pct':target,
          'forbid_discharge':forbid,'battery_model_soc_pct':model_soc,'ev_ac_w':None,'battery_ac_w':None,
          'grid_model_w':None,'binding_phase':None,'reason':None,'device_actions':0,'live_ready':False,
          'missing_inputs':sorted(set(bad)),'ev_ready_by_status':'not_estimated_without_calibrated_energy_model'}
@@ -190,7 +204,7 @@ def allocate(points,at,session,model_soc,priority):
     if reason is None and any(r['house_balance_w'] < -ASSUMPTIONS['phase_balance_tolerance_w'] for r in rows):reason='inconsistent_house_balance'
     if reason is None and (not numeric(points,'ev_w') or any(not numeric(points,f'ev_l{i}_w') for i in (1,2,3))):reason='invalid_ev_input'
     if reason is None and not 0<=value(points,'ev_w')<=25000:reason='invalid_ev_input'
-    if reason is None and any(r['base_w']>22*r['voltage_v']*.9 for r in rows):reason='base_load_over_limit'
+    if reason is None and any(r['base_w']>r['limit_w'] for r in rows):reason='base_load_over_limit'
     if reason is None and any(r['ev_w']<0 or r['ev_w']>r['house_w']+500 for r in rows):reason='inconsistent_ev_phases'
     if reason is None and target and (model_soc is None or not 0<=model_soc<=100):reason='invalid_battery_soc'
     if reason is None and target is None:reason='missing_frozen_forecast'
@@ -228,7 +242,12 @@ def allocate(points,at,session,model_soc,priority):
     bat,ev=allocate_power(budget,battery_request,ev_request,min_ev,priority)
     for r in rows:
         r['planned_w']=round(r['base_w']+(ev+bat)/3,1)
-        r['planned_model_a']=round(r['planned_w']/(r['voltage_v']*.9),2)
+        r['planned_model_a']=round(r['planned_w']/(r['voltage_v']*r['power_factor']),2)
+    constraints=[]
+    if target==0 or model_soc>=target:constraints.append('target_reached_or_no_request')
+    if budget-bat-ev<100.01:constraints.append('phase_power_budget')
+    if battery_request>0 and bat+100>=battery_request:constraints.append('battery_request_or_dc_limit')
+    out['limiting_factors']=constraints
     out.update(ev_ac_w=ev,battery_ac_w=bat,grid_model_w=round(sum(r['planned_w'] for r in rows)),
                ev_measured_request_w=ev_request,
                ev_allocation_mode='idle' if ev_request==0 else 'follow_measured_demand' if abs(ev-ev_request)<1e-6 else 'limited_model',
@@ -336,6 +355,9 @@ def observe(store,states,at,require_soc_plan=False):
             run['assumptions']={**ASSUMPTIONS,'battery_usable_kwh':None,
                 'battery_capacity_source':'empirical_energy_soc_curve_July_fit',
                 'battery_energy_model':model,'grid_conversion_efficiency_verified':False}
+    if run and (session or {}).get('power_budget'):
+        run['assumptions']={**run['assumptions'],'power_budget':session['power_budget'],
+            'phase_limit_a':None,'power_factor':None,'legacy_fallback_phase_limit_a':22}
     variants={}
     if run:
         if run.get('soc_initialized_at') is None and all(m['soc_pct'] is None for m in run['models'].values()) and numeric(points,'battery_soc',10800):
@@ -376,7 +398,7 @@ def observe(store,states,at,require_soc_plan=False):
                       'battery_soc','battery_dc_w','battery_v','battery_a','battery_limit_a','inverter_mode','inverter_run_mode','manual_mode',
                       'main_breaker_limit_a','battery_out_today','battery_in_today')},
             'next_forecast_kwh':next_f,'next_target_soc_pct':night.target_for(next_f) if next_f is not None else None,
-            'session':session,'progress':row,'history':history,'assumptions':run.get('assumptions',ASSUMPTIONS) if run else ASSUMPTIONS,
+            'session':session,'progress':row,'history':history,'assumptions':{**(run.get('assumptions',ASSUMPTIONS) if run else ASSUMPTIONS),'power_budget':(session or {}).get('power_budget'),'legacy_phase_limit_a':22,'phase_limit_a':None if (session or {}).get('power_budget') else 22},
             'readiness':['phase_current_available_pending_ev_load_validation','actuator_response_not_verified','no_actuator_adapter'],
             'ev_parameters_status':'future_soc_and_deadline_not_estimated',
             'comparison_status':comparison_status(row['models']) if row else 'waiting_for_night',

@@ -103,3 +103,13 @@ SQLite `mode=ro`. Pro staré odmítnuté plány výslovně uvádí přenesená p
 Odděluje as-of scénářový plán od následného replay na skutečně pozorovaných
 výkonech. Výstupy ukládá do nového privátního adresáře; není to tehdy vydané
 rozhodnutí a nelze z něj vyvozovat naměřené úspory.
+
+## Evidence 0.6.4
+
+Rozhodnutí schéma 4 obsahuje `power_budget` (25 A, reserve_a, power_factor,
+house_phase_shares, source_hash, dostupnost a období), `attainable_soc_05`,
+`target_shortfall_soc_pct` a `target_reached_all_scenarios`. Tyto hodnoty
+procházejí kompaktním pohledem i alternativami priorit. Plné scénáře a
+kandidáti zůstávají v rozhodnutí. Úplná splnitelnost cíle a splnitelnost
+EV/modelové rezervy jsou dvě různé příznakové hodnoty. Staré záznamy se
+nepřepisují; chybějící pole nejsou zpětně domyšleným měřením.

@@ -1,4 +1,4 @@
-# Noční nabíjení · stínové priority 0.6.3
+# Noční nabíjení · stínové priority 0.6.4
 
 Samostatný Home Assistant doplněk pro Raspberry Pi. Počítá návrhy SOC baterie
 a porovnává priority EV/baterie v okně 03:00–05:00 Europe/Prague. Používá
@@ -47,6 +47,6 @@ Před další prací číst [`../MEMORY.md`](../MEMORY.md),
 [Provoz a obnova](docs/OPERATIONS.md) · [Data a AI](docs/DATA.md) ·
 [Automatizace 03–05](docs/AUTOMATIONS.md) · [Vývoj a vydání](docs/DEVELOPMENT.md).
 
-Dokumentace odpovídá runtime 0.6.3. `config/settings.example.json` obsahuje
+Dokumentace odpovídá runtime 0.6.4. `config/settings.example.json` obsahuje
 historické nastavení společných modulů; aktivní nastavení tohoto doplňku
 určují výhradně volby v `config.yaml` načítané z `/data/options.json`.
