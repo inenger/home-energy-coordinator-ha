@@ -1,6 +1,6 @@
 # Provoz, aktualizace a obnova
 
-Tento postup popisuje runtime 0.6.2 na RPi/HA OS. Žádný zdejší krok se
+Tento postup popisuje runtime 0.6.3 na RPi/HA OS. Žádný zdejší krok se
 neprovádí automaticky publikací do GitHubu. Pro aktuální identitu doplňků
 a poslední ověření čti [projektovou paměť](../../MEMORY.md).
 

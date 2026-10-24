@@ -1,6 +1,6 @@
 # Projektová paměť · Home Assistant / energie
 
-Aktualizace: 23. 10. 2026. Tento soubor je verzovaný pracovní kontext;
+Aktualizace: 24. 10. 2026. Tento soubor je verzovaný pracovní kontext;
 nenahrazuje čerstvé ověření zařízení, GitHubu ani konfigurace.
 
 Dokončená publikace ověřena 23. 10. 2026: [PR #4](https://github.com/inenger/home-energy-coordinator-ha/pull/4)
@@ -127,7 +127,7 @@ relaci a jiné návaznosti. Netvrdit absenci všech chyb jen z počtu testů.
 - Dokumentační doplnění nemění runtime 0.6.2; nevydávat kvůli němu novou
   provozní verzi doplňku. Původní automatizace ani data se tím neupravují.
 
-## Opravy připravené 24. 10. 2026 · 0.6.3
+## Opravy dodané 24. 10. 2026 · 0.6.3
 
 Nový zdroj je v `priority_shadow/`, politika SOC v4 a priority v9. Nedosažitelný
 žádoucí cíl EV vede k přiznanému částečnému plánu podle preference, ne ke
@@ -146,3 +146,11 @@ protože původní zamítnuté plány neměly úplné vstupy; přenesené pole l
 má uvedený starší zdroj. Skutečné záznamy ani původní relace se nepřepisují.
 Tato dodávka sama nepřevádí lokální doplněk na repozitářový; poslední ověřený
 běžící shadow je stále 0.6.2. Nasazení zdroje 0.6.3 není prokázané mergem.
+
+Publikace 0.6.3 dokončena: [PR #5](https://github.com/inenger/home-energy-coordinator-ha/pull/5)
+sloučen do main, merge `6199c1be72c1b182f0e9f5f4dff74eff40939f8e`.
+[CI hlavní větve](https://github.com/inenger/home-energy-coordinator-ha/actions/runs/40064317074)
+prošlo; 296 testů shadow, 158 původního balíčku a spustitelný test karty.
+Finální zdroj byl znovu přehrán na RPi; soukromé důkazy jsou v recovery
+adresáři analýzy, nikoli ve veřejném repozitáři. Provozní addon ani dashboard
+nebyly touto dodávkou aktualizované; stále rozlišovat publikaci a nasazení.

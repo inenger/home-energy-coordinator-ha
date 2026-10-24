@@ -1,4 +1,4 @@
-# Architektura 0.6.2
+# Architektura 0.6.3
 
 Stav popisu: 23. 10. 2026. Hlavní cíl je účelné levné nabití mezi 03:00
 a 05:00 s prostorem pro pozdější FVE. Dům může v zimě spotřebovat více než
