@@ -113,10 +113,19 @@ def priority_history_view(history):
     rows=[]
     for r in history[:14]:
         x={k:r.get(k) for k in ('day','observed_ev_kwh_ac','observed_covered_s','gap_s','phase_max_measured_a','comparison_status','uncovered_seconds','comparison_context','sample_count','version')}
+        if r.get('session'):
+            from .priority import comparison_context
+            corrected=comparison_context(r['session'])
+            if corrected!=x['comparison_context']:
+                x['original_comparison_context']=x['comparison_context']
+                x['comparison_context']=corrected
         if not x['comparison_context'] and (r.get('session') or {}).get('target_soc_pct')==0:x['comparison_context']='battery_no_request'
         x['models']={k:{f:round(m[f],4) if isinstance(m.get(f),(int,float)) else m.get(f)
                             for f in ('ev_kwh_ac','battery_kwh_ac','soc_pct','ev_reallocated_kwh','covered_s')}
                      for k,m in r.get('models',{}).items()}
+        for model in x['models'].values():
+            if not model.get('covered_s',0)>0:
+                for field in ('ev_kwh_ac','battery_kwh_ac','soc_pct','ev_reallocated_kwh'):model[field]=None
         rows.append(x)
     return rows
 
@@ -125,6 +134,7 @@ def publish_priority(result,cfg):
     """Exact new monitoring entities only; never calls input_select or devices."""
     selected=result['selected'];progress=result.get('progress') or {}
     model=(progress.get('models') or {}).get('selected') or {}
+    if not model.get('covered_s',0)>0:model={}
     rows=[
         ('sensor.nocni_stinovy_plan','Noční plán · pouze stínově',selected.get('reason','waiting'),priority_plan_view(result)),
         ('sensor.nocni_stinovy_souhrn','Noční stínové statistiky',len(result.get('history',[])),{'nights':priority_history_view(result.get('history',[]))}),

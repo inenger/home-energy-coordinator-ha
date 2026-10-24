@@ -1,13 +1,13 @@
 # Jak se vybírá cílové SOC
 
 Implementace: `soc_planner.py`, politika
-`soc-energy-scenarios-v3-conserved-ac-flows`. Výpočet je deterministický,
+`soc-energy-scenarios-v4-partial-demand`. Výpočet je deterministický,
 bez volání AI. AI může na RPi kontrolovat důkazy a navrhovat změny kódu;
 není součástí rozhodování ani podmínkou běhu.
 
 ## Vstupy a jejich skutečná role
 
-| Vstup | Použití v 0.6.2 |
+| Vstup | Použití v 0.6.3 |
 |---|---|
 | Aktuální SOC SolaX | Výchozí zásoba, převedená přes empirickou mapu energie/SOC |
 | Hodinová/půlhodinová FVE | Rozložení výroby v čase, pokrytí domu, dobití a volné místo |
@@ -39,12 +39,12 @@ není samostatnou optimalizační podmínkou.
    Nula neznamená vybití na nulu, ale nulový požadavek na síťové dobíjení.
 5. Každý cíl simuluje pro centrální scénář, slabou FVE/vysokou spotřebu
    a silnou FVE/nízkou spotřebu. Pravděpodobnosti scénářů nepředstírá.
-6. Vyřadí cíle, které ve všech scénářích nesplní EV potřebu (tolerance
+6. Pro úplné plány vyřadí cíle, které ve všech scénářích nesplní EV potřebu (tolerance
    0,05 kWh), modelovou rezervu a požadovaný SOC v 05:00 (tolerance 0,5 bodu).
 7. Porovná nákupní náklad po odečtení stejného ocenění konečné zásoby.
    Konečná energie nad rezervou se oceňuje nejnižší nezápornou cenou
    nočního okna. Příjem z přetoků se v této účelové funkci neoceňuje.
-8. Vybere nejmenší nejhorší rozdíl vůči nejlepšímu přípustnému cíli
+8. Mezi úplnými plány vybere nejmenší nejhorší rozdíl vůči nejlepšímu přípustnému cíli
    v každém scénáři (minimax regret). Při shodě preferuje menší nákup
    na dobíjení a pak nižší cíl. Uloží varianty, důvody a hash rozhodnutí.
 
@@ -87,3 +87,30 @@ tarifu/FVE nemusí vzniknout návrh. Zkrácený horizont může být náhled, al
 noční relace přijímá pouze úplný, hashově platný návrh pro daný den,
 nejvýše 30 minut starý. Novější neplatný návrh odvolává předchozí.
 Při chybě se zobrazí pouze referenční tabulka; nevzniká fyzický povel.
+
+## Částečně splnitelný požadavek od 0.6.3
+
+Cíl auta je žádoucí cíl, nikoli potvrzené minimum do odjezdu. Evidence
+`ev_requirement` odděluje požadovanou energii, minimální energii a odjezd.
+Minimum a odjezd nyní nejsou zadávané vstupy a zůstávají `null`; aplikace
+jejich splnění netvrdí. Existující cílové SOC auta se fyzicky nemění.
+
+Neexistuje-li úplný plán, výpočet zkusí `partial_shadow_plan`. Stále musí
+ve všech scénářích dosáhnout modelové rezervy a zvoleného bateriového cíle.
+Při prioritě EV nejprve najde nejmenší nejhorší deficit auta; do dalšího
+výběru pustí pouze cíle s deficitem nejvýše o 0,05 kWh větším. Při prioritě
+baterie posuzuje všechny přípustné bateriové cíle. Následuje minimax regret
+nákladu domu a baterie: od celkového nákupu po ocenění konečné zásoby odečte
+náklad síťové energie EV. Tím se menší nabití auta samo nevydává za úsporu
+bateriové strategie. Při shodě preferuje menší nejhorší deficit EV, pak méně
+síťového nabíjení baterie a nižší cíl.
+
+Každá varianta uchovává nesplněnou EV energii a `demand_fully_met=false`.
+`economic_comparison=unequal_ev_service_no_savings_claim` zakazuje závěr,
+že jde o srovnání stejně splněných potřeb nebo prokázanou úsporu. Jde o
+výslovnou preferenční politiku stínového výpočtu, nikoli schválení řízení.
+Obě priority mají vlastní optimalizovaný cíl, který přebírá i výkonový replay.
+
+Není-li dosažitelná ani modelová rezerva, zůstává plán odmítnutý. Chybějící
+měření se nikdy nesmí stát částečným plánem s vymyšlenými nulovými vstupy.
+Částečný plán podléhá stejnému hashi, TTL, dni a úplnému horizontu jako úplný.

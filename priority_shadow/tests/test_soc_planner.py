@@ -113,8 +113,9 @@ class PlannerTests(unittest.TestCase):
 
     def test_impossible_ev_demand_not_claimed_saving(self):
         r=self.run_plan(ev=80)
-        self.assertEqual(r['status'],'no_comparable_feasible_plan')
-        self.assertIsNone(r['target_soc_pct'])
+        self.assertEqual(r['status'],'partial_shadow_plan')
+        self.assertGreater(r['ev_deficit_ac_kwh']['central'],0)
+        self.assertFalse(r['demand_fully_met'])
 
     def test_missing_ev_calibration_is_not_zero(self):
         now,i,h,v,house=fixture();i['ev_need_ac_kwh']=None

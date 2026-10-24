@@ -35,3 +35,12 @@ Historii opravených případů najdete v `FIX_HISTORY.md`; aktuální stav v ko
 Zelené CI po merge dokládá veřejný zdroj, nikoli automatické nasazení
 tohoto zdroje do lokálního doplňku. Otevřené fyzické předpoklady a další
 práce jsou v [DEVELOPMENT.md](DEVELOPMENT.md).
+
+## 0.6.3
+
+296 syntetických Python testů shadow, 158 původního balíčku. Spustitelný
+Node renderer ověřuje částečný plán, deficit, obě priority, oddělené režimy
+měniče, nevyhodnotitelné modely a absenci servisních volání při renderování.
+Nejde o vizuální kontrolu v reálném HA prohlížeči. Privátní rekonstrukce noci
+běží pouze na RPi, odděluje předokenní plán a replay skutečných výkonů a
+přiznává pole přenesená ze staršího snímku. Původní historie se nemění.

@@ -126,3 +126,23 @@ relaci a jiné návaznosti. Netvrdit absenci všech chyb jen z počtu testů.
   přesný dosažený stav a zbývající provozní kroky.
 - Dokumentační doplnění nemění runtime 0.6.2; nevydávat kvůli němu novou
   provozní verzi doplňku. Původní automatizace ani data se tím neupravují.
+
+## Opravy připravené 24. 10. 2026 · 0.6.3
+
+Nový zdroj je v `priority_shadow/`, politika SOC v4 a priority v9. Nedosažitelný
+žádoucí cíl EV vede k přiznanému částečnému plánu podle preference, ne ke
+zrušení celého plánování baterie. Minimum a odjezd zůstávají nepotvrzené;
+neodvozovat je z nastaveného cíle. Obě priority přebírají vlastní cílové SOC.
+Částečné varianty mají různé splnění EV potřeby, nejsou důkazem úspory.
+Zamítnuté plány nově archivují vstupy i kontext předpovědí a modelů.
+
+Poučení z chybného reportu: `sensor.solax_run_mode` je oddělený od
+`select.solax_charger_use_mode`. Nesoudit celý režim z hodnoty selectu.
+Podrobná oprava a privátní report zůstávají na RPi. Historické chyby
+nepřepisovat; při změně diagnostického pohledu uchovat původní kontext.
+
+Read-only replay nové verze proběhl na RPi. Je označený jako rekonstrukce,
+protože původní zamítnuté plány neměly úplné vstupy; přenesené pole limitu
+má uvedený starší zdroj. Skutečné záznamy ani původní relace se nepřepisují.
+Tato dodávka sama nepřevádí lokální doplněk na repozitářový; poslední ověřený
+běžící shadow je stále 0.6.2. Nasazení zdroje 0.6.3 není prokázané mergem.

@@ -32,3 +32,19 @@ protipříklad rozšiřuje regresní sadu; historické důkazy se nepřepisují.
 
 Privátní auditní zprávy, logy, seed a časové řady zůstávají na RPi.
 Veřejné příklady a testy nesmějí obsahovat kopie naměřených řad.
+
+## 0.6.3: nedosažitelný EV cíl a význam stavů
+
+Regrese jsou v `tests/test_partial_063.py` a `scripts/test_partial_card.mjs`.
+
+- Žádoucí EV cíl není potvrzené minimum do odjezdu. Nedosažitelný cíl
+  vytváří výslovně částečný plán a uchovává deficit, nikoli falešný úspěch.
+- Obě priority mají vlastní cíle, stejné limity a výslovně přiznanou různou
+  službu autu. Částečná relace musí projít stejnými branami jako úplná.
+- Zamítnuté rozhodnutí uchovává vstupy; snapshot se nesmí měnit po výpočtu.
+- Provozní `sensor.solax_run_mode` a volba `select.solax_charger_use_mode`
+  jsou samostatné údaje. Jejich rozdíl sám neprokazuje závadu či zastaralost.
+- Přítomná předpověď s odmítnutým plánem není missing_forecast. Bez platného
+  modelového pokrytí nepublikovat nulové energie ani výchozí SOC jako výsledek.
+- Staré důkazy zůstávají zachované; opravený diagnostický pohled na historický
+  souhrn uchovává i jeho původní diagnostický kontext.

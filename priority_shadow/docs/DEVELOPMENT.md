@@ -27,13 +27,14 @@ bash scripts/test_local_source_paths.sh
 (cd energy_coordinator && python3 -m unittest discover -s tests -q)
 (cd priority_shadow && python3 -m unittest discover -s tests -q)
 node --check priority_shadow/dashboard/night-priority-card.js
+node scripts/test_partial_card.mjs
 ```
 
 Skořápková simulace upgradu používá dočasné soubory a náhradu HA; neprovádí
 živý upgrade RPi. Spouštět ji sekvenčně vůči testům, které mění pracovní strom
 o `__pycache__`, aby se během tar archivace neměnil obsah zdrojů.
 
-Ověřené počty pro 0.6.2: 285 syntetických testů shadow a 158 původního
+Ověřené počty pro 0.6.3: 296 syntetických testů shadow a 158 původního
 doplňku. CI `.github/workflows/validate.yml` kontroluje obě sady, verze,
 shell cesty a syntaxi karty při PR i po push do main. Zelené CI neprokazuje
 fyzickou kapacitu baterie, úsporu ani vizuální správnost v HA prohlížeči.
