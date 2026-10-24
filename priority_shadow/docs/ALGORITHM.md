@@ -1,13 +1,13 @@
 # Jak se vybírá cílové SOC
 
 Implementace: `soc_planner.py`, politika
-`soc-energy-scenarios-v4-partial-demand`. Výpočet je deterministický,
+`soc-energy-scenarios-v5-attainable-targets`. Výpočet je deterministický,
 bez volání AI. AI může na RPi kontrolovat důkazy a navrhovat změny kódu;
 není součástí rozhodování ani podmínkou běhu.
 
 ## Vstupy a jejich skutečná role
 
-| Vstup | Použití v 0.6.3 |
+| Vstup | Použití v 0.6.4 |
 |---|---|
 | Aktuální SOC SolaX | Výchozí zásoba, převedená přes empirickou mapu energie/SOC |
 | Hodinová/půlhodinová FVE | Rozložení výroby v čase, pokrytí domu, dobití a volné místo |
@@ -39,8 +39,10 @@ není samostatnou optimalizační podmínkou.
    Nula neznamená vybití na nulu, ale nulový požadavek na síťové dobíjení.
 5. Každý cíl simuluje pro centrální scénář, slabou FVE/vysokou spotřebu
    a silnou FVE/nízkou spotřebu. Pravděpodobnosti scénářů nepředstírá.
-6. Pro úplné plány vyřadí cíle, které ve všech scénářích nesplní EV potřebu (tolerance
-   0,05 kWh), modelovou rezervu a požadovaný SOC v 05:00 (tolerance 0,5 bodu).
+6. Zachová kandidáty, které dosáhnou modelové rezervy. Nedosažení požadovaného
+   cíle není důvodem k vyřazení: simuluje skutečně dosažené SOC, následný nákup
+   a koncovou zásobu. Přednostně porovnává varianty se splněnou EV potřebou
+   ve všech scénářích (tolerance 0,05 kWh); jinak použije níže popsanou prioritu.
 7. Porovná nákupní náklad po odečtení stejného ocenění konečné zásoby.
    Konečná energie nad rezervou se oceňuje nejnižší nezápornou cenou
    nočního okna. Příjem z přetoků se v této účelové funkci neoceňuje.
@@ -62,7 +64,8 @@ AC výstup 0,977 a PV převod 0,966 jsou modelové předpoklady, nikoli úplná
 nezávislá kalibrace celého řetězce. Původ i hodnoty jsou v uloženém modelu.
 
 Během levného okna se modelově nevybíjí do domu. EV i baterie sdílejí
-konzervativní rozpočet odvozený z 22 A/fázi, napětí a účiníku 0,90.
+rozpočet 25 A/fázi minus odhad rezervy, s měřeným napětím a empirickým
+odhadem účiníku. Přesný postup a náhradní rozpočet jsou níže.
 Budoucí dům je ve výpočtu rozdělen po fázích odhadem; to není ochrana jističe.
 EV má buď nulový příkon, nebo alespoň proud odpovídající 6 A na třech fázích.
 Dokončení EV nebo cíle baterie rozděluje úsek na skutečné dílčí intervaly.
@@ -96,7 +99,8 @@ Minimum a odjezd nyní nejsou zadávané vstupy a zůstávají `null`; aplikace
 jejich splnění netvrdí. Existující cílové SOC auta se fyzicky nemění.
 
 Neexistuje-li úplný plán, výpočet zkusí `partial_shadow_plan`. Stále musí
-ve všech scénářích dosáhnout modelové rezervy a zvoleného bateriového cíle.
+ve všech scénářích dosáhnout modelové rezervy. Od 0.6.4 může požadovaný
+bateriový cíl zůstat nesplněný; tuto skutečnost vykáže odděleně.
 Při prioritě EV nejprve najde nejmenší nejhorší deficit auta; do dalšího
 výběru pustí pouze cíle s deficitem nejvýše o 0,05 kWh větším. Při prioritě
 baterie posuzuje všechny přípustné bateriové cíle. Následuje minimax regret
@@ -114,3 +118,43 @@ Obě priority mají vlastní optimalizovaný cíl, který přebírá i výkonov�
 Není-li dosažitelná ani modelová rezerva, zůstává plán odmítnutý. Chybějící
 měření se nikdy nesmí stát částečným plánem s vymyšlenými nulovými vstupy.
 Částečný plán podléhá stejnému hashi, TTL, dni a úplnému horizontu jako úplný.
+
+## Výkonový rozpočet 0.6.4
+
+`phase_budget.py` čte nejvýše sedm předchozích dní vzorků nočních priorit,
+vždy `sample.at <= decision.at`. Vyžaduje čerstvé U/P/I, rozdělení EV a
+zanedbatelný výkon měniče (do 200 W na fázi), aby do odhadu nepromítal
+výrazné nabíjení, vybíjení nebo výrobu. Používá lokální proudové senzory
+SolaX, nikoli druhou cloudovou řadu proudů. Neověřuje tím fyzické zapojení.
+
+- Pro každou fázi alespoň 30 zatížených vzorků (I ≥ 5 A) a 60 sousedních
+  intervalů do 30 sekund. Poměr |P|/(U|I|) mimo 0,5–1,05 vzorek odmítne.
+- Odhad účiníku je minimum přijatých poměrů, shora omezené jedničkou.
+- Rezerva je největší pozorovaný kladný skok proudu domu **bez EV**,
+  přepočtený tímto účiníkem, plus 0,1 A a zaokrouhlený nahoru na desetiny.
+- Budoucí podíly fází jsou odvozené z časově vážené spotřeby domu bez EV.
+  Ve výkonovém replay se používá skutečné rozložení naměřeného domu.
+- Dostupný vyvážený výkon = 3 × minimum z fázových rozpočtů po odečtení domu.
+  Priorita EV dostává nejprve výkon pro auto, zbytek baterie do svého cíle
+  a limitu DC nabíjení. Kvantování výkonu baterie zůstává po 100 W.
+- Replay empirického návrhu vyžaduje i čerstvé proudy; horší aktuální
+  poměr P/(UI) rozpočet dále sníží. Chybějící proud nepovažuje za nulu.
+
+Bez dostatečné historie je **výslovně označená náhrada 22 A / 0,90**,
+nikoli vymyšlený měřený účiník. Návrh archivuje zdrojový hash, období,
+počty vzorků, fázové podíly, účiníky a rezervy. Výsledek je kandidát pro
+shadow, `control_verified=false`: nezachytí špičky mezi vzorky a nemá
+ověřenou latenci akčního adaptéru. Není automatickým schválením provozu
+u hranice jističe. Neznámý limit měniče zůstává neznámý.
+
+## Cíl versus dosažitelný výsledek
+
+`target_soc_pct` je ekonomicky vybraný požadavek při dané prioritě a
+výkonových omezeních, ne nezávislé optimum s nekonečným výkonem.
+`attainable_soc_05` a `target_shortfall_soc_pct` obsahují výsledek všech
+tří scénářů. `feasible_all_scenarios` nadále znamená úplné splnění EV,
+rezervy i cíle; `service_feasible_all_scenarios` kontroluje EV a rezervu
+a dovoluje porovnávat i nedosažený cíl. Takový cíl má vypočtené náklady
+a může vyhrát. `demand_fully_met` je false při chybějící EV energii i při
+nedosaženém SOC. Klasifikace úplného cíle toleruje 0,5 procentního bodu;
+přesný deficit je uložen bez této tolerance. Pravděpodobnosti nevymýšlíme.

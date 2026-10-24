@@ -108,7 +108,7 @@ class PlannerTests(unittest.TestCase):
 
     def test_ev_need_is_fulfilled_for_comparable_candidates(self):
         r=self.run_plan(pv=6,house=.7,soc=20,season='winter',ev=12)
-        self.assertEqual(r['status'],'conditional_shadow_plan')
+        self.assertIn(r['status'],('conditional_shadow_plan','partial_shadow_plan'))
         for x in r['selected']['scenarios'].values():self.assertLessEqual(x['unserved_ev_ac_kwh'],.05)
 
     def test_impossible_ev_demand_not_claimed_saving(self):

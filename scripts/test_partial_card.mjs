@@ -11,7 +11,7 @@ vm.runInNewContext(fs.readFileSync(new URL('../priority_shadow/dashboard/night-p
 const card=new Card();
 card._hass={states:{'sensor.nocni_stinovy_soc_optimalizace':{attributes:{
   status:'partial_shadow_plan',target_soc_pct:30,day:'2026-01-15',issued_at:new Date().toISOString(),
-  horizon_complete:true,ev_deficit_ac_kwh:{central:22},assumptions:{},profile:[],candidates:[],
+  attainable_soc_05:{central:65,low_pv_high_load:60,high_pv_low_load:70},power_budget:{status:"empirical_shadow_candidate",reserve_a:[.3,.4,.5],power_factor:[.99,.99,.99]},horizon_complete:true,ev_deficit_ac_kwh:{central:22},assumptions:{},profile:[],candidates:[],
   priority_alternatives:{ev:{target_soc_pct:30,ev_deficit_ac_kwh:{central:22}},battery:{target_soc_pct:70,ev_deficit_ac_kwh:{central:28}}}
 }}},callService(){throw Error('Rendering must not call services');}};
 card.lastEntity={attributes:{at:new Date().toISOString(),actual:{inverter_run_mode:'Normal Mode',inverter_mode:'Back Up Mode'},
@@ -20,6 +20,10 @@ const panel=card.optimizerPanel({});
 assert.match(panel,/Částečný plán/);
 assert.match(panel,/22 kWh/);
 assert.match(panel,/Baterie první: cíl 70/);
+assert.match(panel,/Dosažitelné SOC/);
+assert.match(panel,/při vyšší spotřebě 60/);
+assert.match(panel,/Přípojka 3×25 A/);
+assert.match(panel,/0,3 \/ 0,4 \/ 0,5/);
 card.render();
 assert.match(card.shadowRoot.innerHTML,/sensor.solax_run_mode\]: Normal Mode/);
 assert.match(card.shadowRoot.innerHTML,/select.solax_charger_use_mode\]: Back Up Mode/);

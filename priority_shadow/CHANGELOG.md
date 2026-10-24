@@ -1,3 +1,10 @@
+# 0.6.4
+
+- Per-phase 25 A shadow budget calibrated from earlier measured night envelopes, with explicit data provenance, current checks and labeled fallback. No actuator or protection claim.
+- Retain economically useful requested targets even when an adverse scenario reaches a lower SOC; expose target, attainable SOC and shortfall separately through runtime and card.
+- Shared budget for planning and both priority replays; EV priority uses remaining room for battery charging without intentional EV reduction.
+- Read-only reconstruction records phase model peaks and limiting reasons. No changes to historical records or the original addon.
+
 # 0.6.3
 
 - Explicit partial-service planning when the desired EV target cannot fit in 03–05; no invented departure or minimum requirement.
