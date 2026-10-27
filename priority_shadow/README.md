@@ -1,3 +1,8 @@
+# 0.6.5 · okamžité využití fází
+
+Ekonomický cíl je poradní; stínová alokace využívá aktuální rezervu do 25 A.
+Viz [MAX_FILL_065.md](docs/MAX_FILL_065.md). Pouze observe_only.
+
 # Noční nabíjení · stínové priority 0.6.4
 
 Samostatný Home Assistant doplněk pro Raspberry Pi. Počítá návrhy SOC baterie

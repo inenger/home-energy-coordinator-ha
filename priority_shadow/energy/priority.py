@@ -141,6 +141,13 @@ def effective_session(store,day,at,points,require_soc_plan=False):
 
 
 def allocate(points,at,session,model_soc,priority):
+    if (session or {}).get("allocation_policy")=="instant-max-fill-v1":
+        from .instant_fill import allocate as instantaneous
+        return instantaneous(points,at,session,model_soc,priority)
+    return allocate_economic(points,at,session,model_soc,priority)
+
+
+def allocate_economic(points,at,session,model_soc,priority):
     """Replace actual EV, never add EV twice. Model ignores generation credit."""
     local=instant(at).astimezone(TZ)
     active=180<=local.hour*60+local.minute<300
@@ -303,9 +310,14 @@ def comparison_status(models):
 
 def comparison_context(session):
     if not session:return 'missing_forecast'
+    if session.get('allocation_policy')=='instant-max-fill-v1':return 'instant_max_fill_economic_target_advisory'
     if session.get('target_soc_pct') is None:
         return 'missing_forecast' if session.get('forecast_kwh') is None else 'invalid_soc_plan'
-    if session.get('soc_plan_status')=='partial_shadow_plan':return 'partial_ev_service'
+    if session.get('soc_plan_status')=='partial_shadow_plan':
+        if 'ev_deficit_ac_kwh' not in session:return 'partial_ev_service'  # legacy partial-EV schema
+        deficit=session.get('ev_deficit_ac_kwh') or 0
+        values=deficit.values() if isinstance(deficit,dict) else [deficit]
+        return 'partial_ev_service' if any(isinstance(v,(int,float)) and v>0 for v in values) else 'partial_battery_target'
     return 'battery_no_request' if session['target_soc_pct']==0 else 'battery_target_present'
 
 
@@ -324,7 +336,7 @@ def _get(store,table,day):
     return unpack(row[0]) if row else None
 
 
-def observe(store,states,at,require_soc_plan=False):
+def observe(store,states,at,require_soc_plan=False,allocation_policy=None):
     from . import automation_context
     schema(store.db)
     points=checked_points(states,at)
@@ -336,7 +348,10 @@ def observe(store,states,at,require_soc_plan=False):
     if not last or last.get('priority')!=choice:
         with store.db:store.db.execute('INSERT OR IGNORE INTO priority_events VALUES(?,?)',
             (at,pack({'at':at,'priority':choice,'raw_option':value(points,'priority'),'source':HELPER,'device_actions':0})))
-    session=effective_session(store,day,at,points,require_soc_plan) if active else None
+    if active and allocation_policy=='instant-max-fill-v1':
+        from .instant_fill import session as fill_session
+        session=fill_session(store,day,at,points)
+    else:session=effective_session(store,day,at,points,require_soc_plan) if active else None
     run=_get(store,'priority_runs',day) if active else None
     if active and run is None:
         soc=value(points,'battery_soc') if numeric(points,'battery_soc',10800) else None
@@ -358,6 +373,11 @@ def observe(store,states,at,require_soc_plan=False):
     if run and (session or {}).get('power_budget'):
         run['assumptions']={**run['assumptions'],'power_budget':session['power_budget'],
             'phase_limit_a':None,'power_factor':None,'legacy_fallback_phase_limit_a':22}
+    if run and allocation_policy=='instant-max-fill-v1':
+        run['assumptions']={**run['assumptions'],'allocation_policy':allocation_policy,
+            'phase_limit_a':25,'power_factor':None,'transient_margin_a':0,
+            'economic_target_is_advisory':True,'battery_energy_model':(session or {}).get('battery_energy_model')}
+        run['policy']=allocation_policy
     variants={}
     if run:
         if run.get('soc_initialized_at') is None and all(m['soc_pct'] is None for m in run['models'].values()) and numeric(points,'battery_soc',10800):
@@ -385,12 +405,17 @@ def observe(store,states,at,require_soc_plan=False):
             store.db.execute('INSERT OR IGNORE INTO priority_samples VALUES(?,?,?)',(at,day,pack(row)))
             store.db.execute('INSERT OR REPLACE INTO priority_runs VALUES(?,?)',(day,pack(run)))
     else:
-        variants={'selected':allocate(points,at,None,value(points,'battery_soc'),choice)}
+        variants={'selected':allocate(points,at,{'allocation_policy':'instant-max-fill-v1'} if allocation_policy=='instant-max-fill-v1' else None,value(points,'battery_soc'),choice)}
         row=None
     next_key='forecast_today' if minute<300 else 'forecast_tomorrow'
     next_f=value(points,next_key) if numeric(points,next_key,26*3600) and same_local_day(points[next_key],at) else None
     if not isinstance(next_f,(int,float)) or not 0<=next_f<100:next_f=None
     history=[unpack(r[0]) for r in store.db.execute('SELECT payload FROM priority_summaries ORDER BY day DESC LIMIT 14')]
+    if allocation_policy=='instant-max-fill-v1':
+        runtime_assumptions={**ASSUMPTIONS,'phase_limit_a':25,'breaker_a':25,'power_factor':None,'allocation_policy':allocation_policy,
+            'economic_target_is_advisory':True,'battery_capacity_source':'archived_energy_model',
+            'battery_usable_kwh':None,'transient_margin_a':0,'control_verified':False}
+    else:runtime_assumptions=None
     result={'at':at,'version':VERSION,'mode':'observe_only','device_actions':0,'priority':choice,
             'active':active,'collecting_window':night.window(at),'selected':variants['selected'],
             'alternatives':{k:v for k,v in variants.items() if k!='selected'},
@@ -399,12 +424,14 @@ def observe(store,states,at,require_soc_plan=False):
                       'main_breaker_limit_a','battery_out_today','battery_in_today')},
             'next_forecast_kwh':next_f,'next_target_soc_pct':night.target_for(next_f) if next_f is not None else None,
             'session':session,'progress':row,'history':history,'assumptions':{**(run.get('assumptions',ASSUMPTIONS) if run else ASSUMPTIONS),'power_budget':(session or {}).get('power_budget'),'legacy_phase_limit_a':22,'phase_limit_a':None if (session or {}).get('power_budget') else 22},
+            'allocation_policy':allocation_policy,
             'readiness':['phase_current_available_pending_ev_load_validation','actuator_response_not_verified','no_actuator_adapter'],
             'ev_parameters_status':'future_soc_and_deadline_not_estimated',
             'comparison_status':comparison_status(row['models']) if row else 'waiting_for_night',
             'comparison_context':comparison_context(session),
             'automation_context':automation_context.snapshot(states,at),
             'note':'Alternatives replay measured EV demand. Reallocated EV kWh are not proven unmet departure energy. See battery model provenance; no measured savings.'}
+    if runtime_assumptions:result['assumptions']=runtime_assumptions
     return result
 
 
