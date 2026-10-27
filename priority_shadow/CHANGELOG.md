@@ -1,3 +1,8 @@
+# 0.6.5 · okamžité využití fází
+
+Ekonomický cíl je poradní; stínová alokace využívá aktuální rezervu do 25 A.
+Viz [MAX_FILL_065.md](docs/MAX_FILL_065.md). Pouze observe_only.
+
 # 0.6.4
 
 - Per-phase 25 A shadow budget calibrated from earlier measured night envelopes, with explicit data provenance, current checks and labeled fallback. No actuator or protection claim.

@@ -54,7 +54,7 @@ def main():
                 optimizer=planner.observe(store,states,at,client)
                 if night.window(at):night.record(store,states,at)
                 for day in priority.closed_days(store,at):priority.finish(store,day)
-                result=priority.observe(store,states,at,require_soc_plan=True)
+                result=priority.observe(store,states,at,require_soc_plan=True,allocation_policy="instant-max-fill-v1")
                 result['soc_optimizer']=optimizer
                 priority_audit.journal(store,result)
                 if time.monotonic()>=next_day_audit:

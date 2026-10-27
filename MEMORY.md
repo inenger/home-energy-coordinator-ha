@@ -183,3 +183,20 @@ Při této práci ověřeno: runtime lokálního shadow stále 0.6.2, původní
 doplněk 0.5.3; žádná aktualizace, restart ani změna starých automatizací.
 Publikaci 0.6.4 ověřit samostatně na GitHubu a CI; tato poznámka sama
 neznamená merge ani nasazení.
+
+
+## 0.6.5 · okamžitá stínová alokace
+Implementováno oddělení okamžitého max-fill od ekonomického SOC, explicitní
+mapování proudů a kalendářní audit opožděného DST resetu. Viz
+priority_shadow/docs/MAX_FILL_065.md. Starší relace se nepřepisují.
+Testy ani merge nedokazují fyzickou odezvu; nasazení a CI ověřovat zvlášť.
+Soukromé podklady zůstávají mimo veřejný checkout na RPi.
+
+
+Stav dodávky 0.6.5: nasazení lokálního shadow na RPi bylo ověřeno přes
+Supervisor a čerstvé monitory; režim observe_only, bez akčního adaptéru.
+325 syntetických testů, metadata a renderer karty prošly. Původní koordinátor
+a provozní automatizace zůstaly beze změny; stará noční evidence zachována.
+Uživatel výslovně schválil veřejnou publikaci kódu a obecné projektové paměti.
+Soukromé měřené řady a reporty nejsou součástí publikace. GitHub CI a merge
+ověřovat samostatně; další provozní změna není součástí publikace.

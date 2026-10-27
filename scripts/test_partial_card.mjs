@@ -23,9 +23,16 @@ assert.match(panel,/Baterie první: cíl 70/);
 assert.match(panel,/Dosažitelné SOC/);
 assert.match(panel,/při vyšší spotřebě 60/);
 assert.match(panel,/Přípojka 3×25 A/);
-assert.match(panel,/0,3 \/ 0,4 \/ 0,5/);
+assert.match(panel,/0[,.]3 \/ 0[,.]4 \/ 0[,.]5/);
 card.render();
 assert.match(card.shadowRoot.innerHTML,/sensor.solax_run_mode\]: Normal Mode/);
 assert.match(card.shadowRoot.innerHTML,/select.solax_charger_use_mode\]: Back Up Mode/);
 assert.match(card.shadowRoot.innerHTML,/Nelze vyhodnotit/);
 console.log('PASS: partial demand, distinct inverter states, unknown model coverage, no services');
+
+card.lastEntity.attributes.allocation_policy='instant-max-fill-v1';
+card.render();
+assert.match(card.shadowRoot.innerHTML,/Strop stínového dobíjení/);
+assert.match(card.shadowRoot.innerHTML,/ekonomický cíl je poradní/);
+assert.match(card.shadowRoot.innerHTML,/Odstup.*25 A/);
+console.log('PASS: instant max-fill is separate from economic target');

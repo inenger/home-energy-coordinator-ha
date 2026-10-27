@@ -14,7 +14,7 @@ HISTORY_IDS={
  'soc':'sensor.solax_battery_capacity',
  'forecast':'sensor.solcast_pv_forecast_forecast_today',
 }
-EVALUATION_VERSION='day-audit-v3'
+EVALUATION_VERSION='day-audit-v4-calendar-reset'
 JOURNAL_VERSION='intent-v2'
 RULES=[{'min_kwh':0,'max_kwh':5,'target_soc_pct':90},
        {'min_kwh':5,'max_kwh':10,'target_soc_pct':80},
@@ -113,7 +113,21 @@ def daily_counter(rows,start):
     early=[r for r in rows if r[0]<=start+timedelta(minutes=30) and r[1]==0]
     decreases=[b for a,b in zip(rows,rows[1:]) if b[0]<=start+timedelta(minutes=30) and a[1] is not None and b[1] is not None and 0<=b[1]<=.2 and b[1]<a[1]-.001]
     if len(decreases)>1:return None,'multiple_midnight_resets'
-    if not early and not decreases:return None,'reset_not_observed'
+    if not early and not decreases:
+        # A fall-back day can expose the device's new UTC offset at 01:00.
+        # Preserve the calendar boundary by including the pre-reset increment.
+        offset=(start.utcoffset()-(start+timedelta(days=1)).utcoffset()).total_seconds()
+        if offset==3600 and rows and rows[0][0]<=start+timedelta(minutes=2):
+            resets=[(a,b) for a,b in zip(rows,rows[1:]) if a[1] is not None and b[1] is not None and 0<=b[1]<=.2 and b[1]<a[1]-.001]
+            if len(resets)==1:
+                before,after=resets[0]
+                if (start+timedelta(minutes=50)<=after[0]<=start+timedelta(minutes=70)
+                    and all(v is not None for t,v in rows if t<=after[0])
+                    and rows[0][1] is not None and before[1]>=rows[0][1]):
+                    tail=[v for t,v in rows if t>=after[0] and v is not None]
+                    if tail and all(b>=a for a,b in zip(tail,tail[1:])):
+                        return before[1]-rows[0][1]+tail[-1], 'calendar_sum_across_DST_reset_counter_quantized'
+        return None,'reset_not_observed'
     reset=(decreases[-1] if decreases else early[0])[0];valid=[r for r in rows if r[0]>=reset]
     if not valid or valid[-1][1] is None:return None,'unavailable_at_end'
     prev=None
@@ -139,7 +153,7 @@ def evaluate_day(day,histories,at,session=None):
                           and 0<=session['forecast_kwh']<100)
         except (KeyError,ValueError,TypeError):pass
     result={'day':day,'calculated_at':at,'source':'HA recorder history','source_hash':digest(histories),
-            'software_version':VERSION,'device_actions':0,'quality':{},'linked_shadow_night':frozen_valid,'has_shadow_session':bool(session),
+            'software_version':VERSION,'device_actions':0,'quality':{},'counter_boundaries':{},'linked_shadow_night':frozen_valid,'has_shadow_session':bool(session),
             'forecast_source':'frozen_shadow_session' if frozen_valid else 'not_archived_at_shadow_decision',
             'forecast_frozen_kwh':session.get('forecast_kwh') if frozen_valid else None,
             'forecast_captured_at':session.get('captured_at') if frozen_valid else None,
@@ -147,7 +161,11 @@ def evaluate_day(day,histories,at,session=None):
     for k in ('export_kwh','import_kwh','pv_kwh','battery_in_kwh'):
         series=by.get(HISTORY_IDS[k],[]);unit=series[0].get('attributes',{}).get('unit_of_measurement') if series else None
         if unit!='kWh' or any(r.get('attributes',{}).get('unit_of_measurement','kWh')!='kWh' for r in series):result[k]=None;result['quality'][k]='missing_or_mismatched_unit'
-        else:result[k],result['quality'][k]=daily_counter(rows[k],start)
+        else:
+            result[k],result['quality'][k]=daily_counter(rows[k],start)
+            drops=[b[0].isoformat() for a,b in zip(rows[k],rows[k][1:]) if a[1] is not None and b[1] is not None and b[1]<a[1]-.001]
+            result['counter_boundaries'][k]={'calendar_start':start.isoformat(),'calendar_end':end.isoformat(),
+                'observed_resets':drops,'quantization_and_boundary_gaps_not_exact_energy':True}
     soc_series=by.get(HISTORY_IDS['soc'],[])
     if (not soc_series or soc_series[0].get('attributes',{}).get('unit_of_measurement')!='%'
             or any(r.get('attributes',{}).get('unit_of_measurement','%')!='%' for r in soc_series)):rows['soc']=[]

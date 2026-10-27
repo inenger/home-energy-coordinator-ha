@@ -59,3 +59,10 @@ náklady. `tests/test_phase_064.py` ověřuje časovou kauzalitu, chybějící
 a rozporné proudy, rezervy, nejslabší fázi, zbytek výkonu po EV, zachování
 cíle s deficitem, průchod do view a letní vynechání nabíjení. Renderer
 ověřuje rozdíl cíl/výsledek i zobrazení fázových rezerv.
+
+
+## 0.6.5
+- Ekonomické odmítnutí neblokuje alokaci: test_full_observer_path_without_soc_plan.
+- Proudové vstupy, slabá fáze, minimum EV, DC/AC limity a bilance: test_instant_fill.
+- Opožděný DST reset: test_calendar_reset_preserves_prefix a test_sparse_night_counters_dst.
+- Oddělení deficitů a kvantování: test_deficit_dictionary a test_rounding_regression.

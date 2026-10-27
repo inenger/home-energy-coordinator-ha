@@ -16,6 +16,7 @@ def fallback():
 
 def checked(context):
     c = context or fallback()
+    if c.get('status')=='observed_steps_exceed_budget':raise ValueError('OBSERVED_PHASE_BUDGET_BLOCKED')
     for key in ('reserve_a', 'power_factor', 'house_phase_shares'):
         values = c.get(key)
         if not isinstance(values, list) or len(values) != 3 or not all(valid(v) for v in values):
@@ -52,12 +53,12 @@ def estimate(samples, at):
         values=[]
         for i in (1,2,3):
             u,g,inv,ev,a=[num(k) for k in (f'grid_voltage_l{i}_v',f'grid_l{i}_w',f'inverter_l{i}_w',f'ev_l{i}_w',f'grid_l{i}_a')]
-            if any(v is None for v in (u,g,inv,ev,a)) or not 180<u<260 or ev<0 or not 0<=abs(a)<=100 or abs(inv)>200:
+            if any(v is None for v in (u,g,inv,ev,a)) or not 180<u<260 or ev<0 or not 0<=abs(a)<=100:
                 break
             base=inv-g-ev
             if base < -100:break
             ratio=abs(g)/(u*abs(a)) if abs(a)>=5 else None
-            if ratio is not None and not .5<=ratio<=1.05:break
+            if ratio is not None and (abs(inv)>200 or not .5<=ratio<=1.05):ratio=None
             values.append((max(0.,base),u,ratio))
         if len(values)!=3:previous=None;continue
         for i,(base,u,pf) in enumerate(values):
@@ -75,7 +76,7 @@ def estimate(samples, at):
     pf=[min(x) for x in ratios]
     reserve=[math.ceil((max(s)/f+.1)*10)/10 for s,f in zip(steps,pf)]
     if any(r>=25 for r in reserve):
-        return {**fallback(),'status':'observed_steps_exceed_budget','available_at':at,'source_hash':digest(evidence)}
+        return {**fallback(),'status':'observed_steps_exceed_budget','reserve_a':reserve,'available_at':at,'source_hash':digest(evidence),'blocking':True}
     return checked({'policy':POLICY,'status':'empirical_shadow_candidate','breaker_a':25.,
         'reserve_a':reserve,'power_factor':pf,'house_phase_shares':[v/sum(energy) for v in energy],
         'available_at':at,'source_start':evidence[0]['at'],'source_end':evidence[-1]['at'],
