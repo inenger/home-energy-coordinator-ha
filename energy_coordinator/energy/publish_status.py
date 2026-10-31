@@ -3,6 +3,7 @@ import json
 import urllib.request
 from .collector import DATA, NoRedirect, settings, read_token
 from .core import VERSION
+from .monitor_payload import bounded,encoded
 
 IDS=(
 'sensor.energie_v3_sber_stav','sensor.energie_v3_posledni_sber','sensor.energie_v3_pocet_vzorku',
@@ -21,7 +22,7 @@ def request(entity_id,payload,base,token):
     if entity_id not in IDS:raise ValueError('Only exact monitoring IDs are allowed')
     if set(payload)-{'state','attributes'}:raise ValueError('Invalid payload')
     return urllib.request.Request(base.rstrip('/')+'/api/states/'+entity_id,
-        data=json.dumps(payload,ensure_ascii=False,allow_nan=False).encode(),method='POST',
+        data=encoded({**payload,'attributes':bounded(payload.get('attributes',{}))}),method='POST',
         headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'})
 
 def _load(name):
@@ -65,7 +66,7 @@ def main():
       (IDS[17],'Energetické anomálie',len(a.get('anomalies') or []),{})
     ]
     environment=a.get('environment') or {};weather=a.get('weather') or {};quality=environment.get('quality') or {}
-    temps=[{k:p.get(k) for k in ('entity_id','label','value','unit','quality','role','zone','area_name')} for p in environment.get('points',[]) if p.get('quantity')=='temperature']
+    temps=[{k:p[k] for k in ('entity_id','label','value','unit','quality','role','zone','area_name')if p.get(k)is not None} for p in environment.get('points',[]) if p.get('quantity')=='temperature']
     rows.extend([
         (IDS[18],'Telemetrie — počet čidel',quality.get('count','unknown'),{'counts_by_quantity':environment.get('counts_by_quantity',{}),'observed_at':environment.get('observed_at')}),
         (IDS[19],'Teploty — počet čidel',len(temps),{'sensors':temps}),

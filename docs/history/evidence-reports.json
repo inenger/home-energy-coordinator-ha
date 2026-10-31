@@ -1,0 +1,150 @@
+{
+  "recorded_on": "2026-10-31",
+  "scope": "All direct recovery-directory REPORT markdown files found at publication. Hash references are not off-site backups of private contents.",
+  "reports": [
+    {
+      "path": "audit-0612-2026-10-30/REPORT.md",
+      "sha256": "ff192d01df3c4912aa9434eefa5c3af646efc17b61d5923cc634326a5b27bb84",
+      "bytes": 7332,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "audit-0613-2026-10-30/REPORT.md",
+      "sha256": "8e9a57477e362ec9d63301ff0365522c739c3a9c27f2e3a24482979bb30987a4",
+      "bytes": 11803,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "audit-069-2026-10-29/REPORT.md",
+      "sha256": "1504daff6b2c45d167a41f4377a68fd5df8c4fe5c8b0fcf0ae62842e69201c52",
+      "bytes": 3994,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "audit-night-2026-10-30/REPORT.md",
+      "sha256": "d6d9c9a08cd2865420cae8f4e89b7e46f8868cda1a00f321e078a93ea073d3ac",
+      "bytes": 8682,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "control-067/REPORT.md",
+      "sha256": "f243c95364a85879c9b7a9e85902337d9c9b825dda12212f1a23d7cc2c4cd80b",
+      "bytes": 2306,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "deep-audit-068-2026-10-29/REPORT.md",
+      "sha256": "692bf17a648649606ebbdf59a25a65953809955a896e697660daaf21cc799857",
+      "bytes": 14717,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "fix-0610/REPORT.md",
+      "sha256": "0384cef125e663bfb7769b6f7eff1f586920bcfd3ba3a007dcf9c20db6cbf78f",
+      "bytes": 1405,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "fix-0611/REPORT.md",
+      "sha256": "3e61a4d0afaea5b12c7fdc154a4ad0f27f97a2517a3ba3053bf4dddb0341cd79",
+      "bytes": 2857,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "fix-0612/REPORT.md",
+      "sha256": "b24c685b6a605c3da94a8b1c0b4c4cc7cafa886f6ff7a2a65e28a9de8490dd10",
+      "bytes": 3831,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "fix-0613/REPORT.md",
+      "sha256": "4626fe9245a9a93b9f86c1ab61690caf9bfd042886a14a77fcf35d41081bebba",
+      "bytes": 4044,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "fix-0614/REPORT.md",
+      "sha256": "b34cf73990c1744150dc6b8e230a160669a52c9f13ef891a0068a2cc991ac538",
+      "bytes": 3607,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "fix-0615/REPORT.md",
+      "sha256": "79091cf16a1a341e3367245a26cd73d2d1bc74516937710f2632bbb75ce9fd72",
+      "bytes": 2778,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "fix-069/REPORT.md",
+      "sha256": "807976f76f74db4945b2d8e3a41040a0bd082f1138cea118a76a4f13a0cb45f6",
+      "bytes": 4458,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "fix-ui-0612-r1/REPORT.md",
+      "sha256": "f0931effa5c90c99f0f64b6e5492645de9d99ccdb8aefe69c7f0773a74ab9e21",
+      "bytes": 2964,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "journal-audit-2026-10-29/REPORT.md",
+      "sha256": "aa9f2e12d9d8a7e279cbc43078f53466c0bfa4f579f03e193ae8da1fc427612c",
+      "bytes": 2399,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "journal-backfill-2026-10-29/REPORT.md",
+      "sha256": "2a4a6bbcf332d86c1673428e35487cd0eef6f49366f009c28c1bfdeff0d55323",
+      "bytes": 1612,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "journal-ram-replay-2026-10-29/REPORT.md",
+      "sha256": "a67fd67389c98772c6d262a1c65708a6ec8807c9dde7d927e4b77327c6fdd31f",
+      "bytes": 2530,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "max-fill-065/REPORT.md",
+      "sha256": "d5b9f9d1960b85b51ee9452b101b32fcbbacca627fec6c43d4d47e6a7585cd51",
+      "bytes": 1254,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "night-analysis-2026-10-24/REPORT-original-before-run-mode-correction.md",
+      "sha256": "74db69aa502430479797013b0a519c02ef46d43f5414f855308563ebeb65f544",
+      "bytes": 4890,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "night-analysis-2026-10-24/REPORT.md",
+      "sha256": "8b825aba1221ed1b63ab026b233695482de514929afb9b467d899489f1d84b41",
+      "bytes": 5485,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "ram-control-068/REPORT.md",
+      "sha256": "e434d2f3c83a891d98c4bff64b5a1d1316c7f360c1fd1c9d17adcc03a994324c",
+      "bytes": 1824,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "reconstruct-2026-10-30-0611/REPORT.md",
+      "sha256": "cf4c10e58f17d3f823fd39ac0dfec1a8eb727944f1db005a865728fedc534c09",
+      "bytes": 2579,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "summary-066/REPORT.md",
+      "sha256": "d66068df458f8052e75de504b7bf05036437af6e2b4cc00b2e441a76b7cb647d",
+      "bytes": 1827,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    },
+    {
+      "path": "update-2026-10-31/REPORT.md",
+      "sha256": "f307cd514aa20abf952095ef39077c08e6b78741a1d7cc363711336fe9e85b71",
+      "bytes": 1194,
+      "availability": "RPi original; public technical account in DEVELOPMENT_HISTORY.md and version documentation"
+    }
+  ]
+}

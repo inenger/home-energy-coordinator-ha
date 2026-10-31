@@ -1,0 +1,27 @@
+83ef3f6af8929d1c22a077017296c251440bec79 Keep priority collection running across incomplete night summaries
+622d95262223f5f2030a9e41ae33d93575a6bcdc Journal the complete shadow control session and conditional restoration
+2a447c0af419018bedc5e8ca9f6f98b0c159dd37 Display explicitly labeled retrospective control journal archives
+e73c0774654b3f141112c9377d8a69230ee38d07 Clarify inverter operating status and inconsistent phase evidence in journal
+f7fa72c89edb3afcc94fe5e44749638715c11d95 Add EEPROM-free logical power shadow and isolated five-second control loop
+11835fb8fb1960662d9f843b5b6b2f8bbef3a1a2 fix(ui): label reconstructed journals with their source version
+68b03ad2c6d4f9cc3296277963c06874cdc5cf41 docs: record unresolved 0.6.8 deep audit findings
+2f7fa82eae3379c6ba50ba51992756dfaf47e06c Fix audit findings with recorder-confirmed journal and fail-closed frame gates
+56d979bc957f19815e80a55ca5509bec795b62f8 docs: record verified local 0.6.9 deployment and recorder evidence
+ba01890ae3babeca782c0d2bbc56ccd33e4e403d docs: record follow-up audit counterexamples for 0.6.9
+304d4c37ac5fc8aae3b0160563d0211b992ddcc8 Fix HTTP journal integrity, clock recovery and JSON duplicate comparison
+07fe88c7ff3cb4ce3255474d557a11122c940d9a Record verified local 0.6.10 deployment and validation limits
+615371933e5cb8029c1ed14b2c470eeab9a8b806 Record read-only audit of first 0.6.10 night and uncorrected findings
+ed75f65a1267863cbf86765e0a73500b877f7b83 Fix coherent HA snapshots, SQLite sidecars, controller summary and bounded legacy telemetry
+85a03b78c631dd81201456eb4f5e0b898865f283 Record verified RPi 0.6.11 and complete 0.5.4 observer migration
+805f363f84a3d88d494a49242e54020f7fecbc9a Support isolated reconstruction and original live journal for the same night
+76f7dd911cf25f2f18be24e4abae13b8756c6441 Renew held shadow power within original report validity bounds
+1494f78ce077613dbd9891656a076aa9064c5374 Preserve card scroll and focus and bound journal rendering
+95fef6f5644742516016da40ebc3c1826edab6a9 Record six confirmed deep audit findings with end-to-end counterexamples
+b99ccd50686a5026d383bba929750eba91b6ed46 Fix deep audit findings across monitoring, receipt recovery, ownership and UI integrity
+3881a8b98b051f33b0176ff197eb263efdc872f2 Document independent 0.6.13 audit counterexamples without runtime changes
+4110800df68879407953f4e9db9e5686014c3f83 Fix independent audit findings in time accounting, handoff recovery and journal responsiveness
+cfd8f6a4db6c2a23e05f9deefcf9fceb879d185b Record verified local 0.6.14 deployment and evidence limits
+6d4128199a96dcc6ab788d71eb9b0841abaf5ecd Handle low power-to-current ratios conservatively and isolate network input collection
+8f0e1604c2733bb2414a6c6499aada3a79880998 Prevent polling alias with original five-second HA report cohorts
+7afc43c467c522608ae3d71c2d45b31dcd52f419 Bound control database contention and persist original pending failure times
+519f58c10efc95cef335e00350ef373fa75dee8c Record verified 0.6.15 deployment and exact validation limits

@@ -30,3 +30,7 @@ jobs:
           python -m unittest discover -s tests -q
           node --check dashboard/night-priority-card.js
           node ../scripts/test_partial_card.mjs
+          node ../scripts/test_same_day_reconstruction.mjs
+          node ../scripts/test_card_updates.mjs
+          node ../scripts/test_deep_fixes_0613.mjs
+          node ../scripts/test_independent_fixes_0614.mjs

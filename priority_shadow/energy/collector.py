@@ -62,29 +62,40 @@ class ReadOnlyHA:
         return rows
 
     def priority_states(self):
-        """Read the live HA State objects, bypassing cached REST serialization.
+        """Rychlé hodnoty a jejich metadata z jediného živého HA snímku.
 
-        HA may retain an older serialized last_reported for unchanged states.
-        Read scalar state/report times directly. Join REST attributes only when
-        state and last_updated match, so a racing change is rejected. Some
-        forecast attributes contain datetime objects a template cannot serialize.
-        A successful query never renews an entity's report timestamp itself.
+        REST je potřeba jen pro komplexní prognózy. Jejich souběžnou změnu
+        zkusíme znovu; při neúspěchu ji explicitně označíme a nearchivujeme.
+        Čtení nikdy nevytváří nový čas hlášení zařízení.
         """
-        from . import night, priority, automation_context, soc_runtime
+        from . import night,priority,automation_context,soc_runtime,control_journal,ram_control
         all_states=self.get('/api/states')
-        weather_ids={s['entity_id'] for s in all_states if s['entity_id'].startswith('weather.')}
-        ids=sorted(set(night.IDS.values()) | set(priority.EXTRA.values()) | set(automation_context.ENTITY_IDS) | set(soc_runtime.IDS.values()) | weather_ids)
-        rest={s['entity_id']:s for s in all_states if s['entity_id'] in ids}
-        template="{% set ids = "+json.dumps(ids)+" %}{% set ns=namespace(rows=[]) %}{% for e in ids %}{% set s=states[e] %}{% if s is not none and s is defined %}{% set ns.rows=ns.rows+[dict(entity_id=e,state=s.state,last_reported=s.last_reported.isoformat(),last_updated=s.last_updated.isoformat(),last_changed=s.last_changed.isoformat(),report_source='ha_live_state_template')] %}{% endif %}{% endfor %}{{ ns.rows | to_json }}"
-        rows=json.loads(self._query('/api/template',{'template':template},text=True))
-        if (not isinstance(rows,list) or any(not isinstance(r,dict) or r.get('entity_id') not in ids
-                or r.get('report_source')!='ha_live_state_template'
-                or not all(k in r for k in ('state','last_reported','last_updated')) for r in rows)
-                or len({r['entity_id'] for r in rows})!=len(rows)):
-            raise ValueError('Invalid live priority snapshot')
-        return [{**rest[r['entity_id']],**r} for r in rows if r['entity_id'] in rest
-                and r['state']==rest[r['entity_id']]['state']
-                and r['last_updated']==rest[r['entity_id']].get('last_updated')]
+        weather_ids={s['entity_id']for s in all_states if s['entity_id'].startswith('weather.')}
+        ids=sorted(set(night.IDS.values())|set(priority.EXTRA.values())|set(automation_context.ENTITY_IDS)|set(soc_runtime.IDS.values())|set(control_journal.ENTITY_IDS)|set(ram_control.ENTITY_IDS)|weather_ids)
+        complex_ids=weather_ids|{night.IDS['forecast_today'],priority.EXTRA['forecast_tomorrow'],soc_runtime.IDS['forecast_day3'],soc_runtime.IDS['tariff']}
+        fields=('unit_of_measurement','friendly_name','min','max','step','options')
+        attrs=','.join(k+"=s.attributes.get('"+k+"')"for k in fields)
+        template="{% set ids = "+json.dumps(ids)+" %}{% set ns=namespace(rows=[]) %}{% for e in ids %}{% set s=states[e] %}{% if s is not none and s is defined %}{% set ns.rows=ns.rows+[dict(entity_id=e,state=s.state,attributes=dict("+attrs+"),context=dict(id=s.context.id,parent_id=s.context.parent_id,user_id=s.context.user_id),last_reported=s.last_reported.isoformat(),last_updated=s.last_updated.isoformat(),last_changed=s.last_changed.isoformat(),report_source='ha_live_state_template')] %}{% endif %}{% endfor %}{{ ns.rows | to_json }}"
+        for attempt in range(2):
+            rest={s['entity_id']:s for s in all_states if s['entity_id']in complex_ids}
+            rows=json.loads(self._query('/api/template',{'template':template},text=True))
+            if (not isinstance(rows,list)or any(not isinstance(row,dict)or row.get('entity_id')not in ids
+                    or row.get('report_source')!='ha_live_state_template'
+                    or not all(k in row for k in ('state','last_reported','last_updated'))
+                    or not isinstance(row.get('attributes'),dict)or not isinstance(row.get('context'),dict)for row in rows)
+                    or len({row['entity_id']for row in rows})!=len(rows)):
+                raise ValueError('Invalid live priority snapshot')
+            out=[];races=[]
+            for row in rows:
+                eid=row['entity_id'];row={**row,'attributes':{k:v for k,v in row['attributes'].items()if v is not None}}
+                if eid in complex_ids:
+                    old=rest.get(eid)
+                    if old and old['state']==row['state']and old.get('last_updated')==row['last_updated']:
+                        row={**row,'attributes':old.get('attributes',{})}
+                    else:row={**row,'snapshot_error':'snapshot_race'};races.append(eid)
+                out.append(row)
+            if not races or attempt:return out
+            all_states=self.get('/api/states')
 
     def _query(self, path, payload, text=False):
         req=urllib.request.Request(self.base+path,data=json.dumps(payload).encode(),method='POST',
@@ -151,7 +162,8 @@ def settings():
 def storage_check(cfg):
     data = DATA
     data.mkdir(mode=0o700,exist_ok=True)
-    used=sum(p.stat().st_size for p in data.glob('evidence.sqlite*') if p.is_file())
+    from .storage import sqlite_bytes
+    used=sqlite_bytes(data,required=(data/'status.json').exists())
     if used >= cfg['storage_limit_bytes']:
         raise RuntimeError('STORAGE_BUDGET_EXCEEDED_NO_DATA_DELETED')
     if shutil.disk_usage(data).free < cfg['minimum_free_bytes']:

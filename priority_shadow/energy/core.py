@@ -6,7 +6,7 @@ import math
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-VERSION = '0.6.5'
+VERSION = '0.6.15'
 TZ = ZoneInfo('Europe/Prague')
 BAD_STATES = {'unknown', 'unavailable', 'none', ''}
 
@@ -86,6 +86,7 @@ def forecast_payloads(states):
     byid = {s['entity_id']: s for s in states}
     polled = byid.get('sensor.solcast_pv_forecast_api_last_polled', {}).get('state')
     for eid, s in byid.items():
+        if s.get('snapshot_error'):continue
         a = s.get('attributes', {})
         if eid in ('sensor.cez_indi_cenik', 'sensor.current_sell_electricity_price'):
             if eid == 'sensor.cez_indi_cenik':

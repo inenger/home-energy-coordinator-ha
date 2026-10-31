@@ -34,7 +34,8 @@ def schema(db):
     CREATE TABLE IF NOT EXISTS priority_samples(at TEXT PRIMARY KEY,day TEXT NOT NULL,payload BLOB NOT NULL);
     CREATE INDEX IF NOT EXISTS priority_samples_day ON priority_samples(day,at);
     CREATE TABLE IF NOT EXISTS priority_summaries(day TEXT PRIMARY KEY,payload BLOB NOT NULL);
-    CREATE TABLE IF NOT EXISTS priority_events(at TEXT PRIMARY KEY,payload BLOB NOT NULL);''')
+    CREATE TABLE IF NOT EXISTS priority_events(at TEXT PRIMARY KEY,payload BLOB NOT NULL);
+    CREATE TABLE IF NOT EXISTS priority_summary_revisions(day TEXT NOT NULL,version TEXT NOT NULL,payload BLOB NOT NULL,PRIMARY KEY(day,version));''')
 
 
 def value(points,key):
@@ -60,7 +61,7 @@ def checked_points(states,at):
     for key,eid in {**night.IDS,**EXTRA}.items():
         state=by.get(eid);p=night.point(state,at);unit=(state or {}).get('attributes',{}).get('unit_of_measurement');wanted=expected_unit(key)
         p.update(unit=unit,entity_id=eid)
-        if wanted and unit!=wanted:
+        if wanted and unit!=wanted and p['quality'] not in ('missing','unknown','unavailable','snapshot_race'):
             p['quality']='unit_mismatch';p['expected_unit']=wanted
         elif wanted and p['quality']=='text':p['quality']='invalid_numeric'
         if p['quality']=='valid':
@@ -378,8 +379,22 @@ def observe(store,states,at,require_soc_plan=False,allocation_policy=None):
             'phase_limit_a':25,'power_factor':None,'transient_margin_a':0,
             'economic_target_is_advisory':True,'battery_energy_model':(session or {}).get('battery_energy_model')}
         run['policy']=allocation_policy
-    variants={}
+    variants={};temporal_status=None
     if run:
+        # Unikátní SQL řádek sám nestačí: stejný čas nesmí změnit ani model/čítač.
+        watermark=run.get('last_processed_at') or (run.get('previous') or {}).get('at')
+        latest=store.db.execute('SELECT at FROM priority_samples ORDER BY at DESC LIMIT 1').fetchone()
+        if latest and (not watermark or instant(latest[0])>instant(watermark)):watermark=latest[0]
+        if watermark and instant(at)<instant(watermark):
+            temporal_status='clock_rollback'
+            if run.get('previous') and not store.db.execute('SELECT 1 FROM priority_summaries WHERE day=?',(day,)).fetchone():
+                run.update(previous=None,clock_recovery_after=watermark,last_processed_at=watermark)
+                with store.db:store.db.execute('INSERT OR REPLACE INTO priority_runs VALUES(?,?)',(day,pack(run)))
+        elif watermark and instant(at)<=instant(watermark):temporal_status='duplicate_observation'
+        elif store.db.execute('SELECT 1 FROM priority_samples WHERE at=?',(at,)).fetchone():temporal_status='duplicate_observation'
+    if run and not temporal_status:
+        if run.get('clock_recovery_after'):
+            run['gap_s']+=max(0,(instant(at)-instant(run['clock_recovery_after'])).total_seconds())
         if run.get('soc_initialized_at') is None and all(m['soc_pct'] is None for m in run['models'].values()) and numeric(points,'battery_soc',10800):
             for m in run['models'].values():m['soc_pct']=value(points,'battery_soc')
             run['soc_initialized_at']=at
@@ -401,9 +416,17 @@ def observe(store,states,at,require_soc_plan=False,allocation_policy=None):
              'models':{k:dict(m) for k,m in run['models'].items()},'soc_initialized_at':run.get('soc_initialized_at'),'observed_ev_kwh_ac':run['observed_ev_kwh_ac'],
              'observed_covered_s':run['observed_covered_s'],'gap_s':run['gap_s']}
         run['previous']={k:row[k] for k in ('at','variants','actual_ev_w')}
+        run['last_processed_at']=at;run.pop('clock_recovery_after',None)
         with store.db:
             store.db.execute('INSERT OR IGNORE INTO priority_samples VALUES(?,?,?)',(at,day,pack(row)))
             store.db.execute('INSERT OR REPLACE INTO priority_runs VALUES(?,?)',(day,pack(run)))
+    elif run:
+        prior=store.db.execute('SELECT payload FROM priority_samples WHERE day=? ORDER BY at DESC LIMIT 1',(day,)).fetchone()
+        row=unpack(prior[0]) if prior else {'day':day,'models':run['models']}
+        row={**row,'models':{k:dict(m)for k,m in run['models'].items()},'temporal_status':temporal_status,'models_as_of':watermark}
+        if temporal_status=='duplicate_observation' and prior:variants=row['variants']
+        else:
+            variants={k:{'reason':'clock_rollback','ev_ac_w':None,'battery_ac_w':None,'grid_model_w':None,'device_actions':0}for k in ('ev','battery','selected')}
     else:
         variants={'selected':allocate(points,at,{'allocation_policy':'instant-max-fill-v1'} if allocation_policy=='instant-max-fill-v1' else None,value(points,'battery_soc'),choice)}
         row=None
@@ -435,6 +458,23 @@ def observe(store,states,at,require_soc_plan=False,allocation_policy=None):
     return result
 
 
+SUMMARY_VERSION='night-summary-v2-phase-ids'
+
+def phase_statistics(rows):
+    """Neúplný seznam není pořadí L1–L3; každou fázi identifikuje její ID."""
+    values={i:[] for i in (1,2,3)}
+    for row in rows:
+        phases=row.get('variants',{}).get('selected',{}).get('phase') or []
+        for i in values:
+            matches=[p for p in phases if isinstance(p,dict) and type(p.get('phase')) is int and p['phase']==i]
+            # Dvojznačné nebo chybějící měření nepřevádíme na nulu.
+            if len(matches)!=1:continue
+            amps=matches[0].get('grid_current_a')
+            if isinstance(amps,(int,float)) and not isinstance(amps,bool) and math.isfinite(amps):
+                values[i].append(abs(amps))
+    return ({f'L{i}':max(v) if v else None for i,v in values.items()},
+            {f'L{i}':len(v) for i,v in values.items()})
+
 def finish(store,day):
     schema(store.db)
     if _get(store,'priority_summaries',day):return _get(store,'priority_summaries',day)
@@ -442,15 +482,15 @@ def finish(store,day):
     if not run:return None
     rows=[unpack(r[0]) for r in store.db.execute('SELECT payload FROM priority_samples WHERE day=? ORDER BY at',(day,))]
     if not rows:return None
-    last=rows[-1];prev=run['previous'];end=instant(f'{day}T05:00:00'+instant(last['at']).astimezone(TZ).strftime('%z'))
-    dt=(end-instant(prev['at'])).total_seconds()
+    last=rows[-1];prev=run.get('previous');end=instant(f'{day}T05:00:00'+instant(last['at']).astimezone(TZ).strftime('%z'))
+    dt=(end-instant(prev['at'])).total_seconds() if prev else 0
     if 0<dt<=30:
         for k,m in run['models'].items():advance(m,prev['variants'].get(k),dt,(prev['at'],end.isoformat()))
         if prev.get('actual_ev_w') is not None:
             run['observed_ev_kwh_ac']+=max(0,prev['actual_ev_w'])*dt/3600000
             run['observed_covered_s']+=dt
-    current_max={f'L{i}':max((abs(x['variants']['selected']['phase'][i-1]['grid_current_a']) for x in rows if x['variants']['selected']['phase'][i-1].get('grid_current_a') is not None),default=None) for i in (1,2,3)}
-    result={'day':day,'version':VERSION,'policy':POLICY,'started_at':run['started_at'],
+    current_max,phase_counts=phase_statistics(rows)
+    result={'day':day,'version':VERSION,'policy':run.get('policy',POLICY),'summary_version':SUMMARY_VERSION,'started_at':run['started_at'],
             'sample_count':run['sample_count'],'models':run['models'],'soc_initialized_at':run.get('soc_initialized_at'),
             'uncovered_seconds':{k:max(0,7200-m['covered_s']) for k,m in run['models'].items()},
             'comparison_status':comparison_status(run['models']),
@@ -459,8 +499,11 @@ def finish(store,day):
             'gap_s':run['gap_s'],'session':last['session'],
             'priority_changes':sum(rows[i]['priority']!=rows[i-1]['priority'] for i in range(1,len(rows))),
             'reasons':{r:sum(x['variants']['selected']['reason']==r for x in rows) for r in {x['variants']['selected']['reason'] for x in rows}},
-            'limits':run.get('assumptions',ASSUMPTIONS),'phase_max_measured_a':current_max,'device_actions':0}
-    with store.db:store.db.execute('INSERT OR IGNORE INTO priority_summaries VALUES(?,?)',(day,pack(result)))
+            'limits':run.get('assumptions',ASSUMPTIONS),'phase_max_measured_a':current_max,
+            'phase_observation_counts':phase_counts,'phase_statistics_scope':'available_phase_measurements_not_continuous_coverage','device_actions':0}
+    with store.db:
+        store.db.execute('INSERT OR IGNORE INTO priority_summaries VALUES(?,?)',(day,pack(result)))
+        store.db.execute('INSERT OR IGNORE INTO priority_summary_revisions VALUES(?,?,?)',(day,SUMMARY_VERSION,pack(result)))
     return result
 
 

@@ -1,3 +1,7 @@
+# Aktuální doplnění0.6.7
+
+Stínový deník nyní **virtuálně** eviduje převzetí a předání konkrétního seznamu automatizací a registrů. Žádné skutečné automatiky ani zařízení se nemění. Přesná implementace a její meze: [CONTROL_JOURNAL_067.md](CONTROL_JOURNAL_067.md). Následující text popisuje původní audit a budoucí fyzickou koordinaci.
+
 # Co se děje s automatizacemi mezi 03:00 a 05:00
 
 **V aktuální 0.6.2 se nevypíná ani neupravuje žádná provozní automatizace.**

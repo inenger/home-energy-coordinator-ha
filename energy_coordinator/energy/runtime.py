@@ -115,7 +115,7 @@ def main():
     os.umask(0o077)
     DATA.mkdir(mode=0o700,parents=True,exist_ok=True)
     try: print(json.dumps({'portable_restore':portable_restore(DATA/'evidence.sqlite')}),flush=True)
-    except Exception as e: print(json.dumps({'portable_restore':'failed','error_code':type(e).__name__}),flush=True)
+    except Exception as e: print(json.dumps({'portable_restore':'failed','error_code':type(e).__name__}),flush=True);raise
     cfg,_=settings()
     for sig in (signal.SIGINT,signal.SIGTERM):signal.signal(sig,lambda *_:STOP.set())
     try:os.nice(10)

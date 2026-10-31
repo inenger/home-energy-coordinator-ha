@@ -13,10 +13,10 @@ def unpack(value):
     return json.loads(zlib.decompress(value))
 
 class Store:
-    def __init__(self, path):
+    def __init__(self, path, timeout=10):
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        self.db = sqlite3.connect(path, timeout=10)
+        self.db = sqlite3.connect(path, timeout=timeout)
         self.db.execute('PRAGMA journal_mode=WAL')
         self.db.execute('PRAGMA synchronous=FULL')
         self.db.executescript('''
