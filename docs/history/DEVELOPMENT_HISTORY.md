@@ -60,3 +60,7 @@ git log archive/rpi-through-0615
 ```
 
 `bundle-metadata.json` uvádí SHA-256 archivu, původní head a předpokládaný základ. Kontrola před publikací prošla všechny unikátní bloby 27 původních nepublikovaných commitů na běžné formáty tajemství a zakázané datové soubory; nic nezachytila. Není to univerzální důkaz absence všech typů citlivých údajů.
+
+
+## Navazující audit 31. 10. 2026
+[Hloubkový audit 0.6.15](../../priority_shadow/docs/AUDIT_0615_20261031.md) uchovává tři nové nálezy, původní neúspěšný browser test i diagnostické opakování, nesprávný import root testů a opravené předpoklady porovnání build manifestu. Předchozí opravy nejsou přepsané; nový nález neznamená automatickou opravu.

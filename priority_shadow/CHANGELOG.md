@@ -260,3 +260,7 @@ Oddělení provozního stavu, strategie nabíjení a ručního povelu. Přesné 
 
 ## 0.6.8
 Logický výkonový deník s nulovými persistentními zápisy, Normal Mode/freshness/coherence brány, dva nové snímky, rampa a expirace. Rychlá5s smyčka oddělená od pomalé údržby. Původní data zachovaná; žádný fyzický adaptér. Viz RAM_CONTROL_068.md.
+
+
+## Audit 0.6.15 · 31. 10. 2026 (bez změny runtime)
+Tři nové potvrzené P2 a pozorování latence; [nálezy a meze](docs/AUDIT_0615_20261031.md). Přidány syntetické auditní protipříklady, veřejné výsledky a otisky soukromé evidence. Žádná oprava nebo nasazení.

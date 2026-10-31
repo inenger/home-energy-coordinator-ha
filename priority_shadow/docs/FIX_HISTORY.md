@@ -324,3 +324,7 @@ worker, stárnutí cache a selhání. Frontend0.6.14 a původní automatizace z�
 Pouze observe_only, žádný akční adaptér, EEPROM, fyzickýpovel nebo veřejnýpush.
 
 Řídicí DB spojení má busy_timeout250ms místo10s, včetně chybové větve. Pokud stop nelze zapsat, pamatuje se původní čas chyby a po zotavení se nejprve dokončí stop a dvousnímková obnova. Nezapsaný čas je i v priority-live.json pro restart. Rozlišené HTTP/cache/DB metriky umožní další mezery přiřadit ke konkrétní cestě; starý recorder nemá úplné rozlišení příčin. Nová regrese simuluje zamčenou SQLite i celémain zotavení bez zpětného prodlužování energie.
+
+
+## Otevřené nálezy auditu 0.6.15 · 31. 10. 2026
+A15-01 ztracená chyba workeru, A15-02 konflikt živých záznamů, A15-03 příliš dlouhý history dotaz. O15-04 kolísání stránkování111.2ms versus78.8/78.7ms. Dosud neopravené; viz [audit](AUDIT_0615_20261031.md), reprodukce a zachované důkazy.
