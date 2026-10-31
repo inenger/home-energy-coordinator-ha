@@ -115,7 +115,8 @@ def settings():
 def storage_check(cfg):
     data = DATA
     data.mkdir(mode=0o700,exist_ok=True)
-    used=sum(p.stat().st_size for p in data.glob('evidence.sqlite*') if p.is_file())
+    from .storage import sqlite_bytes
+    used=sqlite_bytes(data,required=(data/'status.json').exists())
     if used >= cfg['storage_limit_bytes']:
         raise RuntimeError('STORAGE_BUDGET_EXCEEDED_NO_DATA_DELETED')
     if shutil.disk_usage(data).free < cfg['minimum_free_bytes']:

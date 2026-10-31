@@ -62,6 +62,8 @@ def ensure_schema(db):
 def point(state, at):
     if state is None:
         return {'value': None, 'quality': 'missing', 'age_seconds': None}
+    if state.get('snapshot_error'):
+        return {'value':None,'quality':state['snapshot_error'],'age_seconds':None,'last_reported':state.get('last_reported'),'last_updated':state.get('last_updated'),'report_source':state.get('report_source')}
     raw = state.get('state')
     age = None
     try:

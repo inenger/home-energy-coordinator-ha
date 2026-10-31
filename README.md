@@ -2,8 +2,8 @@
 
 | Doplněk | Adresář | Verze |
 |---|---|---|
-| Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.3 |
-| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.3 |
+| Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.4 |
+| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.15 |
 
 Oba balíčky mají vlastní Docker build context. Nový stínový doplněk nemění
 verzi ani provoz původního koordinátoru. Veřejné balíčky neobsahují soukromou
@@ -28,3 +28,7 @@ Hlavní integrační větev je `main`. [PR #4](https://github.com/inenger/home-e
 obsahuje zveřejnění kompletního balíčku 0.6.3 a dokumentace. Sloučení kódu,
 HA aktualizace a migrace existující lokální instalace jsou různé kroky;
 podrobnosti a poslední ověřený stav jsou v [MEMORY.md](MEMORY.md).
+
+## Vývoj včetně chyb a slepých cest
+
+[Úplná dohledatelná historie](docs/history/DEVELOPMENT_HISTORY.md) uvádí odmítnuté varianty, chybné závěry, návaznosti auditů a oprav i manifest původních důkazů.

@@ -53,10 +53,10 @@ def allocate(points,at,session,model_soc,priority):
         if abs(amps)<1 and abs(g)>u*abs(amps)*1.05+50:
             out['missing_inputs'].append(f'grid_l{i}_a');continue
         ratio=abs(g)/(u*abs(amps)) if abs(amps)>=1 else None
-        if ratio is not None and not .5<=ratio<=1.05:
+        if ratio is not None and not 0<=ratio<=1.05:
             out['missing_inputs'].append(f'grid_l{i}_a');continue
-        # Below 1 A, use a conservative observed-current bound instead of a PF guess.
-        pf=min(1.,ratio) if ratio is not None else None
+        # Nízký poměr P/UI není chybějící proud. Bez ověřeného účiníku použijeme proudovou trojúhelníkovou mez.
+        pf=min(1.,ratio) if ratio is not None and ratio>=.5 else None
         house=inv-g;base=house-ev
         if base< -100:out['missing_inputs'].append(f'inconsistent_house_l{i}');continue
         base=max(0.,base)
@@ -74,13 +74,14 @@ def allocate(points,at,session,model_soc,priority):
           'grid_current_reported_a':value(points,f'grid_l{i}_a_reported'),
           'api_grid_current_role':'diagnostic_only_never_fallback',
           'power_to_va_ratio':ratio,'power_factor':pf,'proxy_method':proxy,
+          'current_offset_a':base_a-base/u if proxy=='low_current_triangle_bound' else 0.,
           'limit_a':25,'limit_w':limit_w,'budget_w':max(0.,limit_w-base),
           'room_w':max(0.,limit_w-house),'model_current_a':house/(u*pf),
           'report_age_s':max(points[k]['age_seconds'] for k in keys)})
     if out['missing_inputs'] or len(out['phase'])!=3:out['reason']='invalid_phase_input';return out
     rows=out['phase']
     if not numeric(points,'ev_w') or abs(sum(r['ev_w'] for r in rows)-value(points,'ev_w'))>max(500,value(points,'ev_w')*.1):out['reason']='inconsistent_ev_phases';return out
-    if any(r['base_w']>r['limit_w'] for r in rows):out['reason']='base_load_over_limit';return out
+    if any(r['base_w']>r['limit_w'] or r['base_w']/(r['voltage_v']*r['power_factor'])+r['current_offset_a']>25 for r in rows):out['reason']='base_load_over_limit';return out
     if not numeric(points,'battery_soc',10800) or model_soc is None or not 0<=model_soc<=100:out['reason']='invalid_battery_soc';return out
     if not model:out['reason']='missing_battery_energy_model';return out
     if not (numeric(points,'battery_v',7200) and numeric(points,'battery_limit_a',7*86400)):
@@ -114,7 +115,7 @@ def allocate(points,at,session,model_soc,priority):
         bat=math.floor((bat+1e-8)/100)*100
     for r,e in zip(rows,evs):
         r['planned_ev_w']=e;r['planned_w']=r['base_w']+e+bat/3
-        r['planned_model_a']=r['planned_w']/(r['voltage_v']*r['power_factor'])
+        r['planned_model_a']=r['planned_w']/(r['voltage_v']*r['power_factor'])+r['current_offset_a']
         if r['planned_model_a']>25+1e-7:raise ValueError('INSTANT_PHASE_LIMIT_EXCEEDED')
     binding=min(rows,key=lambda r:r['budget_w']-r['planned_ev_w'])['phase']
     out.update(ev_ac_w=sum(evs),battery_ac_w=bat,grid_model_w=sum(r['planned_w'] for r in rows),

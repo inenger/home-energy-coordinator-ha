@@ -1,6 +1,7 @@
 """Publish only explicit monitoring sensors. No service calls and no actuator IDs."""
 import json
 import urllib.request
+from .monitor_payload import bounded,encoded,PayloadOverflow
 from .collector import DATA, NoRedirect, settings, read_token
 from .core import VERSION
 
@@ -19,14 +20,16 @@ IDS=(
 'sensor.nocni_stinove_povely','sensor.nocni_stinove_fve_soc_vyhodnoceni','sensor.nocni_stinove_vstupy',
 'sensor.nocni_stinovy_ev_vykon','sensor.nocni_stinovy_baterie_vykon',
 'sensor.nocni_stinovy_sit_vykon','sensor.nocni_stinovy_baterie_soc_model',
-'sensor.nocni_stinovy_odlozena_ev_energie','sensor.nocni_stinovy_soc_optimalizace'
+'sensor.nocni_stinovy_odlozena_ev_energie','sensor.nocni_stinovy_soc_optimalizace','sensor.nocni_stinovy_ridici_denik'
 )
 
 def request(entity_id,payload,base,token):
     if entity_id not in IDS:raise ValueError('Only exact monitoring IDs are allowed')
     if set(payload)-{'state','attributes'}:raise ValueError('Invalid payload')
+    try:attributes=bounded(payload.get('attributes',{}))
+    except PayloadOverflow as error:error.entity_id=entity_id;raise
     return urllib.request.Request(base.rstrip('/')+'/api/states/'+entity_id,
-        data=json.dumps(payload,ensure_ascii=False,allow_nan=False).encode(),method='POST',
+        data=encoded({**payload,'attributes':attributes}),method='POST',
         headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'})
 
 def _load(name):
@@ -103,14 +106,18 @@ if __name__=='__main__':
 
 def priority_plan_view(result):
     """Bound UI attributes; full raw input and variants stay in SQLite evidence."""
-    out={k:v for k,v in result.items() if k not in ('command_audit','fve_soc_audit','input_quality','history','alternatives','soc_optimizer')}
+    out={k:v for k,v in result.items() if k not in ('command_audit','fve_soc_audit','input_quality','history','alternatives','soc_optimizer','control_journal')}
     if out.get('progress'):
         out['progress']={k:v for k,v in out['progress'].items() if k not in ('inputs','variants','session')}
+    from .ram_control import summary
+    out['controller']=summary((result.get('control_journal')or{}).get('session'))
+    out['allocation_model_scope']='ideal_instant_allocation'
     return out
 
 
-def priority_history_view(history):
+def priority_history_view(history,controllers=()):
     rows=[]
+    by_day={run['day']:run for run in controllers}
     for r in history[:14]:
         x={k:r.get(k) for k in ('day','observed_ev_kwh_ac','observed_covered_s','gap_s','phase_max_measured_a','comparison_status','uncovered_seconds','comparison_context','sample_count','version')}
         if r.get('session'):
@@ -126,18 +133,49 @@ def priority_history_view(history):
         for model in x['models'].values():
             if not model.get('covered_s',0)>0:
                 for field in ('ev_kwh_ac','battery_kwh_ac','soc_pct','ev_reallocated_kwh'):model[field]=None
+        x['allocation_model_scope']='ideal_instant_allocation'
+        x['controller']=by_day.get(r.get('day'))
         rows.append(x)
     return rows
 
 
-def publish_priority(result,cfg):
-    """Exact new monitoring entities only; never calls input_select or devices."""
+def prepare_priority(result,failure=False):
+    """Pevný allowlist a neměnný bounded snapshot bez HTTP či credentialu."""
+    if failure:
+        entities=['sensor.nocni_stinovy_plan','sensor.nocni_stinovy_ev_vykon',
+            'sensor.nocni_stinovy_baterie_vykon','sensor.nocni_stinovy_sit_vykon',
+            'sensor.nocni_stinovy_baterie_soc_model','sensor.nocni_stinovy_odlozena_ev_energie']
+        if result.get('control_journal'):entities.append('sensor.nocni_stinovy_ridici_denik')
+        packets=[]
+        for eid in entities:
+            plan=eid=='sensor.nocni_stinovy_plan'
+            journal=result.get('control_journal') if eid=='sensor.nocni_stinovy_ridici_denik' else None
+            attrs={**(result if plan else {}),'mode':'observe_only','device_actions':0,
+                'software_version':VERSION,'observed_at':result['at'],'collection_health':result['collection_health']}
+            if journal:attrs.update(journal)
+            packets.append((eid,{'state':journal.get('status','error') if journal else 'collection_failed' if plan else 'unknown','attributes':attrs}))
+    else:
+        packets=[]
+        for eid,name,v,attrs in priority_rows(result):
+            attrs={**attrs,'friendly_name':name,'mode':'observe_only','device_actions':0,
+                'observed_at':result['at'],'software_version':VERSION}
+            packets.append((eid,{'state':_safe_state(v),'attributes':attrs}))
+    prepared=[]
+    for eid,payload in packets:
+        if eid not in IDS:raise ValueError('Only exact monitoring IDs are allowed')
+        try:payload={**payload,'attributes':bounded(payload['attributes'])}
+        except PayloadOverflow as error:error.entity_id=eid;raise
+        prepared.append((eid,json.loads(encoded(payload))))
+    return prepared
+
+
+def priority_rows(result):
     selected=result['selected'];progress=result.get('progress') or {}
     model=(progress.get('models') or {}).get('selected') or {}
     if not model.get('covered_s',0)>0:model={}
     rows=[
         ('sensor.nocni_stinovy_plan','Noční plán · pouze stínově',selected.get('reason','waiting'),priority_plan_view(result)),
-        ('sensor.nocni_stinovy_souhrn','Noční stínové statistiky',len(result.get('history',[])),{'nights':priority_history_view(result.get('history',[]))}),
+        ('sensor.nocni_stinovy_souhrn','Noční stínové statistiky',len(result.get('history',[])),{'nights':priority_history_view(result.get('history',[]),(result.get('control_journal')or{}).get('sessions',[]))}),
         ('sensor.nocni_stinovy_ev_vykon','Auto · stínový návrh',selected.get('ev_ac_w'),{'unit_of_measurement':'W','device_class':'power','state_class':'measurement'}),
         ('sensor.nocni_stinovy_baterie_vykon','Baterie · stínový návrh AC',selected.get('battery_ac_w'),{'unit_of_measurement':'W','device_class':'power','state_class':'measurement'}),
         ('sensor.nocni_stinovy_sit_vykon','Přívod · stínový model',selected.get('grid_model_w'),{'unit_of_measurement':'W','device_class':'power','state_class':'measurement'}),
@@ -146,15 +184,26 @@ def publish_priority(result,cfg):
     ]
     commands=result.get('command_audit') or {};audit=result.get('fve_soc_audit') or {}
     rows.extend([
+        ('sensor.nocni_stinovy_ridici_denik','Řídicí deník · pouze stínově',(result.get('control_journal') or {}).get('status','waiting_for_window'),result.get('control_journal') or {}),
         ('sensor.nocni_stinovy_soc_optimalizace','Baterie · výběr cílového SOC',
          (result.get('soc_optimizer') or {}).get('status','waiting_for_calculation'),result.get('soc_optimizer') or {}),
         ('sensor.nocni_stinove_vstupy','Stínový plán · kvalita vstupů',(result.get('input_quality') or {}).get('unusable_count'),result.get('input_quality') or {}),
         ('sensor.nocni_stinove_povely','Stínové povely · posledních 20',len(commands.get('rows',[])),commands),
         ('sensor.nocni_stinove_fve_soc_vyhodnoceni','FVE versus SOC · pozorování',audit.get('status','waiting_for_completed_day'),audit),
     ])
-    opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
-    token=read_token()
-    for eid,name,v,attrs in rows:
-        attrs={**attrs,'friendly_name':name,'mode':'observe_only','device_actions':0,'observed_at':result['at'],'software_version':VERSION}
-        with opener.open(request(eid,{'state':_safe_state(v),'attributes':attrs},cfg['ha_base_url'],token),timeout=5) as response:
+    return rows
+
+
+def _publish_packets(packets,cfg):
+    opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect());token=read_token()
+    for eid,payload in packets:
+        with opener.open(request(eid,payload,cfg['ha_base_url'],token),timeout=5)as response:
             if response.status not in (200,201):raise RuntimeError('Priority monitoring publication failed')
+
+
+def publish_priority(result,cfg):
+    _publish_packets(prepare_priority(result),cfg)
+
+
+def publish_priority_failure(result,cfg):
+    _publish_packets(prepare_priority(result,True),cfg)

@@ -12,3 +12,5 @@
 10. Záměrně zastavenou službu ani ukončení SIGTERM/143 samo o sobě neoznačuj za novou poruchu; nejprve ověř požadovaný režim a nový důkaz chyby.
 11. Pokud uživatel zadal dokončení v main, po kontrolách dokonči merge a ověř obsah main i CI. Draft PR sám není dokončená dodávka. Neměň tím automaticky zdroj běžící lokální HA instalace.
 12. Změna pouze dokumentace nemění runtime verzi. Udržuj dokumentaci podle skutečné implementace a jasně odděluj již implementované chování od budoucího návrhu.
+
+13. Na výslovný požadavek uživatele z 31. 10. 2026 průběžně publikuj na GitHub celý dohledatelný vývoj včetně chyb, neúspěšných testů, slepých cest a vyvrácených hypotéz. Uveď vstupní commit, pokus, výsledek, důvod odmítnutí a navazující opravu. Zachovej původní historii; neuváděj pouze úspěšný závěr. Soukromé podklady eviduj obecným popisem a SHA-256, tajemství ani provozní databáze do veřejného Gitu nepatří. Rozcestník: docs/history/DEVELOPMENT_HISTORY.md.

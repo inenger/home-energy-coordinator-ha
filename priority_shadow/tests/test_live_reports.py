@@ -3,7 +3,7 @@ import json,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
 from energy.collector import ReadOnlyHA
-from energy import night,priority,priority_audit as audit,automation_context,soc_runtime
+from energy import night,priority,priority_audit as audit,automation_context,soc_runtime,ram_control
 from energy.store import Store
 from test_priority import inputs,points,AT
 from test_priority_audit import result
@@ -12,7 +12,7 @@ from test_priority_audit import result
 class LiveReportsTests(unittest.TestCase):
     def snapshot(self,reported=AT):
         return [{'entity_id':night.IDS['ev_w'],'state':'0','attributes':{'unit_of_measurement':'W'},
-                 'last_reported':reported,'last_updated':'2026-10-22T16:00:00+00:00',
+                 'context':{},'last_reported':reported,'last_updated':'2026-10-22T16:00:00+00:00',
                  'report_source':'ha_live_state_template'}]
 
     def test_query_reads_real_state_report_and_never_replaces_it_with_query_time(self):
@@ -24,7 +24,7 @@ class LiveReportsTests(unittest.TestCase):
         self.assertIn('s.last_reported.isoformat()',template)
         self.assertNotIn('now()',template)
         self.assertNotIn('services',template)
-        self.assertEqual(json.loads(template.split(' = ',1)[1].split(' %}',1)[0]),sorted(set(night.IDS.values())|set(priority.EXTRA.values())|set(automation_context.ENTITY_IDS)|set(soc_runtime.IDS.values())))
+        self.assertEqual(json.loads(template.split(' = ',1)[1].split(' %}',1)[0]),sorted(set(night.IDS.values())|set(priority.EXTRA.values())|set(automation_context.ENTITY_IDS)|set(soc_runtime.IDS.values())|set(ram_control.ENTITY_IDS)))
         p=night.point(states[0],AT)
         self.assertEqual(p['age_seconds'],0)
         self.assertTrue(night.valid({'ev_w':p},'ev_w'))
@@ -45,12 +45,12 @@ class LiveReportsTests(unittest.TestCase):
         with patch.object(client,'get',return_value=self.snapshot()),patch.object(client,'_query',side_effect=TimeoutError):self.assertRaises(TimeoutError,client.priority_states)
         with patch.object(client,'get',return_value=self.snapshot()),patch.object(client,'_query',return_value='[]'):self.assertEqual(client.priority_states(),[])
 
-    def test_racing_state_or_attribute_change_is_omitted_not_joined(self):
+    def test_scalar_update_is_complete_from_same_live_object(self):
         client=ReadOnlyHA();rest=self.snapshot()
         for change in ({'state':'1000'},{'last_updated':AT}):
             live=[{**rest[0],**change}]
             with patch.object(client,'get',return_value=rest),patch.object(client,'_query',return_value=json.dumps(live)):
-                self.assertEqual(client.priority_states(),[])
+                rows=client.priority_states();self.assertEqual(len(rows),1);self.assertEqual(rows[0]['state'],live[0]['state']);self.assertEqual(rows[0]['attributes']['unit_of_measurement'],'W')
 
     def test_feasible_demand_has_no_artificial_rounding_deferral(self):
         pp=points(inputs());pp['ev_w']['value']=11379

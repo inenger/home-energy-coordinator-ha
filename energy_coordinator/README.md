@@ -1,3 +1,7 @@
+# 0.5.4 · recorder a teplotní katalog
+
+Publisher má rozpočet14kB atributů. Velký katalog uchovává celý v bezztrátovém zlib-json-v1 s délkou a SHA-256; žádná čidla se nezahazují. Nulová nepovinná pole se při tvorbě katalogu vynechávají. Plná místní analytická evidence a Ingress zůstávají dostupné. Jednoduchý stav počtu čidel se nemění. SQLite storage check toleruje běžný zánik WAL/SHM, ostatní I/O chyby neskrývá. Bez fyzických povelů.
+
 # Energetický koordinátor 0.5.3
 
 ## Opravy nočního vyhodnocení 0.5.3
