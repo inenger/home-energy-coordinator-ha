@@ -1,0 +1,27 @@
+{
+  "A15-02": {
+    "valid_batch_hashes": true,
+    "conflicting_event_id": 1,
+    "conflicting_sample_at": "2026-01-15T02:00:05Z",
+    "original_power_w": 500,
+    "replacement_power_w": 9000,
+    "reversed_response_power_w": 500,
+    "history_complete": true,
+    "error": false,
+    "contract_met": false
+  },
+  "exact_duplicate_control": {
+    "history_complete": true,
+    "error": false,
+    "contract_met": true
+  },
+  "A15-03": {
+    "closed_day": "2026-01-15",
+    "last_recorded_at": "2026-01-15T04:00:02Z",
+    "requested_end": "2026-01-29T12:00:00.000Z",
+    "requested_hours": 345.99916666666667,
+    "known_recorded_hours": 1.9997222222222222,
+    "excess_days": 14.333310185185185,
+    "contract_met": false
+  }
+}

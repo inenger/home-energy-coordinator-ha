@@ -1,0 +1,73 @@
+{
+  "browser": "Chrome/155.0.8059.84",
+  "real_browser": true,
+  "actual_HA_shell": false,
+  "private_fixture": false,
+  "results": [
+    {
+      "width": 1280,
+      "loading_anchor_shift_px": -0.140625,
+      "sameScroll": true,
+      "sameDetails": true,
+      "independentDetails": true,
+      "sameFocus": true,
+      "topShift": 0,
+      "leftShift": 0,
+      "viewportShift": 0,
+      "duration": 33.5,
+      "timings": {
+        "controlPanel": 0.30000001192092896,
+        "controllerPanel": 0.5,
+        "inputHealth": 0.09999999403953552,
+        "optimizerPanel": 0.09999999403953552,
+        "chart": 1.9000000059604645,
+        "auditPanels": 2.199999988079071,
+        "automationPanel": 0,
+        "updateDOM": 23.69999998807907
+      },
+      "pages": 53,
+      "max_rows": 20,
+      "all_events_reachable": true,
+      "loaded_samples": 1440,
+      "wheel_scroll_px": 300,
+      "unrelated_updates_rendered": 0,
+      "burst_renders": 1,
+      "page_render_max_ms": 78.80000001192093,
+      "page_full_renders": 0,
+      "page_graph_preserved": true
+    },
+    {
+      "width": 390,
+      "loading_anchor_shift_px": -0.140625,
+      "sameScroll": true,
+      "sameDetails": true,
+      "independentDetails": true,
+      "sameFocus": true,
+      "topShift": 0,
+      "leftShift": 0,
+      "viewportShift": 0,
+      "duration": 33.89999997615814,
+      "timings": {
+        "controlPanel": 0.19999998807907104,
+        "controllerPanel": 0.699999988079071,
+        "inputHealth": 0,
+        "optimizerPanel": 0.09999999403953552,
+        "chart": 1.7999999821186066,
+        "auditPanels": 2.2000000178813934,
+        "automationPanel": 0,
+        "updateDOM": 25.100000023841858
+      },
+      "pages": 53,
+      "max_rows": 20,
+      "all_events_reachable": true,
+      "loaded_samples": 1440,
+      "wheel_scroll_px": 300,
+      "unrelated_updates_rendered": 0,
+      "burst_renders": 1,
+      "page_render_max_ms": 78.7000000178814,
+      "page_full_renders": 0,
+      "page_graph_preserved": true
+    }
+  ],
+  "physical_services": 0
+}

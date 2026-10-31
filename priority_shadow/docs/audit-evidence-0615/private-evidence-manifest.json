@@ -1,0 +1,76 @@
+{
+  "root": "RPi /share/hec-recovery/audit-0615-2026-10-31",
+  "note": "Hash reference, not public backup of private file contents.",
+  "files": [
+    {
+      "path": "baseline-shadow.log",
+      "bytes": 101,
+      "sha256": "8d8092070ae0fdec4688424f004f8c7cf2ef850c8566dd35e141659b83907758"
+    },
+    {
+      "path": "baseline-legacy.log",
+      "bytes": 1175,
+      "sha256": "3f971ff20e9899a011aa5a38496c8937e0668be50a81ada6783cb04ee2ca9c1d"
+    },
+    {
+      "path": "baseline-legacy-final.log",
+      "bytes": 99,
+      "sha256": "d3563b89af44d575f237197039b0cbf84ae776246942dc06b0397261acd8fd42"
+    },
+    {
+      "path": "baseline-node.log",
+      "bytes": 2184,
+      "sha256": "71a7dde757a66d27bbd217b57f22e5b4b63c8f8b1a1deb05ee60787285a3a6b1"
+    },
+    {
+      "path": "prior-backend.log",
+      "bytes": 3444,
+      "sha256": "4bb202f8d95af22147d845ad71111a1e08996f431d172d512e2e86df8c727dc6"
+    },
+    {
+      "path": "prior-frontend.log",
+      "bytes": 1455,
+      "sha256": "ee7dd7e5105f32ac974444c166d0e1e5c966daf0a334f64f25b50af63ecefa66"
+    },
+    {
+      "path": "native-result.json",
+      "bytes": 2548,
+      "sha256": "8b927f9e9e2b587ab672cc32f382ead7790a645694d3501609ee9d7dbe53365a"
+    },
+    {
+      "path": "private-live-monitors.json",
+      "bytes": 14331,
+      "sha256": "97efcb382a6459e1fecc9fb6ff23ccde321acc45a6ae0d311eb5246a3e0c7b85"
+    },
+    {
+      "path": "private-recent-history.json",
+      "bytes": 851858,
+      "sha256": "b20b5ec47473e829d7dc45cbcac509b6e6e7829b86246d12cf5de2671378d31d"
+    },
+    {
+      "path": "evidence-snapshot.sqlite",
+      "bytes": 95514624,
+      "sha256": "d72eb7a2ef18970d88211858ffdcc8171786139e3b33f7dfab82d8ae4ad0f0eb"
+    },
+    {
+      "path": "attempts.md",
+      "bytes": 982,
+      "sha256": "7875c09c51ff49f7a45bb7bf14e93184b98334363c08292825e0fbe5c74528cc"
+    },
+    {
+      "path": "browser.log",
+      "bytes": 827,
+      "sha256": "829e37cbc6412074caa74a690646b956b2489fc01ad0b7f3642c3639cb74a864"
+    },
+    {
+      "path": "browser-diagnostic.json",
+      "bytes": 2055,
+      "sha256": "bdfb07b9513cb2cc897af8150bf912462fa6be99c5c7618503bb14c4b47aa03d"
+    },
+    {
+      "path": "browser-diagnostic.log",
+      "bytes": 2600,
+      "sha256": "f215db31bee3d4336db66e942e634fd58f434f031fa7c90224f5dda36c09622b"
+    }
+  ]
+}

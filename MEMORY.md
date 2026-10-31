@@ -535,3 +535,9 @@ Soukromé důkazy /share/hec-recovery/fix-0615 a původní update-2026-10-31.
 
 ## Úplná dohledatelná historie na GitHubu · 31. 10. 2026
 Uživatel výslovně požaduje a autorizuje zveřejnění vývojové historie včetně slepých cest. Doplněn docs/history/DEVELOPMENT_HISTORY.md, původní commity a manifest všech nalezených přímých recovery REPORT souborů. Nezveřejňují se databáze, tajemství ani surové provozní řady; hashe nejsou jejich off-site záloha. Neuložené historické pokusy nelze zpětně zaručit. Publikaci/CI/merge ověřit odděleně; tato dokumentační změna nemění runtime.
+
+
+## Hloubkový audit 0.6.15 · 31. 10. 2026
+Audit e0ede61 / runtime7afc43c potvrzuje tři nové nálezy P2: A15-01 worker může úspěchem smazat dosud nepřečtenou chybu bez stopu/dvousnímkové obnovy; A15-02 živý stream tiše přepisuje konfliktní ID/časy mezi validně hashovanými dávkami; A15-03 starší uzavřená noc se dotazuje až do současnosti místo známého konce potvrzeného přenosu. Syntetické celé dotčené cesty a pozitivní kontroly jsou v scripts/audit_deep_0615.{py,mjs}.
+447+164 Python testů, Node a předchozích7+5 auditních kontraktů prošlo. Chromium jednou111.2ms překročil100ms limit; diagnostické opakování78.8/78.7ms, scroll0px,wheel300px,53stránek bez plného renderu. Původní FAIL zachovaný, nejde o důkaz trvalého zasekávání ani uživatelův HA shell/iPhone. Nativní zdroj/health/SQLite ověřeny, žádná změna provozu nebo fyzický povel. Nová celá noc0.6.15 neověřená.
+Podrobnosti: priority_shadow/docs/AUDIT_0615_20261031.md; soukromé důkazy naRPi v audit-0615-2026-10-31, veřejné syntetické výsledky a SHA manifest v audit-evidence-0615. Chyby provedení auditu i vyvrácené hypotézy zaznamenané. Toto je audit, žádná oprava A15 nebyla provedena; runtimeverze se nemění.
