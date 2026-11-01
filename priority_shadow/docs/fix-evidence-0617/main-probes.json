@@ -1,0 +1,60 @@
+{
+  "delayed_ev": {
+    "samples": 31,
+    "logical_expiry_stops": 0,
+    "stop_times": [],
+    "sub_five_second_waits": 15,
+    "held_frame_renewals": 6,
+    "invalid_samples": 0,
+    "energy_ac_kwh": 0.09419444444444448,
+    "outbox_parts": 31,
+    "acknowledged_generations": [],
+    "contract_met": true
+  },
+  "true_dropout": {
+    "samples": 33,
+    "logical_expiry_stops": 1,
+    "stop_times": [
+      "2026-01-15T02:00:22.800000+00:00"
+    ],
+    "sub_five_second_waits": 15,
+    "held_frame_renewals": 4,
+    "invalid_samples": 4,
+    "energy_ac_kwh": 0.06125000000000001,
+    "outbox_parts": 33,
+    "acknowledged_generations": [],
+    "contract_met": true
+  },
+  "masked_budget": {
+    "samples": 3,
+    "logical_expiry_stops": 0,
+    "stop_times": [
+      "2026-01-15T02:00:06+00:00"
+    ],
+    "sub_five_second_waits": 0,
+    "held_frame_renewals": 0,
+    "invalid_samples": 0,
+    "energy_ac_kwh": 0.0001388888888888889,
+    "outbox_parts": 2,
+    "acknowledged_generations": [
+      1
+    ],
+    "contract_met": true
+  },
+  "masked_stat": {
+    "samples": 3,
+    "logical_expiry_stops": 0,
+    "stop_times": [
+      "2026-01-15T02:00:06+00:00"
+    ],
+    "sub_five_second_waits": 0,
+    "held_frame_renewals": 0,
+    "invalid_samples": 0,
+    "energy_ac_kwh": 0.0001388888888888889,
+    "outbox_parts": 2,
+    "acknowledged_generations": [
+      1
+    ],
+    "contract_met": true
+  }
+}

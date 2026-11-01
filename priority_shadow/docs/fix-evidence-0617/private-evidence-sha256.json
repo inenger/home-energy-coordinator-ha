@@ -1,0 +1,12 @@
+{
+  "preflight.sqlite": "d4fe34c7cb98cc3e15b1f63839003d5834bf4ff0c08864e0da88afa48c49232a",
+  "preflight-states.json": "f9578b70872ef3480e2df862225c6f975b946f37bec66f7cefc138dbe2e52c33",
+  "current-ui.json": "2dfb0895dbef56fe550e28d34a5835b75124ea28f752c1a35757232753272258",
+  "served-card-before.js": "3129a35e69e07e4f09fb8f15f7ffc6545bd6410a5876aaa00ffcbe8a14377871",
+  "recent-expected.json": "66d82c05851e68c862d19bed350db1599966cb770f6e9172cdf48fa4c2209193",
+  "recent-verification.json": "ab7b89fd941b5b183dc65147c04d3b78299987ef3975c769031eb6411dadb7b6",
+  "ui-verification.json": "6e4d90cb842bbd205cdb25fe52645224392201f05f9fe766343df4210b912aae",
+  "card-before-slot-paging.js": "3129a35e69e07e4f09fb8f15f7ffc6545bd6410a5876aaa00ffcbe8a14377871",
+  "card-slot-reset-after-rejected.js": "82dab0690b7750c9b2d56549b5f4ecbfbab2b4fd8c6af780b1b7f2f04196fb22",
+  "card-slot-reset-before-rejected.js": "b5b83b35f23d08724f30fd80baf078faeec9f7300ff4fa74b56f567c0f17f9e2"
+}

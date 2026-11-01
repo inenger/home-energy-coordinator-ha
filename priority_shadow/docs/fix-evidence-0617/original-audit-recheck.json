@@ -1,0 +1,66 @@
+{
+  "A16-02_storage_masks_earlier_failure": {
+    "masked_by_storage_budget": true,
+    "worker_failure_second": 6,
+    "consumer_second": 10,
+    "expected_ac_kwh": 0.0001388888888888889,
+    "actual_ac_kwh": 0.0001388888888888889,
+    "overcount_kwh": 0.0,
+    "stop_times": [
+      "2026-01-15T02:00:06+00:00"
+    ],
+    "failure_times": [
+      "2026-01-15T02:00:06+00:00"
+    ],
+    "outbox_parts": 2,
+    "pending_failure_after": null,
+    "contract_met": true
+  },
+  "failure_without_mask_control": {
+    "masked_by_storage_budget": false,
+    "worker_failure_second": 6,
+    "consumer_second": 10,
+    "expected_ac_kwh": 0.0001388888888888889,
+    "actual_ac_kwh": 0.0001388888888888889,
+    "overcount_kwh": 0.0,
+    "stop_times": [
+      "2026-01-15T02:00:06+00:00"
+    ],
+    "failure_times": [
+      "2026-01-15T02:00:06+00:00"
+    ],
+    "outbox_parts": 2,
+    "pending_failure_after": null,
+    "contract_met": true
+  },
+  "A16-01_ev_report_cadence": {
+    "ev_report_period_s": 8,
+    "delivery_delay_s": 4,
+    "controller_period_s": 5,
+    "all_current_frames_valid": true,
+    "logical_expiry_stops": 6,
+    "zero_samples_after_start": 6,
+    "outbox_parts": 1,
+    "continuous_model_contract_met": false
+  },
+  "five_second_ev_control": {
+    "ev_report_period_s": 5,
+    "delivery_delay_s": 0,
+    "controller_period_s": 5,
+    "all_current_frames_valid": true,
+    "logical_expiry_stops": 0,
+    "zero_samples_after_start": 0,
+    "outbox_parts": 1,
+    "continuous_model_contract_met": true
+  },
+  "eight_second_ev_without_delivery_delay_control": {
+    "ev_report_period_s": 8,
+    "delivery_delay_s": 0,
+    "controller_period_s": 5,
+    "all_current_frames_valid": true,
+    "logical_expiry_stops": 0,
+    "zero_samples_after_start": 0,
+    "outbox_parts": 1,
+    "continuous_model_contract_met": true
+  }
+}

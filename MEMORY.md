@@ -591,3 +591,18 @@ Stejná0.6.16 služba jednou obnovena, Supervisorstarted a čerstvýhealth ově�
 původní noční evidence/konfigurace zachované. První rawhealthok bylo
 zastaralé a jeho původní důkaz je zachovaný s vysvětlením. Samostatný
 browser po obnově:154.2/60.6ms;0pxshift. VizO16-03/O16-04v auditní zprávě.
+
+
+## Opravy A16 · 0.6.17 · 1.11.2026
+next_wait v main naplánuje převzetí cache před původní lease deadline;
+TTL/reporty zůstávají původní, skutečný výpadek nadále stop/dvě nové sady.
+Každá chybová větev zohledňuje nejstarší čekající worker first_at i přes
+maskující budget/stat chybu; ack až po stopu/outboxu. Stránkování používá
+offset ze scroll eventu a mění obsah existujících řádků při nulovém posunu.
+Synchronní scrollTop čtení/reset pokusy405/505ms byly zamítnuté a uchované.
+455+164Python, nové celé main protipříklady a Node regrese prošly.
+Browserlimit100ms zůstal; zesílený skutečný test91.2/29.4ms,syntetický38.1/49.7ms,
+0pxrefreshshift,focus/DOM/diagnostiky/allrows/wheel ověřené.
+Běhy postupně s RAM guardem; hromadné soukromé čtení jen streaming.
+Viz priority_shadow/docs/AUDIT_FIXES_0617.md. Nová celá noc/uživatelův HAshell
+neověřené. Nasazení/GitHub/CI se potvrzují samostatným dokončením.

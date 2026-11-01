@@ -3,7 +3,7 @@ from datetime import datetime,timezone
 from pathlib import Path
 import hashlib,json,os,signal,threading,time,sqlite3
 from .collector import ReadOnlyHA,DATA,atomic_json
-from .core import VERSION,TZ,digest,forecast_payloads
+from .core import VERSION,TZ,digest,forecast_payloads,instant
 from .store import Store,pack
 from . import night,priority,priority_audit,soc_runtime
 from . import ram_control as control_journal
@@ -61,6 +61,21 @@ def failure_result(at,error,last_success):
                               'error_file':Path(error.filename).name if isinstance(error,OSError)and error.filename else None}}
 
 
+
+def next_wait(at,work_s,journal=None):
+    """Další krok před lease deadline; původní HA reporty ani TTL se nemění."""
+    delay=max(1.,(5 if night.window(at) else 60)-work_s)
+    run=(journal or {}).get('session') or {}
+    if (run.get('target_ac_w') or 0)>0:
+        expiry=(run.get('last_intent') or {}).get('expires_at')
+        if expiry:
+            remaining=(instant(expiry)-instant(at)).total_seconds()
+            # Rezerva pro převzetí čerstvé cache. Při skutečné ztrátě dat
+            # řídicí vrstva stále zastaví přesně na původní deadline.
+            delay=min(delay,max(.25,remaining-1.))
+    return delay
+
+
 def main():
     os.umask(0o077);DATA.mkdir(parents=True,exist_ok=True,mode=0o700)
     optionfile=Path('/data/options.json');opts=json.loads(optionfile.read_text()) if optionfile.exists() else {}
@@ -79,7 +94,7 @@ def main():
         if previous.get('collection_health',{}).get('status')=='failed':failure_pending=previous.get('unpersisted_failure_at') or previous['collection_health'].get('checked_at')
     except (OSError,ValueError,TypeError):pass
     while not STOP.is_set():
-        started=time.monotonic();now=datetime.now(timezone.utc)
+        started=time.monotonic();now=datetime.now(timezone.utc);loop_journal=None
         try:
             used=sqlite_bytes(DATA,required=last_success is not None)
             if used>int(opts.get('storage_limit_mb',2048))*1024*1024:raise RuntimeError('STORAGE_BUDGET_EXCEEDED_NO_DELETE')
@@ -106,6 +121,7 @@ def main():
                 result['command_audit']=priority_audit.command_summary(store,at)
                 result['fve_soc_audit']=slow.get('fve_soc_audit',{})
             finally:store.close()
+            loop_journal=result['control_journal']
             result['monitor_publication']=monitoring.snapshot()
             if result['monitor_publication'].get('status')=='degraded':
                 result['collection_health'].update(status='degraded',monitor_publication_error=result['monitor_publication'].get('error_code'))
@@ -120,18 +136,25 @@ def main():
         except Exception as e:
             failed=failure_result(datetime.now(timezone.utc).isoformat(),e,last_success)
             failure_at=e.failure_at if isinstance(e,CollectionFailure) else failed['collection_health']['checked_at']
-            failure_pending=min(filter(None,[failure_pending,failure_at]))
+            # Jiná chyba (např. stat/storage budget) nesmí zakrýt starší
+            # dosud nepřevzatý výpadek síťového workeru.
+            pending_collection=client.snapshot().get('pending_failure')
+            pending_at=pending_collection['first_at'] if pending_collection else None
+            failure_pending=min(filter(None,[failure_pending,failure_at,pending_at]),key=instant)
+            if pending_collection:failed['collection_health']['pending_collection_failure']=pending_collection
             try:
                 journal_store=Store(DATA/'evidence.sqlite',timeout=.25)
                 try:
                     if isinstance(e,monitor_payload.PayloadOverflow):monitor_payload.record_overflow(journal_store,e,datetime.now(timezone.utc).isoformat())
                     failed['control_journal']=control_journal.record_failure(journal_store,failure_pending,type(e).__name__)
                     failed['control_journal']['transport']=journal_transport.enqueue(journal_store,failed['control_journal'])
-                    if isinstance(e,CollectionFailure):client.acknowledge_failure(e.generation)
+                    if pending_collection:client.acknowledge_failure(pending_collection['generation'])
+                    elif isinstance(e,CollectionFailure):client.acknowledge_failure(e.generation)
                     failure_pending=None
                 finally:journal_store.close()
             except Exception as journal_error:
                 failed['control_journal']={'status':'error','error_code':type(journal_error).__name__,'device_actions':0}
+            loop_journal=failed.get('control_journal')
             if failure_pending:failed['unpersisted_failure_at']=failure_pending
             print(json.dumps({'priority_collection':'failed',**failed['collection_health'],'device_actions':0}),flush=True)
             try:
@@ -139,7 +162,7 @@ def main():
                 monitoring.submit(failed,failure=True)
             except Exception as monitor_error:
                 print(json.dumps({'priority_failure_publication':'failed','error_code':type(monitor_error).__name__}),flush=True)
-        STOP.wait(max(1,(5 if night.window(now.isoformat()) else 60)-(time.monotonic()-started)))
+        STOP.wait(next_wait(datetime.now(timezone.utc).isoformat(),time.monotonic()-started,loop_journal))
     client.close();publisher_closed=journal_publisher.close();monitoring_closed=monitoring.close()
     if maintenance.close() and publisher_closed and monitoring_closed:
         try:backup()

@@ -1,3 +1,11 @@
+## 0.6.17 · časování obnovy, přesný stop a rychlejší deník
+
+Smyčka přebírá novou cache před lease deadline; nemění původní reporty/TTL.
+Nejstarší worker výpadek se zachová i při maskující storage/stat chybě.
+Stránkování nečte scrollTop v click handleru, uchovává DOM nahoře a odděluje
+diagnostiky různých událostí. [Opravy, testy a slepé cesty](docs/AUDIT_FIXES_0617.md).
+Pouze observe_only; nová úplná produkční noc není tímto tvrzená.
+
 ## 0.6.16 · zachování výpadků a integrita deníku
 
 Nepřevzatý výpadek sběru přežije následný úspěch i běžný restart a potvrdí se

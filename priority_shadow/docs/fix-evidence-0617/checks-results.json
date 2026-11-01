@@ -1,0 +1,97 @@
+{
+  "shadow": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 52516,
+    "minimum_host_available_kb": 1020520
+  },
+  "legacy": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 34428,
+    "minimum_host_available_kb": 1061336
+  },
+  "metadata": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 11216,
+    "minimum_host_available_kb": 1074052
+  },
+  "node-syntax": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 8,
+    "minimum_host_available_kb": 1075864
+  },
+  "main-probes": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 40196,
+    "minimum_host_available_kb": 1051812
+  },
+  "test_audit_fixes_0616": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 60664,
+    "minimum_host_available_kb": 1062860
+  },
+  "test_card_updates": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 67456,
+    "minimum_host_available_kb": 1047472
+  },
+  "test_controller_summary": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 948,
+    "minimum_host_available_kb": 1069192
+  },
+  "test_deep_fixes_0613": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 61680,
+    "minimum_host_available_kb": 1060604
+  },
+  "test_http_integrity": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 87728,
+    "minimum_host_available_kb": 1033352
+  },
+  "test_independent_fixes_0614": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 936,
+    "minimum_host_available_kb": 1062204
+  },
+  "test_journal_transport": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 61664,
+    "minimum_host_available_kb": 1057908
+  },
+  "test_partial_card": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 61528,
+    "minimum_host_available_kb": 1061224
+  },
+  "test_same_day_reconstruction": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 896,
+    "minimum_host_available_kb": 1069612
+  },
+  "prior-backend": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 31080,
+    "minimum_host_available_kb": 1053888
+  },
+  "prior-frontend": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 904,
+    "minimum_host_available_kb": 1080972
+  },
+  "prior-independent": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 31100,
+    "minimum_host_available_kb": 1050276
+  },
+  "prior-collector": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 32708,
+    "minimum_host_available_kb": 1048756
+  },
+  "browser-synthetic": {
+    "exit_code": 0,
+    "peak_process_rss_kb": 82784,
+    "minimum_host_available_kb": 827084
+  }
+}
