@@ -1,0 +1,18 @@
+test_provenance_causality_readonly_input_and_energy (test_archived_replay.ArchivedReplayTests.test_provenance_causality_readonly_input_and_energy) ... ERROR
+
+======================================================================
+ERROR: test_provenance_causality_readonly_input_and_energy (test_archived_replay.ArchivedReplayTests.test_provenance_causality_readonly_input_and_energy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<synthetic-test-checkout>/priority_shadow/tests/test_archived_replay.py", line 26, in test_provenance_causality_readonly_input_and_energy
+    with contextlib.redirect_stdout(io.StringIO()):out=replay(path,root/'history.gz','2026-01-15',root/'out')
+                                                       ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<synthetic-test-checkout>/priority_shadow/scripts/replay_archived_night.py", line 18, in replay
+    assert instant(session['model_available_at'])<=instant(x['at'])
+                   ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'model_available_at'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.208s
+
+FAILED (errors=1)

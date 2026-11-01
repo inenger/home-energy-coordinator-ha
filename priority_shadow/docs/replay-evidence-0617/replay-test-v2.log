@@ -1,0 +1,15 @@
+test_provenance_causality_readonly_input_and_energy (test_archived_replay.ArchivedReplayTests.test_provenance_causality_readonly_input_and_energy) ... FAIL
+
+======================================================================
+FAIL: test_provenance_causality_readonly_input_and_energy (test_archived_replay.ArchivedReplayTests.test_provenance_causality_readonly_input_and_energy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<synthetic-test-checkout>/priority_shadow/tests/test_archived_replay.py", line 31, in test_provenance_causality_readonly_input_and_energy
+    self.assertGreater(run['shadow_model']['battery_kwh_ac'],0)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0.0 not greater than 0
+
+----------------------------------------------------------------------
+Ran 1 test in 0.806s
+
+FAILED (failures=1)
