@@ -99,3 +99,20 @@ freshness/Supervisor, zdrojové hashe, HTTP karta a skutečný recorder.
 Dokončení nasazení a GitHub/CI se připojí samostatně; tento text je nenahrazuje.
 Původní noci se nepřepočítávají ani zpětně neopravují vydáváním předpokladů
 za naměřené reporty. Žádné fyzické povely, EEPROM, tarif nebo změny priorit.
+
+
+## Nativní nasazení 0.6.17 ověřeno 1.11.2026
+Backend i HTTP karta0.6.17, Supervisorstarted/observe_only, čerstvýhealthok.
+Zdrojové hashe souhlasí, SQLitequick_checkok, všechny kontrolované původní
+řádky evidence zachované. Dashboard/ostatní resources/archivní provenience
+a původní automatizace/koordinátor beze změny; nativní záloha vytvořená.
+Skutečný recorder a všechny původní řádky posledních nocí souhlasí;
+přepnutí starší rekonstrukce/původního běhu ověřené. Nejde o novou celou
+noční relaci0.6.17 ani přihlášený uživatelův HAshell.
+
+Zdroj: lokální44a1f4b231e376063a1c8b99fef374034fae1d66 =
+veřejný7b4d4606386b5e4f5547488b11c8b34e764c09ca,
+shodnýstrom96c26eb0aa4d4a16f2bb8b9c29ee9050286eb7be.
+[PR #12](https://github.com/inenger/home-energy-coordinator-ha/pull/12).
+Nasazení: fix-evidence-0617/native-deployment.json a soukromý SHA manifest.
+CI/merge jsou samostatné následné kontroly a potvrzují se na GitHubu.

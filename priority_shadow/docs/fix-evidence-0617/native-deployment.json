@@ -1,0 +1,35 @@
+{
+  "checked_at": "2026-11-01T12:31:56.082675+00:00",
+  "backend": "0.6.17",
+  "frontend": "0.6.17",
+  "supervisor_state": "started",
+  "mode": "observe_only",
+  "health": "ok",
+  "freshness_verified": true,
+  "sqlite_quick_check": "ok",
+  "all_baseline_rows_preserved": true,
+  "protected_files_preserved": true,
+  "source_hashes_match": true,
+  "http_served_card_sha256": "83edebe2b5e022af4f77556b7ff77ce2918979ec25ee56814df30a633c8229fb",
+  "dashboard_unchanged": true,
+  "archive_provenance_unchanged": true,
+  "actual_recorder_original_rows_verified": true,
+  "same_day_archive_live_switch_verified": true,
+  "physical_control_ready": false,
+  "persistent_writes": 0,
+  "legacy": [
+    {
+      "slug": "local_energy_coordinator",
+      "version": "0.5.4",
+      "state": "started"
+    },
+    {
+      "slug": "6696af1a_energy_coordinator",
+      "version": "0.5.3",
+      "state": "stopped"
+    }
+  ],
+  "complete_new_production_night_verified": false,
+  "actual_user_HA_shell_verified": false,
+  "native_backup_created": true
+}
