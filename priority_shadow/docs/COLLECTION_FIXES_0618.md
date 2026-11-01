@@ -89,3 +89,14 @@ a dostupná RAM byla pod dříve stanoveným limitem pro tento zátěžový běh
 Při přípravě veřejných logů zachytil diff --check koncovou mezeru na řádku
 syntetického unittest výstupu. Veřejná kopie má normalizované koncové mezery;
 původní log a předchozí lokální commit 9d1595c zůstávají na RPi zachované.
+
+## Oprava balení odhalená při nativním sestavení
+První image build selhal: test_archived_replay importoval nástroj, který
+Dockerfile nekopíroval do /app/scripts. Dosavadní host/CI testy proto byly
+pro distribuovaný balík nedostatečné. Doplněn COPY scripts a samostatný CI
+kontrakt, který sestaví testovací rozložení přímo podle Docker COPY a spustí
+replay test z tohoto rozložení bez původního source PYTHONPATH. Tentýž
+kontrakt před opravou selhal na ModuleNotFoundError a po opravě prošel.
+Neúspěšný build i první veřejný commit zůstávají v historii. Provoz byl
+mezi pokusy obnoven na předchozí instalované verzi; nejde o novou poruchu
+ani o změnu fyzického řízení. Nativní build se opakuje po opravě balíku.

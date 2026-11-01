@@ -7,6 +7,7 @@ WORKDIR /app
 COPY energy/ /app/energy/
 COPY config/ /app/config/
 COPY tests/ /app/tests/
+COPY scripts/ /app/scripts/
 RUN python3 -m unittest discover -s tests -q && rm -rf /app/tests
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 TZ=Europe/Prague
 CMD ["python3", "-m", "energy.priority_observer"]

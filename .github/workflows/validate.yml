@@ -20,6 +20,8 @@ jobs:
           grep -Fxq 'slug: energy_coordinator' energy_coordinator/config.yaml
           test -f repository.yaml
           bash scripts/test_local_source_paths.sh
+      - name: Packaged shadow replay contract
+        run: python scripts/verify_packaged_shadow.py
       - name: Unit tests
         run: |
           cd energy_coordinator
