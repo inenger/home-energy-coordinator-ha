@@ -1,0 +1,32 @@
+{
+  "checked_at": "2026-11-01T06:26:16.946662+00:00",
+  "backend": "0.6.16",
+  "frontend": "0.6.16",
+  "mode": "observe_only",
+  "health": "ok",
+  "sqlite_quick_check": "ok",
+  "all_baseline_evidence_rows_preserved": true,
+  "protected_files_preserved": true,
+  "source_hashes_match": true,
+  "http_served_card_sha256": "3129a35e69e07e4f09fb8f15f7ffc6545bd6410a5876aaa00ffcbe8a14377871",
+  "dashboard_unchanged": true,
+  "archive_provenance_unchanged": true,
+  "actual_HA_recorder_verified": true,
+  "recent_original_nights_equal_sqlite": true,
+  "physical_control_ready": false,
+  "persistent_writes": 0,
+  "legacy": [
+    {
+      "slug": "local_energy_coordinator",
+      "version": "0.5.4",
+      "state": "started"
+    },
+    {
+      "slug": "6696af1a_energy_coordinator",
+      "version": "0.5.3",
+      "state": "stopped"
+    }
+  ],
+  "complete_new_production_night_verified": false,
+  "actual_user_HA_shell_verified": false
+}

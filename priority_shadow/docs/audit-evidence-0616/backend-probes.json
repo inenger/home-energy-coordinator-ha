@@ -1,0 +1,16 @@
+{
+  "A15-01": {
+    "worker_error_observed": "TimeoutError",
+    "consumer_was_notified": true,
+    "power_before_w": 500,
+    "power_after_recovery_w": 0.0,
+    "failure_events": 1,
+    "outbox_chunks": 1,
+    "contract_met": true
+  },
+  "persistent_error_control": {
+    "stopped_w": 0.0,
+    "first_recovery_frame_w": 0.0,
+    "contract_met": true
+  }
+}

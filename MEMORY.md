@@ -541,3 +541,32 @@ Uživatel výslovně požaduje a autorizuje zveřejnění vývojové historie v�
 Audit e0ede61 / runtime7afc43c potvrzuje tři nové nálezy P2: A15-01 worker může úspěchem smazat dosud nepřečtenou chybu bez stopu/dvousnímkové obnovy; A15-02 živý stream tiše přepisuje konfliktní ID/časy mezi validně hashovanými dávkami; A15-03 starší uzavřená noc se dotazuje až do současnosti místo známého konce potvrzeného přenosu. Syntetické celé dotčené cesty a pozitivní kontroly jsou v scripts/audit_deep_0615.{py,mjs}.
 447+164 Python testů, Node a předchozích7+5 auditních kontraktů prošlo. Chromium jednou111.2ms překročil100ms limit; diagnostické opakování78.8/78.7ms, scroll0px,wheel300px,53stránek bez plného renderu. Původní FAIL zachovaný, nejde o důkaz trvalého zasekávání ani uživatelův HA shell/iPhone. Nativní zdroj/health/SQLite ověřeny, žádná změna provozu nebo fyzický povel. Nová celá noc0.6.15 neověřená.
 Podrobnosti: priority_shadow/docs/AUDIT_0615_20261031.md; soukromé důkazy naRPi v audit-0615-2026-10-31, veřejné syntetické výsledky a SHA manifest v audit-evidence-0615. Chyby provedení auditu i vyvrácené hypotézy zaznamenané. Toto je audit, žádná oprava A15 nebyla provedena; runtimeverze se nemění.
+
+
+## Opravy 0.6.16 · 1. 11. 2026
+A15-01 má persistentní generační latch s potvrzením po SQLite stop/outbox;
+A15-02 odmítá konflikty živého streamu/cache/recent řádků a izoluje archiv;
+A15-03 omezuje uzavřený potvrzený dotaz skutečným koncem přenosu.
+Stránky po10událostech: skutečný browser47/51ms, syntetický66/56ms,
+nulový posun při obnově. Původní FAIL117ms i zamítnutá varianta204ms zachované.
+450+164Python, Node, staré auditní kontrakty a skutečný recorder/SQLite prošly.
+Celá nová produkční noc0.6.16 ani uživatelův HA shell/iPhone nejsou ověřené.
+Viz priority_shadow/docs/AUDIT_FIXES_0616.md. Nasazení/GitHub/CI se potvrzují
+samostatným dokončovacím záznamem; tato poznámka je nenahrazuje.
+
+
+## Nativní nasazení ověřeno 1. 11. 2026
+Backend i HTTP podávaná karta jsou 0.6.16. Sběr je čerstvý/ok, zdrojové
+hashe souhlasí, SQLite quick_check je ok a původní evidence zůstala zachovaná.
+Původní automatizace, konfigurace původního doplňku, dashboard a archivní
+provenience se nezměnily. Obě poslední původní noci mají přesnou shodu
+načteného recorderu s SQLite; přepínání starší rekonstrukce je ověřené.
+Před aktualizací vznikla nativní záloha a soukromá kopie zdrojů/evidence.
+Původní lokální koordinátor0.5.4 běží, rollback0.5.3 zůstává zastavený.
+
+Veřejný zdroj d1dab28607ae4695457bfc2d29e46db9340384ee má shodný strom
+2071708876f79df0e42089be7d568bfb5598a5aa s lokálním bcd43e5285a0f8917290d075d438e1ef268d7ab7.
+Publikace: [PR #10](https://github.com/inenger/home-energy-coordinator-ha/pull/10).
+CI/merge jsou samostatná následná kontrola; jejich stav ověřit na GitHubu.
+Důkaz nasazení: audit-evidence-0616/deployment-summary.json a privátní SHA manifest.
+Celá nová noční relace0.6.16 zatím ověřená není.

@@ -1,0 +1,15 @@
+{
+  "shadow": 0,
+  "legacy": 0,
+  "versions": 0,
+  "syntax": 0,
+  "test_audit_fixes_0616": 0,
+  "test_card_updates": 0,
+  "test_controller_summary": 0,
+  "test_deep_fixes_0613": 0,
+  "test_http_integrity": 0,
+  "test_independent_fixes_0614": 0,
+  "test_journal_transport": 0,
+  "test_partial_card": 0,
+  "test_same_day_reconstruction": 0
+}

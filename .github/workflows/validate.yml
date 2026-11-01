@@ -34,3 +34,4 @@ jobs:
           node ../scripts/test_card_updates.mjs
           node ../scripts/test_deep_fixes_0613.mjs
           node ../scripts/test_independent_fixes_0614.mjs
+          node ../scripts/test_audit_fixes_0616.mjs

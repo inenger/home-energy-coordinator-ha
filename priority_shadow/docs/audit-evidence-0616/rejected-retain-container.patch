@@ -1,0 +1,19 @@
+--- candidate-before-paging.js
++++ rejected-retain-container.js
+@@ -332,13 +332,9 @@
+   const view=this.controlEventView(),ram=(this.controlSession()?.policy||this.controlData().policy||'').startsWith('volatile-power');
+   const template=this.ownerDocument.createElement('template');template.innerHTML=this.controlTimelineRows(view.shown,ram);
+   // Výška scroll kontejneru zůstává pevná; ostatních panelů ani grafu se nedotýkáme.
+-  if(resetScroll){
+-   // Nová explicitně zvolená stránka začíná nahoře bez synchronního scroll/layout staré tabulky.
+-   const next=node.cloneNode(false),table=node.querySelector('table').cloneNode(false),head=node.querySelector('thead'),body=this.ownerDocument.createElement('tbody');
+-   if(head)table.append(head.cloneNode(true));body.append(template.content);table.append(body);next.append(table);node.replaceWith(next);
+-   if(this.journalScrollLeft)next.scrollLeft=this.journalScrollLeft;
+-   next.onscroll=()=>{this.journalScrollLeft=next.scrollLeft;};
+-  }else tbody.replaceChildren(template.content);
++  // Zachovat scroll kontejner i hlavičku; mění se pouze dvacet řádků.
++  tbody.replaceChildren(template.content);
++  if(resetScroll)node.scrollTop=0;
+   this.controlHTMLCache=null;this.fragmentHTML?.delete('journal');
+   const get=id=>this.shadowRoot.querySelector('#'+id),prev=get('control-prev'),next=get('control-next'),count=get('control-page-count'),latest=get('control-latest'),all=get('control-all');
+   if(prev){prev.hidden=!this.controlShowAll;prev.disabled=view.page===0;}
