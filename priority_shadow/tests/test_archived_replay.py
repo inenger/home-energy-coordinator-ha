@@ -15,7 +15,7 @@ class ArchivedReplayTests(unittest.TestCase):
    s.db.execute('CREATE TABLE IF NOT EXISTS priority_samples(at TEXT PRIMARY KEY,day TEXT,payload BLOB)')
    start=datetime.fromisoformat('2026-01-15T03:59:40+00:00');history=[]
    for sec in range(0,21,5):
-    at=(start+timedelta(seconds=sec)).isoformat();states=data(at);states.append(state(priority.EXTRA['priority'],'Elektromobil',at));r=result(at);r['session']={**r['session'],'model_available_at':(start-timedelta(seconds=1)).isoformat()}
+    at=(start+timedelta(seconds=sec)).isoformat();states=data(at);r=result(at);r['session']={**r['session'],'model_available_at':(start-timedelta(seconds=1)).isoformat()}
     c.observe(s,states,r)
     if sec<20:
      points=priority.checked_points(states,at)

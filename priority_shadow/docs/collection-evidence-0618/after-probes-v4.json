@@ -1,0 +1,26 @@
+[
+  {
+    "work_s": 0,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 31
+  },
+  {
+    "work_s": 1,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 31
+  },
+  {
+    "work_s": 2,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 32
+  },
+  {
+    "work_s": 3,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 34
+  }
+]

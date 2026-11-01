@@ -13,9 +13,10 @@ def data(at=AT):
  ss=managed(at);mapping={**night.IDS,**priority.EXTRA};already={s['entity_id'] for s in ss}
  for k,p in points().items():
   if k in mapping and mapping[k] not in already:ss.append(state(mapping[k],p['value'],at))
+ ss.append(state(priority.EXTRA['priority'],'Elektromobil',at))
  ss.extend([state(c.RUN_MODE,'Normal Mode',at),state(c.REMOTE_MODE,'Disabled',at),state(c.READBACKS[0],'Disabled',at)])
  return ss
-def result(at=AT):return {'at':at,'session':SESSION,'priority':'ev','actual':{'battery_a':0,'battery_v':230,'ev_w':11040}}
+def result(at=AT):return {'at':at,'session':{**SESSION,'day':at[:10]},'priority':'ev','actual':{'battery_a':0,'battery_v':230,'ev_w':11040}}
 class RamControlTests(unittest.TestCase):
  def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.path=Path(self.tmp.name)/'e.sqlite';self.store=Store(self.path)
  def tearDown(self):self.store.close();self.tmp.cleanup()

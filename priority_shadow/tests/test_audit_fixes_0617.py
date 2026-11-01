@@ -94,6 +94,6 @@ class AuditFixTests(unittest.TestCase):
  def test_wait_respects_lease_work_and_outside_window(self):
   journal={'session':{'target_ac_w':500,'last_intent':{'expires_at':stamp(9.8)}}}
   self.assertAlmostEqual(obs.next_wait(stamp(5),0,journal),3.8)
-  self.assertEqual(obs.next_wait(stamp(5),4,journal),1)
+  self.assertAlmostEqual(obs.next_wait(stamp(5),4,journal),.55)
   self.assertEqual(obs.next_wait(stamp(10),0,journal),.25)
   self.assertEqual(obs.next_wait('2026-01-15T10:00:00+00:00',0),60)

@@ -1,0 +1,21 @@
+/usr/lib/python3.14/unittest/mock.py:2259: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7fab7836a0>
+  def __init__(self, name, parent):
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+======================================================================
+ERROR: test_extended_control_evidence_survives_transport_and_payload_budget (test_collection_context_0618.CollectionContextTests.test_extended_control_evidence_survives_transport_and_payload_budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<synthetic-test-checkout>/priority_shadow/tests/test_collection_context_0618.py", line 69, in test_extended_control_evidence_survives_transport_and_payload_budget
+    packets=publish_status.prepare_priority({'at':at,'version':'synthetic','control_journal':journal})
+  File "<synthetic-test-checkout>/priority_shadow/energy/publish_status.py", line 159, in prepare_priority
+    for eid,name,v,attrs in priority_rows(result):
+                            ~~~~~~~~~~~~~^^^^^^^^
+  File "<synthetic-test-checkout>/priority_shadow/energy/publish_status.py", line 173, in priority_rows
+    selected=result['selected'];progress=result.get('progress') or {}
+             ~~~~~~^^^^^^^^^^^^
+KeyError: 'selected'
+
+----------------------------------------------------------------------
+Ran 464 tests in 168.858s
+
+FAILED (errors=1)

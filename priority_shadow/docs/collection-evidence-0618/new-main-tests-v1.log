@@ -1,0 +1,47 @@
+test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work (test_collection_fixes_0618.CollectionFixTests.test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work) ...
+  test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work (test_collection_fixes_0618.CollectionFixTests.test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work) (work=0) ... ERROR
+  test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work (test_collection_fixes_0618.CollectionFixTests.test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work) (work=1) ... ERROR
+  test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work (test_collection_fixes_0618.CollectionFixTests.test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work) (work=2) ... ERROR
+  test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work (test_collection_fixes_0618.CollectionFixTests.test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work) (work=3) ... ERROR
+test_true_dropout_still_stops_and_recovers_after_new_frames (test_collection_fixes_0618.CollectionFixTests.test_true_dropout_still_stops_and_recovers_after_new_frames) ... ok
+
+======================================================================
+ERROR: test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work (test_collection_fixes_0618.CollectionFixTests.test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work) (work=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<synthetic-test-checkout>/priority_shadow/tests/test_collection_fixes_0618.py", line 81, in test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work
+    end=min(datetime.fromisoformat(b['at']),datetime.fromisoformat(a['intent_expires_at']))
+                                            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: fromisoformat: argument must be str
+
+======================================================================
+ERROR: test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work (test_collection_fixes_0618.CollectionFixTests.test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work) (work=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<synthetic-test-checkout>/priority_shadow/tests/test_collection_fixes_0618.py", line 81, in test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work
+    end=min(datetime.fromisoformat(b['at']),datetime.fromisoformat(a['intent_expires_at']))
+                                            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: fromisoformat: argument must be str
+
+======================================================================
+ERROR: test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work (test_collection_fixes_0618.CollectionFixTests.test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work) (work=2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<synthetic-test-checkout>/priority_shadow/tests/test_collection_fixes_0618.py", line 81, in test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work
+    end=min(datetime.fromisoformat(b['at']),datetime.fromisoformat(a['intent_expires_at']))
+                                            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: fromisoformat: argument must be str
+
+======================================================================
+ERROR: test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work (test_collection_fixes_0618.CollectionFixTests.test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work) (work=3)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<synthetic-test-checkout>/priority_shadow/tests/test_collection_fixes_0618.py", line 81, in test_actual_main_keeps_delayed_reports_continuous_with_nonzero_work
+    end=min(datetime.fromisoformat(b['at']),datetime.fromisoformat(a['intent_expires_at']))
+                                            ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: fromisoformat: argument must be str
+
+----------------------------------------------------------------------
+Ran 2 tests in 9.680s
+
+FAILED (errors=4)

@@ -352,7 +352,10 @@ def observe(store,states,result):
                 'report_skew_s':diagnostic['report_skew_s'],'frame_signature':diagnostic['signature'],'new_frame':new_frame,
                 'hardware_response_verified':False,'input_errors':errors,
                 'intent_renewal':renewal,'intent_expires_at':run.get('last_intent',{}).get('expires_at'),
-                'input_valid_until':valid_until.isoformat() if valid_until else None}
+                'input_valid_until':valid_until.isoformat() if valid_until else None,
+                'collection_snapshot':result.get('collection_snapshot'),
+                'input_reports':{k:points[k]for k in (*FAST_KEYS,'ev_w','battery_v','battery_a','battery_limit_a','battery_soc','priority',*(f'grid_l{i}_a_reported'for i in (1,2,3)))},
+                'owner_reports':{eid:night.point(by.get(eid),at)for eid in (RUN_MODE,REMOTE_MODE,READBACKS[0])}}
             stats=run['statistics'];stats['sample_count']+=1
             for key in ('unverified_current_samples','missing_current_phase_samples'):stats.setdefault(key,0)
             stats['unverified_current_samples']+=int(any(p['current_quality']=='unverified_phase' for p in phase))

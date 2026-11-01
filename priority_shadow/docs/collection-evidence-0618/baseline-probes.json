@@ -1,0 +1,58 @@
+[
+  {
+    "poll_s": 2.5,
+    "work_s": 0,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 34
+  },
+  {
+    "poll_s": 2.5,
+    "work_s": 1,
+    "expiry_stops": 3,
+    "other_stops": [],
+    "samples": 34
+  },
+  {
+    "poll_s": 2.5,
+    "work_s": 2,
+    "expiry_stops": 6,
+    "other_stops": [],
+    "samples": 32
+  },
+  {
+    "poll_s": 2.5,
+    "work_s": 3,
+    "expiry_stops": 3,
+    "other_stops": [],
+    "samples": 30
+  },
+  {
+    "poll_s": 1.0,
+    "work_s": 0,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 31
+  },
+  {
+    "poll_s": 1.0,
+    "work_s": 1,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 31
+  },
+  {
+    "poll_s": 1.0,
+    "work_s": 2,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 31
+  },
+  {
+    "poll_s": 1.0,
+    "work_s": 3,
+    "expiry_stops": 3,
+    "other_stops": [],
+    "samples": 29
+  }
+]

@@ -412,6 +412,7 @@ def observe(store,states,at,require_soc_plan=False,allocation_policy=None):
                 variants[k].update(reason='missing_priority',ev_ac_w=None,battery_ac_w=None,grid_model_w=None)
         run['sample_count']+=1
         row={'at':at,'day':day,'priority':choice,'session':session,'variants':variants,'inputs':points,
+             'collection_snapshot':{**(states[0].get('collection_snapshot',{})if states else {}),'read_at':at},
              'actual_ev_w':value(points,'ev_w') if numeric(points,'ev_w') else None,
              'models':{k:dict(m) for k,m in run['models'].items()},'soc_initialized_at':run.get('soc_initialized_at'),'observed_ev_kwh_ac':run['observed_ev_kwh_ac'],
              'observed_covered_s':run['observed_covered_s'],'gap_s':run['gap_s']}

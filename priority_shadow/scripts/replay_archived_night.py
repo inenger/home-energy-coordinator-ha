@@ -11,15 +11,17 @@ from energy.store import unpack,pack
 def replay(database,history,day,out):
  out.mkdir(parents=True,exist_ok=False)
  db=sqlite3.connect('file:'+str(database)+'?mode=ro',uri=True)
- old=unpack(db.execute('SELECT payload FROM ram_control_sessions WHERE day=?',(day,)).fetchone()[0])
- frames=[];sessions={}
- for payload, in db.execute('SELECT payload FROM priority_samples WHERE day=? ORDER BY at',(day,)):
-  x=unpack(payload);session=sessions.setdefault(digest(x['session']),x['session'])
-  assert instant(session['model_available_at'])<=instant(x['at'])
-  points={k:{z:p.get(z)for z in ('entity_id','value','unit','last_reported','last_updated')}for k,p in x['inputs'].items()}
-  frames.append((instant(x['at']),points,session))
- failures=[unpack(p)for p, in db.execute('SELECT payload FROM ram_control_events WHERE day=? ORDER BY id',(day,))if unpack(p)['kind']=='collection_failure']
- db.close();times=[x[0]for x in frames];end=instant(old['window_end'])
+ try:
+  old=unpack(db.execute('SELECT payload FROM ram_control_sessions WHERE day=?',(day,)).fetchone()[0])
+  frames=[];sessions={}
+  for payload, in db.execute('SELECT payload FROM priority_samples WHERE day=? ORDER BY at',(day,)):
+   x=unpack(payload);session=sessions.setdefault(digest(x['session']),x['session'])
+   assert instant(session['model_available_at'])<=instant(x['at'])
+   points={k:{z:p.get(z)for z in ('entity_id','value','unit','last_reported','last_updated')}for k,p in x['inputs'].items()}
+   frames.append((instant(x['at']),points,session))
+  failures=[unpack(p)for p, in db.execute('SELECT payload FROM ram_control_events WHERE day=? ORDER BY id',(day,))if unpack(p)['kind']=='collection_failure']
+ finally:db.close()
+ times=[x[0]for x in frames];end=instant(old['window_end'])
  hist=json.load(gzip.open(history,'rt'));base={}
  for rows in hist:
   for row in rows:
@@ -92,7 +94,7 @@ def replay(database,history,day,out):
    'scheduler':'production_next_wait_zero_work_duration','collection_failure_preserved':True,
    'live_heartbeat_verified':False,'physical_control_ready':False,
    'limitations':[
-    'Zpětný model 0.6.17; původní živý deník zůstává samostatně zachovaný.',
+    f'Zpětný model {VERSION}; původní živý deník zůstává samostatně zachovaný.',
     'Přesný čas převzetí reportů workerem ani délku práce v nových krocích nelze zpětně doložit. Smyčka používá next_wait a nulovou délku práce.',
     'Strict kontrola nepředpokládá čerstvost vzdáleného vlastníka. Obě podmíněné varianty ji předpokládají podle původního run-mode reportu.',
     'Captured varianta zpřístupní snímek až při původním zachycení. Report-time varianta předpokládá dostupnost už při uloženém last_reported; jde o příznivý předpoklad, nikoli doložené doručení.',
