@@ -93,3 +93,20 @@ Výsledek rekonstrukce není skutečně realizované nabíjení. Žádné fyzick
 povely, EEPROM zápisy, změny tarifu, priorit ani původních automatizací.
 Nativní nasazení, GitHub commit, PR, merge a CI se dokládají samostatně;
 tento dokument sám nepotvrzuje jejich dokončení.
+
+
+## Nativní nasazení ověřeno 1. 11. 2026
+Backend i HTTP podávaná karta jsou 0.6.16. Sběr je čerstvý/ok, zdrojové
+hashe souhlasí, SQLite quick_check je ok a původní evidence zůstala zachovaná.
+Původní automatizace, konfigurace původního doplňku, dashboard a archivní
+provenience se nezměnily. Obě poslední původní noci mají přesnou shodu
+načteného recorderu s SQLite; přepínání starší rekonstrukce je ověřené.
+Před aktualizací vznikla nativní záloha a soukromá kopie zdrojů/evidence.
+Původní lokální koordinátor0.5.4 běží, rollback0.5.3 zůstává zastavený.
+
+Veřejný zdroj d1dab28607ae4695457bfc2d29e46db9340384ee má shodný strom
+2071708876f79df0e42089be7d568bfb5598a5aa s lokálním bcd43e5285a0f8917290d075d438e1ef268d7ab7.
+Publikace: [PR #10](https://github.com/inenger/home-energy-coordinator-ha/pull/10).
+CI/merge jsou samostatná následná kontrola; jejich stav ověřit na GitHubu.
+Důkaz nasazení: audit-evidence-0616/deployment-summary.json a privátní SHA manifest.
+Celá nová noční relace0.6.16 zatím ověřená není.

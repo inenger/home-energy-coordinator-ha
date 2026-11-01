@@ -7,5 +7,12 @@
   "ui-verification.json": "6e4d90cb842bbd205cdb25fe52645224392201f05f9fe766343df4210b912aae",
   "archive-digests.json": "436f0449c325b63ecbb7b61f28fdaf72b0edd63e8e13e25fc8c82d1d9df8e850",
   "card-retained-container-rejected.js": "8cb64e7c8648290b25e65bc5a343999a5a69409fbb6d5bb46ca2590d21e5b6e6",
-  "card-before-paging.js": "97e46ab7f182e2a08056dc142c2f267f42cf7f19b7d0cab12fcab3869715ee77"
+  "card-before-paging.js": "97e46ab7f182e2a08056dc142c2f267f42cf7f19b7d0cab12fcab3869715ee77",
+  "evidence-before.sqlite": "9b637548c07b1b7b2367e322c52551dd77b732c805900edb00aee3fec01dd633",
+  "deployment-verification.json": "0b9aea7ffe35d0b780f49cacc79656ce66834d07fa296d90410ad971bc340f56",
+  "source-manifest-0616.json": "338f5bd879f6c0f1c99229f8774b1663ab4a9cb29c8e43665e13bbab1f746e68",
+  "live-monitors-after.json": "a8e79a45a8b194c050dfced2be906c1ee57e1711ed444e9125c2a5d1b0ae3542",
+  "monitor-history-after.json.gz": "d5fa91d80693b487fccc89afbf6366ff20c5b5a595e00bbd817fee2c6d83a8d1",
+  "ui-deployment.json": "84c3ed24a0a7228d4dbe9c9cc377a6225c5d089a3d46a0a64d4b4cb95d5cc85a",
+  "backup-result.json": "f9549b7f316e5047c80f7ff909412a3c169c0159ad6cbf67eb0ecfb3b58cf574"
 }
