@@ -1,0 +1,7 @@
+{
+  "original_file": "native-summary.json",
+  "original_sha256": "6536d5c3cc6ccd14230ea4f0d0a2e5ed195ea39302256adc3f679f464ad72974",
+  "valid_runtime_health_evidence": false,
+  "reason": "Initial check accepted raw health=ok without snapshot age/Supervisor-state validation; subsequent check found stale monitor and Supervisor error. Original retained unchanged.",
+  "superseded_by": "native-summary-final.json"
+}

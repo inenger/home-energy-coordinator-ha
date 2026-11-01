@@ -1,3 +1,6 @@
+<!-- Audit 1.11.2026 nemění runtime verzi. -->
+Audit stavu 0.6.16 a původní noci0.6.15: [nálezy a původní důkazy](docs/AUDIT_0616_20261101.md). Nové nálezy nejsou opravené.
+
 ## 0.6.16 · zachování výpadků a integrita deníku
 
 Nepřevzatý výpadek sběru přežije následný úspěch i běžný restart a potvrdí se

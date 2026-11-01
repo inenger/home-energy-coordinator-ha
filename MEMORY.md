@@ -570,3 +570,24 @@ Publikace: [PR #10](https://github.com/inenger/home-energy-coordinator-ha/pull/1
 CI/merge jsou samostatná následná kontrola; jejich stav ověřit na GitHubu.
 Důkaz nasazení: audit-evidence-0616/deployment-summary.json a privátní SHA manifest.
 Celá nová noční relace0.6.16 zatím ověřená není.
+
+
+## Audit 1. 11. 2026 · 0.6.16 / původní noc0.6.15
+[Aktuální audit](priority_shadow/docs/AUDIT_0616_20261101.md) rozlišuje přetrvávající
+EV deadline fragmentaci A16-01, novou maskující storage/worker chybu A16-02
+a původní strictbrowser153.8msFAIL O16-03 (diagnostika89.4/68.1ms).
+450+164testů,9Nodesad a předchozí auditní kontrakty prošly. Nativní SQLite/recorder
+souhlasí; všech222SOCrozhodnutí má platný hash a kauzální available_at.
+Veřejné syntetické protipříklady a původní chyby auditu jsou zachované.
+Soukromá noční čísla/řady pouze naRPi, veřejněSHA-256. Toto je audit bez oprav;
+runtime0.6.16 a provozní konfigurace se nemění. Publikaci/CI/merge ověřit zvlášť.
+
+
+Doplnění závěru auditu: během souběžného auditního readeru a Chromium došlo
+ke globálnímu OOM a zastavení shadow. Auditní zátěž mohla přispět; nelze
+to bez dalšího označit za únik paměti aplikace. Reader nyní pro další použití
+streamuje rozhodnutí, těžké audity naRPi spouštět postupně s kontrolou RAM.
+Stejná0.6.16 služba jednou obnovena, Supervisorstarted a čerstvýhealth ověřeny;
+původní noční evidence/konfigurace zachované. První rawhealthok bylo
+zastaralé a jeho původní důkaz je zachovaný s vysvětlením. Samostatný
+browser po obnově:154.2/60.6ms;0pxshift. VizO16-03/O16-04v auditní zprávě.

@@ -1,0 +1,16 @@
+geometry 1280 {"sameScroll":true,"sameDetails":true,"independentDetails":true,"sameFocus":true,"topShift":0,"leftShift":0,"viewportShift":0,"duration":219.30000001192093,"timings":{"controlPanel":2.600000023841858,"controllerPanel":1,"inputHealth":0.10000002384185791,"optimizerPanel":2.699999988079071,"chart":3.800000011920929,"auditPanels":4.100000023841858,"automationPanel":0.5999999642372131,"updateDOM":188.9000000357628}}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Page rendering exceeds 100ms budget: 153.80000001192093
+    at file:///share/hec-recovery/audit-0616-2026-11-01/repo/scripts/test_card_scroll_browser.mjs:49:119 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
