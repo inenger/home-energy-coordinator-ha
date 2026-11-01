@@ -591,3 +591,35 @@ Stejná0.6.16 služba jednou obnovena, Supervisorstarted a čerstvýhealth ově�
 původní noční evidence/konfigurace zachované. První rawhealthok bylo
 zastaralé a jeho původní důkaz je zachovaný s vysvětlením. Samostatný
 browser po obnově:154.2/60.6ms;0pxshift. VizO16-03/O16-04v auditní zprávě.
+
+
+## Opravy A16 · 0.6.17 · 1.11.2026
+next_wait v main naplánuje převzetí cache před původní lease deadline;
+TTL/reporty zůstávají původní, skutečný výpadek nadále stop/dvě nové sady.
+Každá chybová větev zohledňuje nejstarší čekající worker first_at i přes
+maskující budget/stat chybu; ack až po stopu/outboxu. Stránkování používá
+offset ze scroll eventu a mění obsah existujících řádků při nulovém posunu.
+Synchronní scrollTop čtení/reset pokusy405/505ms byly zamítnuté a uchované.
+455+164Python, nové celé main protipříklady a Node regrese prošly.
+Browserlimit100ms zůstal; zesílený skutečný test91.2/29.4ms,syntetický38.1/49.7ms,
+0pxrefreshshift,focus/DOM/diagnostiky/allrows/wheel ověřené.
+Běhy postupně s RAM guardem; hromadné soukromé čtení jen streaming.
+Viz priority_shadow/docs/AUDIT_FIXES_0617.md. Nová celá noc/uživatelův HAshell
+neověřené. Nasazení/GitHub/CI se potvrzují samostatným dokončením.
+
+
+## Nativní nasazení 0.6.17 ověřeno 1.11.2026
+Backend i HTTP karta0.6.17, Supervisorstarted/observe_only, čerstvýhealthok.
+Zdrojové hashe souhlasí, SQLitequick_checkok, všechny kontrolované původní
+řádky evidence zachované. Dashboard/ostatní resources/archivní provenience
+a původní automatizace/koordinátor beze změny; nativní záloha vytvořená.
+Skutečný recorder a všechny původní řádky posledních nocí souhlasí;
+přepnutí starší rekonstrukce/původního běhu ověřené. Nejde o novou celou
+noční relaci0.6.17 ani přihlášený uživatelův HAshell.
+
+Zdroj: lokální44a1f4b231e376063a1c8b99fef374034fae1d66 =
+veřejný7b4d4606386b5e4f5547488b11c8b34e764c09ca,
+shodnýstrom96c26eb0aa4d4a16f2bb8b9c29ee9050286eb7be.
+[PR #12](https://github.com/inenger/home-energy-coordinator-ha/pull/12).
+Nasazení: fix-evidence-0617/native-deployment.json a soukromý SHA manifest.
+CI/merge jsou samostatné následné kontroly a potvrzují se na GitHubu.

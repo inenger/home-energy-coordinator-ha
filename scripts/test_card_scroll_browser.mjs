@@ -10,6 +10,7 @@ const fixture=process.env.CARD_FIXTURE?JSON.parse(fs.readFileSync(process.env.CA
 const server=http.createServer((q,s)=>{s.setHeader('Content-Type','text/html');s.end('<!doctype html><html><body style="margin:0;background:#101a25;color:#eee"><main id="shell"></main></body></html>');});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const browser=await puppeteer.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
+process.once('SIGTERM',()=>{browser.close().finally(()=>server.close(()=>process.exit(2)));});
 const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));const results=[];
 try{
  for(const width of [1280,390]){
@@ -50,7 +51,7 @@ try{
   await page.evaluate(()=>{card.controlPage=0;card.render();const n=card.shadowRoot.querySelector('#control-events');n.scrollTop=0;view.scrollTop+=n.getBoundingClientRect().top-100;});
   const point=await page.evaluate(()=>{const n=card.shadowRoot.querySelector('#control-events'),r=n.getBoundingClientRect();return{x:r.left+Math.min(160,r.width/2),y:r.top+150,top:n.scrollTop};});
   await page.mouse.move(point.x,point.y);await page.mouse.wheel({deltaY:300});await new Promise(resolve=>setTimeout(resolve,120));
-  const wheelTop=await page.evaluate(()=>card.shadowRoot.querySelector('#control-events').scrollTop);assert(wheelTop>point.top,'Wheel did not scroll journal');
+  const wheelState=await page.evaluate(()=>({top:card.shadowRoot.querySelector('#control-events').scrollTop,cached:card.journalScrollTop})),wheelTop=wheelState.top;assert(wheelTop>point.top,'Wheel did not scroll journal');assert.equal(wheelState.cached,wheelTop,'Scroll event did not retain offset');
   const counts=await page.evaluate(async()=>{
    card.hydratePacked=async()=>{};card.loadControlHistory=async()=>{};card.loadHistory=async()=>{};card.lastHistory=Date.now();
    const plan=card.lastEntity,raw={...plan,attributes:{packed_attributes:{sha256:'f'.repeat(64)}}};card.packedCache={'sensor.nocni_stinovy_plan':{hash:'f'.repeat(64),attributes:plan.attributes}};
@@ -64,7 +65,19 @@ try{
    return {unrelated,burst};
   });
   assert.equal(counts.unrelated,0,'Unchanged packed state caused redraws');assert.equal(counts.burst,1,'State burst was not coalesced');
-  results.push({width,loading_anchor_shift_px:loading.shift,...stable,pages:Math.ceil(fixture.archive.events.length/10),max_rows:pages.maxRows,all_events_reachable:true,loaded_samples:pages.loadedSamples,wheel_scroll_px:wheelTop-point.top,unrelated_updates_rendered:counts.unrelated,burst_renders:counts.burst,page_render_max_ms:Math.max(...pages.durations),page_full_renders:pages.fullRenders,page_graph_preserved:pages.sameGraph});
+  const identity=await page.evaluate(()=>{
+   const day=fixture.manifest.day,cache=card.controlCache[day];
+   const events=Array.from({length:20},(_,i)=>({id:100001+i,day,at:fixture.archive.events[0].at,kind:'control_blocked',reason:'synthetic_identity_check',diagnostic:{synthetic:i}}));
+   card.controlCache[day]={...cache,session:{...cache.session,event_count:20},events};card.controlPage=0;card.controlShowAll=true;card.render();
+   const root=card.shadowRoot,node=root.querySelector('#control-events'),head=node.querySelector('thead'),row=node.querySelector('tbody tr'),details=row.querySelector('details');details.open=true;details.querySelector('pre').textContent='old event payload sentinel';
+   card.journalScrollTop=0;card.journalScrollLeft=0;root.querySelector('#control-next').click();
+   const nextNode=root.querySelector('#control-events'),nextRow=nextNode.querySelector('tbody tr'),nextDetails=nextRow.querySelector('details');
+   if(node!==nextNode||head!==nextNode.querySelector('thead')||row!==nextRow)throw Error('Paging at top replaced stable container/header/row');
+   if(details===nextDetails||nextDetails.open||nextDetails.querySelector('pre').textContent)throw Error('Paging leaked expanded diagnostics into a different event');
+   if(nextRow.dataset.uiKey!=='event-100011')throw Error('Paging did not update event identity');
+   return {paging_nodes_retained:true,paging_diagnostics_isolated:true};
+  });
+  results.push({width,...identity,loading_anchor_shift_px:loading.shift,...stable,pages:Math.ceil(fixture.archive.events.length/10),max_rows:pages.maxRows,all_events_reachable:true,loaded_samples:pages.loadedSamples,wheel_scroll_px:wheelTop-point.top,unrelated_updates_rendered:counts.unrelated,burst_renders:counts.burst,page_render_max_ms:Math.max(...pages.durations),page_full_renders:pages.fullRenders,page_graph_preserved:pages.sameGraph});
  }
  assert.deepEqual(errors,[]);const output={browser:await browser.version(),real_browser:true,actual_HA_shell:false,private_fixture:!!process.env.CARD_FIXTURE,results,physical_services:0};if(process.env.CARD_BROWSER_RESULT)fs.writeFileSync(process.env.CARD_BROWSER_RESULT,JSON.stringify(output,null,2));console.log('PASS: real Chromium stable reading anchor, retained DOM/details/focus/offsets, wheel, bounded pages, all events, packed identity and coalesced renders');console.log(JSON.stringify(output));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

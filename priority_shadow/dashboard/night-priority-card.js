@@ -1,4 +1,4 @@
-/* Frontend 0.6.16. Local HA card. The only write is the dedicated simulation preference helper. */
+/* Frontend 0.6.17. Local HA card. The only write is the dedicated simulation preference helper. */
 const NIGHT_SETTINGS=['sensor.solax_run_mode','number.solax_api_max_charge_current_setting','number.tesla_model_y_juniper_nabijeci_proud','number.solax_battery_charge_max_current','sensor.solax_battery_current_charge','sensor.nocni_stinove_povely','sensor.nocni_stinove_fve_soc_vyhodnoceni','sensor.nocni_stinove_vstupy','sensor.nocni_stinovy_soc_optimalizace','number.solax_battery_discharge_max_current','sensor.nocni_stinovy_ridici_denik'];
 const NIGHT_HELPER='input_select.nocni_stinova_priorita';
 const REASONS={clock_rollback:'Návrat systémových hodin · čeká na časovou návaznost',collection_failed:'Sběr selhal · návrhy nejsou dostupné',missing_battery_energy_model:'Chybí doložený model baterie',invalid_inverter_limit:'Neplatný limit měniče',invalid_soc_plan:'Nový plán chybí, není splnitelný nebo už vypršel · výpočet pozastaven',outside_window:'Mimo noční okno · další výpočet ve 03:00',missing_frozen_forecast:'Chybí uložená předpověď pro tuto noc',invalid_phase_input:'Čekáme na čerstvá měření všech fází',invalid_ev_input:'Chybí čerstvý příkon wallboxu',invalid_battery_soc:'Chybí výchozí SOC baterie',invalid_battery_limit:'Chybí použitelný limit nebo napětí baterie',inconsistent_ev_phases:'Výkony auta po fázích se neshodují',missing_priority:'Vyberte stínovou prioritu',ev_first:'Auto má přednost · baterie využívá zbytek',battery_first:'Baterie má přednost · návrh auta se omezuje',forecast_no_charge:'Předpověď nevyžaduje dobíjení baterie',target_reached:'Model baterie dosáhl cíle',base_load_over_limit:'Samotný dům překračuje limit modelu fáze',unsupported_ev_phase_layout:'Nesouměrné fáze auta · tento model je nepokrývá',inconsistent_house_balance:'Výkony měniče a sítě dávají neplatnou bilanci domu'};
@@ -331,14 +331,25 @@ class NightPriorityCard extends HTMLElement {
   if(!tbody||!this.ownerDocument?.createElement){this.render();return;}
   const view=this.controlEventView(),ram=(this.controlSession()?.policy||this.controlData().policy||'').startsWith('volatile-power');
   const template=this.ownerDocument.createElement('template');template.innerHTML=this.controlTimelineRows(view.shown,ram);
-  // Výška scroll kontejneru zůstává pevná; ostatních panelů ani grafu se nedotýkáme.
-  if(resetScroll){
-   // Nová explicitně zvolená stránka začíná nahoře bez synchronního scroll/layout staré tabulky.
+  // Offset uchovává scroll event. Čtení scrollTop zde by vynutilo
+  // synchronní layout celé dosud nevyhodnocené karty.
+  if(resetScroll&&this.journalScrollTop!==0){
    const next=node.cloneNode(false),table=node.querySelector('table').cloneNode(false),head=node.querySelector('thead'),body=this.ownerDocument.createElement('tbody');
    if(head)table.append(head.cloneNode(true));body.append(template.content);table.append(body);next.append(table);node.replaceWith(next);
    if(this.journalScrollLeft)next.scrollLeft=this.journalScrollLeft;
-   next.onscroll=()=>{this.journalScrollLeft=next.scrollLeft;};
-  }else tbody.replaceChildren(template.content);
+   this.journalScrollTop=0;
+   next.onscroll=()=>{this.journalScrollLeft=next.scrollLeft;this.journalScrollTop=next.scrollTop;};
+  }else{
+   const rows=[...tbody.children],fresh=[...template.content.children];
+   for(let i=0;i<fresh.length;i++){
+    const row=rows[i],next=fresh[i];
+    if(!row){tbody.append(next);continue;}
+    for(const attr of [...row.attributes])if(!next.hasAttribute(attr.name))row.removeAttribute(attr.name);
+    for(const attr of next.attributes)if(row.getAttribute(attr.name)!==attr.value)row.setAttribute(attr.name,attr.value);
+    NIGHT_PATCH_DOM(row,next);
+   }
+   for(let i=fresh.length;i<rows.length;i++)rows[i].remove();
+  }
   this.controlHTMLCache=null;this.fragmentHTML?.delete('journal');
   const get=id=>this.shadowRoot.querySelector('#'+id),prev=get('control-prev'),next=get('control-next'),count=get('control-page-count'),latest=get('control-latest'),all=get('control-all');
   if(prev){prev.hidden=!this.controlShowAll;prev.disabled=view.page===0;}
@@ -489,7 +500,7 @@ class NightPriorityCard extends HTMLElement {
   const sourceSelect=this.shadowRoot.querySelector('#control-source');if(sourceSelect)sourceSelect.onchange=e=>{this.controlSources={...this.controlSources,[this.controlSelectedDay()]:e.target.value};this.controlShowAll=false;this.controlPage=0;this.render();this.loadControlHistory(true);};
   const cs=this.shadowRoot.querySelector('#control-day');if(cs)cs.onchange=e=>{this.controlDay=e.target.value;this.controlShowAll=false;this.controlPage=0;this.render();this.loadControlHistory(true);};
   const cr=this.shadowRoot.querySelector('#control-reload');if(cr)cr.onclick=()=>this.loadControlHistory(true);
-  const journalScroll=this.shadowRoot.querySelector('#control-events');if(journalScroll)journalScroll.onscroll=()=>{this.journalScrollLeft=journalScroll.scrollLeft;};
+  const journalScroll=this.shadowRoot.querySelector('#control-events');if(journalScroll)journalScroll.onscroll=()=>{this.journalScrollLeft=journalScroll.scrollLeft;this.journalScrollTop=journalScroll.scrollTop;};
   const ca=this.shadowRoot.querySelector('#control-all');if(ca)ca.onclick=()=>{this.controlShowAll=!this.controlShowAll;this.controlPage=0;this.controlRecentEnd=null;this.updateControlPage(true);};
   const latest=this.shadowRoot.querySelector('#control-latest');if(latest)latest.onclick=()=>{this.controlRecentEnd=null;this.updateControlPage();const n=this.shadowRoot.querySelector('#control-events');if(n)n.scrollTop=n.scrollHeight;};
   for(const [id,step]of [['control-prev',-1],['control-next',1]]){const button=this.shadowRoot.querySelector('#'+id);if(button)button.onclick=()=>{this.controlPage=Math.max(0,(this.controlPage||0)+step);this.updateControlPage(true);};}

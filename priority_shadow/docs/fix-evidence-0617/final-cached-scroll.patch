@@ -1,0 +1,49 @@
+--- card-slot-reset-before-rejected.js
++++ repo/priority_shadow/dashboard/night-priority-card.js
+@@ -331,19 +331,25 @@
+   if(!tbody||!this.ownerDocument?.createElement){this.render();return;}
+   const view=this.controlEventView(),ram=(this.controlSession()?.policy||this.controlData().policy||'').startsWith('volatile-power');
+   const template=this.ownerDocument.createElement('template');template.innerHTML=this.controlTimelineRows(view.shown,ram);
+-  // Při výslovném přepnutí stránky ponechat kontejner, hlavičku i buňky.
+-  // Jiný event ID přesto dostane novou identitu details a prázdné podklady.
+-  const resetTop=resetScroll&&node.scrollTop!==0,rows=[...tbody.children],fresh=[...template.content.children];
+-  // Scroll číst/resetovat před změnou řádků, aby setter nevynutil druhý layout.
+-  if(resetTop)node.scrollTop=0;
+-  for(let i=0;i<fresh.length;i++){
+-   const row=rows[i],next=fresh[i];
+-   if(!row){tbody.append(next);continue;}
+-   for(const attr of [...row.attributes])if(!next.hasAttribute(attr.name))row.removeAttribute(attr.name);
+-   for(const attr of next.attributes)if(row.getAttribute(attr.name)!==attr.value)row.setAttribute(attr.name,attr.value);
+-   NIGHT_PATCH_DOM(row,next);
++  // Offset uchovává scroll event. Čtení scrollTop zde by vynutilo
++  // synchronní layout celé dosud nevyhodnocené karty.
++  if(resetScroll&&this.journalScrollTop!==0){
++   const next=node.cloneNode(false),table=node.querySelector('table').cloneNode(false),head=node.querySelector('thead'),body=this.ownerDocument.createElement('tbody');
++   if(head)table.append(head.cloneNode(true));body.append(template.content);table.append(body);next.append(table);node.replaceWith(next);
++   if(this.journalScrollLeft)next.scrollLeft=this.journalScrollLeft;
++   this.journalScrollTop=0;
++   next.onscroll=()=>{this.journalScrollLeft=next.scrollLeft;this.journalScrollTop=next.scrollTop;};
++  }else{
++   const rows=[...tbody.children],fresh=[...template.content.children];
++   for(let i=0;i<fresh.length;i++){
++    const row=rows[i],next=fresh[i];
++    if(!row){tbody.append(next);continue;}
++    for(const attr of [...row.attributes])if(!next.hasAttribute(attr.name))row.removeAttribute(attr.name);
++    for(const attr of next.attributes)if(row.getAttribute(attr.name)!==attr.value)row.setAttribute(attr.name,attr.value);
++    NIGHT_PATCH_DOM(row,next);
++   }
++   for(let i=fresh.length;i<rows.length;i++)rows[i].remove();
+   }
+-  for(let i=fresh.length;i<rows.length;i++)rows[i].remove();
+   this.controlHTMLCache=null;this.fragmentHTML?.delete('journal');
+   const get=id=>this.shadowRoot.querySelector('#'+id),prev=get('control-prev'),next=get('control-next'),count=get('control-page-count'),latest=get('control-latest'),all=get('control-all');
+   if(prev){prev.hidden=!this.controlShowAll;prev.disabled=view.page===0;}
+@@ -494,7 +500,7 @@
+   const sourceSelect=this.shadowRoot.querySelector('#control-source');if(sourceSelect)sourceSelect.onchange=e=>{this.controlSources={...this.controlSources,[this.controlSelectedDay()]:e.target.value};this.controlShowAll=false;this.controlPage=0;this.render();this.loadControlHistory(true);};
+   const cs=this.shadowRoot.querySelector('#control-day');if(cs)cs.onchange=e=>{this.controlDay=e.target.value;this.controlShowAll=false;this.controlPage=0;this.render();this.loadControlHistory(true);};
+   const cr=this.shadowRoot.querySelector('#control-reload');if(cr)cr.onclick=()=>this.loadControlHistory(true);
+-  const journalScroll=this.shadowRoot.querySelector('#control-events');if(journalScroll)journalScroll.onscroll=()=>{this.journalScrollLeft=journalScroll.scrollLeft;};
++  const journalScroll=this.shadowRoot.querySelector('#control-events');if(journalScroll)journalScroll.onscroll=()=>{this.journalScrollLeft=journalScroll.scrollLeft;this.journalScrollTop=journalScroll.scrollTop;};
+   const ca=this.shadowRoot.querySelector('#control-all');if(ca)ca.onclick=()=>{this.controlShowAll=!this.controlShowAll;this.controlPage=0;this.controlRecentEnd=null;this.updateControlPage(true);};
+   const latest=this.shadowRoot.querySelector('#control-latest');if(latest)latest.onclick=()=>{this.controlRecentEnd=null;this.updateControlPage();const n=this.shadowRoot.querySelector('#control-events');if(n)n.scrollTop=n.scrollHeight;};
+   for(const [id,step]of [['control-prev',-1],['control-next',1]]){const button=this.shadowRoot.querySelector('#'+id);if(button)button.onclick=()=>{this.controlPage=Math.max(0,(this.controlPage||0)+step);this.updateControlPage(true);};}

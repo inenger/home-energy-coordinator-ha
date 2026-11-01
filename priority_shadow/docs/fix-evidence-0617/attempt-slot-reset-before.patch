@@ -1,0 +1,19 @@
+--- card-slot-reset-after-rejected.js
++++ card-slot-reset-before-rejected.js
+@@ -334,6 +334,8 @@
+   // Při výslovném přepnutí stránky ponechat kontejner, hlavičku i buňky.
+   // Jiný event ID přesto dostane novou identitu details a prázdné podklady.
+   const resetTop=resetScroll&&node.scrollTop!==0,rows=[...tbody.children],fresh=[...template.content.children];
++  // Scroll číst/resetovat před změnou řádků, aby setter nevynutil druhý layout.
++  if(resetTop)node.scrollTop=0;
+   for(let i=0;i<fresh.length;i++){
+    const row=rows[i],next=fresh[i];
+    if(!row){tbody.append(next);continue;}
+@@ -342,7 +344,6 @@
+    NIGHT_PATCH_DOM(row,next);
+   }
+   for(let i=fresh.length;i<rows.length;i++)rows[i].remove();
+-  if(resetTop)node.scrollTop=0;
+   this.controlHTMLCache=null;this.fragmentHTML?.delete('journal');
+   const get=id=>this.shadowRoot.querySelector('#'+id),prev=get('control-prev'),next=get('control-next'),count=get('control-page-count'),latest=get('control-latest'),all=get('control-all');
+   if(prev){prev.hidden=!this.controlShowAll;prev.disabled=view.page===0;}

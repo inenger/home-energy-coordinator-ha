@@ -72,3 +72,7 @@ Vstup main85b0c14; [chronologie pokusů a odmítnutých variant](../../priority_
 
 ## Audit noci a doplňku 1.11.2026
 [Zpráva A16-01/A16-02/O16-03](../../priority_shadow/docs/AUDIT_0616_20261101.md) uchovává první neúspěšné hypotézy o EV periodě, chybu výběru integračního horizontu, nesprávný adresář fixture i původní browser FAIL. Jde o audit bez nasazení oprav.
+
+
+## Opravy A16 · 0.6.17
+[Změna runtime a důkazy včetně odmítnutých scrollTop variant](../../priority_shadow/docs/AUDIT_FIXES_0617.md). Původní audit a noční evidence zachované; nové čekání se ověřuje celou main smyčkou, nikoli změnou starého pevného5sprotipříkladu.
