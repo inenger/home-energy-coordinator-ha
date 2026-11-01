@@ -328,3 +328,15 @@ Pouze observe_only, žádný akční adaptér, EEPROM, fyzickýpovel nebo veřej
 
 ## Otevřené nálezy auditu 0.6.15 · 31. 10. 2026
 A15-01 ztracená chyba workeru, A15-02 konflikt živých záznamů, A15-03 příliš dlouhý history dotaz. O15-04 kolísání stránkování111.2ms versus78.8/78.7ms. Dosud neopravené; viz [audit](AUDIT_0615_20261031.md), reprodukce a zachované důkazy.
+
+
+## Opravy 0.6.16 · 1. 11. 2026
+A15-01 má persistentní generační latch s potvrzením po SQLite stop/outbox;
+A15-02 odmítá konflikty živého streamu/cache/recent řádků a izoluje archiv;
+A15-03 omezuje uzavřený potvrzený dotaz skutečným koncem přenosu.
+Stránky po10událostech: skutečný browser47/51ms, syntetický66/56ms,
+nulový posun při obnově. Původní FAIL117ms i zamítnutá varianta204ms zachované.
+450+164Python, Node, staré auditní kontrakty a skutečný recorder/SQLite prošly.
+Celá nová produkční noc0.6.16 ani uživatelův HA shell/iPhone nejsou ověřené.
+Viz priority_shadow/docs/AUDIT_FIXES_0616.md. Nasazení/GitHub/CI se potvrzují
+samostatným dokončovacím záznamem; tato poznámka je nenahrazuje.

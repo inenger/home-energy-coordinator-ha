@@ -1,0 +1,11 @@
+{
+  "preflight.sqlite": "b917c09fe8b69705add742602027b204237eec162ade3d29974184dbc50abff2",
+  "preflight-states.json": "d7865498e33c26981d8b1ead596d81484861d7c76b40eab66f5122fb17215d26",
+  "current-ui.json": "64399c66abc177cf442726841b21eee16e7bcdb34212eb3453a5f1dbe6b2d887",
+  "recent-expected.json": "66d82c05851e68c862d19bed350db1599966cb770f6e9172cdf48fa4c2209193",
+  "recent-verification.json": "ab7b89fd941b5b183dc65147c04d3b78299987ef3975c769031eb6411dadb7b6",
+  "ui-verification.json": "6e4d90cb842bbd205cdb25fe52645224392201f05f9fe766343df4210b912aae",
+  "archive-digests.json": "436f0449c325b63ecbb7b61f28fdaf72b0edd63e8e13e25fc8c82d1d9df8e850",
+  "card-retained-container-rejected.js": "8cb64e7c8648290b25e65bc5a343999a5a69409fbb6d5bb46ca2590d21e5b6e6",
+  "card-before-paging.js": "97e46ab7f182e2a08056dc142c2f267f42cf7f19b7d0cab12fcab3869715ee77"
+}

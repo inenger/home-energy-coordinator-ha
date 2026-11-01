@@ -64,3 +64,7 @@ git log archive/rpi-through-0615
 
 ## Navazující audit 31. 10. 2026
 [Hloubkový audit 0.6.15](../../priority_shadow/docs/AUDIT_0615_20261031.md) uchovává tři nové nálezy, původní neúspěšný browser test i diagnostické opakování, nesprávný import root testů a opravené předpoklady porovnání build manifestu. Předchozí opravy nejsou přepsané; nový nález neznamená automatickou opravu.
+
+
+## 0.6.16 · opravy po auditu
+Vstup main85b0c14; [chronologie pokusů a odmítnutých variant](../../priority_shadow/docs/AUDIT_FIXES_0616.md). Veřejná evidence obsahuje syntetické testy, původní FAIL logy a SHA-256 soukromých podkladů. Nasazení a publikace mají vlastní záznam.

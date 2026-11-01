@@ -1,0 +1,17 @@
+geometry 1280 {"sameScroll":true,"sameDetails":true,"independentDetails":true,"sameFocus":true,"topShift":0,"leftShift":0,"viewportShift":0,"duration":60.89999997615814,"timings":{"controlPanel":0.7000000476837158,"controllerPanel":0.30000001192092896,"inputHealth":0.6000000238418579,"optimizerPanel":2.599999964237213,"chart":2,"auditPanels":4.899999976158142,"automationPanel":0.19999998807907104,"updateDOM":43.80000001192093}}
+PROFILE 1280 {"controlSession":0.30000001192092896,"controlEventView":3,"controlTimelineRows":6,"updateControlPage":20.5} external 101.69999998807907
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Page rendering exceeds 100ms budget: 101.69999998807907
+    at file:///share/hec-recovery/fix-0616/profile-browser.mjs:51:223 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

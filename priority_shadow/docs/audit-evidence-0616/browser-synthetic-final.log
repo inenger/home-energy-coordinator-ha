@@ -1,0 +1,16 @@
+geometry 1280 {"sameScroll":true,"sameDetails":true,"independentDetails":true,"sameFocus":true,"topShift":0,"leftShift":0,"viewportShift":0,"duration":30.80000001192093,"timings":{"controlPanel":0.30000001192092896,"controllerPanel":0.3999999761581421,"inputHealth":0.10000002384185791,"optimizerPanel":0,"chart":1.7000000476837158,"auditPanels":1.800000011920929,"automationPanel":0,"updateDOM":22.400000035762787}}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Wheel did not scroll journal
+    at file:///share/hec-recovery/fix-0616/repo/scripts/test_card_scroll_browser.mjs:53:102 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

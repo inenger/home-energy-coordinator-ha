@@ -1,0 +1,8 @@
+test_failed_persistence_does_not_clear_pending_error (test_audit_fixes_0616.AuditFixTests.test_failed_persistence_does_not_clear_pending_error) ... ok
+test_main_acknowledges_after_stop_and_outbox_at_original_failure_time (test_audit_fixes_0616.AuditFixTests.test_main_acknowledges_after_stop_and_outbox_at_original_failure_time) ... ok
+test_unacknowledged_error_survives_success_restart_and_old_ack (test_audit_fixes_0616.AuditFixTests.test_unacknowledged_error_survives_success_restart_and_old_ack) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.342s
+
+OK

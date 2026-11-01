@@ -1,0 +1,26 @@
+test_failed_persistence_does_not_clear_pending_error (test_audit_fixes_0616.AuditFixTests.test_failed_persistence_does_not_clear_pending_error) ... ok
+test_main_acknowledges_after_stop_and_outbox_at_original_failure_time (test_audit_fixes_0616.AuditFixTests.test_main_acknowledges_after_stop_and_outbox_at_original_failure_time) ... FAIL
+test_unacknowledged_error_survives_success_restart_and_old_ack (test_audit_fixes_0616.AuditFixTests.test_unacknowledged_error_survives_success_restart_and_old_ack) ... ok
+
+======================================================================
+FAIL: test_main_acknowledges_after_stop_and_outbox_at_original_failure_time (test_audit_fixes_0616.AuditFixTests.test_main_acknowledges_after_stop_and_outbox_at_original_failure_time)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/share/hec-recovery/fix-0616/repo/priority_shadow/tests/test_audit_fixes_0616.py", line 68, in test_main_acknowledges_after_stop_and_outbox_at_original_failure_time
+    self.assertEqual(acks,[generation])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != [1]
+
+Second list contains 1 additional elements.
+First extra element 0:
+1
+
+- []
++ [1]
+?  +
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.227s
+
+FAILED (failures=1)

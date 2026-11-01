@@ -1,3 +1,12 @@
+## 0.6.16 · zachování výpadků a integrita deníku
+
+Nepřevzatý výpadek sběru přežije následný úspěch i běžný restart a potvrdí se
+až po stopu/outboxu. Konfliktní neměnné řádky živého deníku blokují výsledek.
+Uzavřený potvrzený přenos se načítá jen do doloženého konce; pozdní předání
+zůstává zahrnuté. Stránky mají 10 událostí pro kratší layout na RPi.
+[Opravy, regresní důkazy a všechny neúspěšné pokusy](docs/AUDIT_FIXES_0616.md).
+Pouze observe_only; stará evidence a automatizace se nepřepisují.
+
 ## 0.6.15 · nízký P/UI a neblokující vstupy
 
 Nízký P/UI má konzervativní proudový rozpočet, síťový sběr má samostatný worker

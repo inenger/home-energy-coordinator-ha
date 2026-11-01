@@ -12,7 +12,7 @@ from . import journal_transport,monitor_payload
 from .storage import sqlite_bytes
 import traceback
 from .priority_publication import MonitorPublisher
-from .priority_collection import SnapshotCollector
+from .priority_collection import SnapshotCollector,CollectionFailure
 STOP=threading.Event()
 PORTABLE=Path('/share/home-energy-priority-shadow')
 
@@ -66,7 +66,7 @@ def main():
     optionfile=Path('/data/options.json');opts=json.loads(optionfile.read_text()) if optionfile.exists() else {}
     if opts.get('mode','observe_only')!='observe_only':raise ValueError('Only observe_only is supported')
     cfg={'ha_base_url':'http://supervisor/core','token_file':None}
-    client=SnapshotCollector(ReadOnlyHA(cfg['ha_base_url']),period=2.5).start()
+    client=SnapshotCollector(ReadOnlyHA(cfg['ha_base_url']),period=2.5,failure_path=DATA/'collection-failure.json').start()
     maintenance=Maintenance(DATA/'evidence.sqlite',opts,backup)
     journal_publisher=journal_transport.Publisher(DATA/'evidence.sqlite').start()
     monitoring=MonitorPublisher(cfg).start()
@@ -119,13 +119,15 @@ def main():
                               'soc_target_pct':optimizer.get('target_soc_pct'),'fast_work_duration_s':time.monotonic()-started,'monitor_publication':monitoring.snapshot(),'device_actions':0}),flush=True)
         except Exception as e:
             failed=failure_result(datetime.now(timezone.utc).isoformat(),e,last_success)
-            failure_pending=failure_pending or failed['collection_health']['checked_at']
+            failure_at=e.failure_at if isinstance(e,CollectionFailure) else failed['collection_health']['checked_at']
+            failure_pending=min(filter(None,[failure_pending,failure_at]))
             try:
                 journal_store=Store(DATA/'evidence.sqlite',timeout=.25)
                 try:
                     if isinstance(e,monitor_payload.PayloadOverflow):monitor_payload.record_overflow(journal_store,e,datetime.now(timezone.utc).isoformat())
                     failed['control_journal']=control_journal.record_failure(journal_store,failure_pending,type(e).__name__)
                     failed['control_journal']['transport']=journal_transport.enqueue(journal_store,failed['control_journal'])
+                    if isinstance(e,CollectionFailure):client.acknowledge_failure(e.generation)
                     failure_pending=None
                 finally:journal_store.close()
             except Exception as journal_error:

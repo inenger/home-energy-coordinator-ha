@@ -1,4 +1,4 @@
-/* Frontend 0.6.14. Local HA card. The only write is the dedicated simulation preference helper. */
+/* Frontend 0.6.16. Local HA card. The only write is the dedicated simulation preference helper. */
 const NIGHT_SETTINGS=['sensor.solax_run_mode','number.solax_api_max_charge_current_setting','number.tesla_model_y_juniper_nabijeci_proud','number.solax_battery_charge_max_current','sensor.solax_battery_current_charge','sensor.nocni_stinove_povely','sensor.nocni_stinove_fve_soc_vyhodnoceni','sensor.nocni_stinove_vstupy','sensor.nocni_stinovy_soc_optimalizace','number.solax_battery_discharge_max_current','sensor.nocni_stinovy_ridici_denik'];
 const NIGHT_HELPER='input_select.nocni_stinova_priorita';
 const REASONS={clock_rollback:'Návrat systémových hodin · čeká na časovou návaznost',collection_failed:'Sběr selhal · návrhy nejsou dostupné',missing_battery_energy_model:'Chybí doložený model baterie',invalid_inverter_limit:'Neplatný limit měniče',invalid_soc_plan:'Nový plán chybí, není splnitelný nebo už vypršel · výpočet pozastaven',outside_window:'Mimo noční okno · další výpočet ve 03:00',missing_frozen_forecast:'Chybí uložená předpověď pro tuto noc',invalid_phase_input:'Čekáme na čerstvá měření všech fází',invalid_ev_input:'Chybí čerstvý příkon wallboxu',invalid_battery_soc:'Chybí výchozí SOC baterie',invalid_battery_limit:'Chybí použitelný limit nebo napětí baterie',inconsistent_ev_phases:'Výkony auta po fázích se neshodují',missing_priority:'Vyberte stínovou prioritu',ev_first:'Auto má přednost · baterie využívá zbytek',battery_first:'Baterie má přednost · návrh auta se omezuje',forecast_no_charge:'Předpověď nevyžaduje dobíjení baterie',target_reached:'Model baterie dosáhl cíle',base_load_over_limit:'Samotný dům překračuje limit modelu fáze',unsupported_ev_phase_layout:'Nesouměrné fáze auta · tento model je nepokrývá',inconsistent_house_balance:'Výkony měniče a sítě dávají neplatnou bilanci domu'};
@@ -38,6 +38,12 @@ const NIGHT_EQUAL_JSON=(a,b)=>{
  if(Array.isArray(a)||Array.isArray(b))return Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((v,i)=>NIGHT_EQUAL_JSON(v,b[i]));
  const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(k=>Object.prototype.hasOwnProperty.call(b,k)&&NIGHT_EQUAL_JSON(a[k],b[k]));
 };
+// Události a vzorky jsou neměnné napříč dávkami i živým náhledem.
+class NightJournalConflict extends Error {}
+function NIGHT_ADD_IMMUTABLE(map,key,value){
+ if(map.has(key)&&!NIGHT_EQUAL_JSON(map.get(key),value))throw new NightJournalConflict('Conflicting immutable journal row');
+ map.set(key,value);
+}
 // Stabilní klíče patří obsahu, nikoli pořadí tabulky na stránce.
 const NIGHT_NODE_KEY=n=>n.nodeType===1?(n.id||n.getAttribute('data-ui-key')):null;
 const NIGHT_SAME_NODE=(a,b)=>a.nodeType===b.nodeType&&(a.nodeType!==1||a.tagName===b.tagName&&a.namespaceURI===b.namespaceURI);
@@ -160,7 +166,7 @@ class NightPriorityCard extends HTMLElement {
  controlArchives(){return (this.config?.control_archives||[]).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x.day)&&/^[a-f0-9]{64}$/.test(x.archive_id)&&Number.isFinite(Date.parse(x.recorded_from))&&Number.isFinite(Date.parse(x.recorded_to))&&Date.parse(x.recorded_to)>Date.parse(x.recorded_from));}
  controlSelectedDay(){return this.controlDay||this.controlData().session?.day||this.controlArchives().map(x=>x.day).sort().reverse()[0]||'';}
  controlUseArchive(day=this.controlSelectedDay()){return this.controlArchives().some(x=>x.day===day)&&this.controlSources?.[day]!=='live';}
- controlSession(){const day=this.controlSelectedDay(),a=this.controlData(),cached=this.controlCache?.[day];if(this.controlUseArchive(day)){const archive=this.controlArchives().find(x=>x.day===day);return cached?.archive_id===archive?.archive_id&&cached.archive_complete&&(!archive.content_sha256||cached.verified_content_sha256===archive.content_sha256)?cached.session:null;}return a.session?.day===day?a.session:cached?.archive_id?null:cached?.session;}
+ controlSession(){const day=this.controlSelectedDay(),a=this.controlData(),cached=this.controlCache?.[day];if(this.controlUseArchive(day)){const archive=this.controlArchives().find(x=>x.day===day);return cached?.archive_id===archive?.archive_id&&cached.archive_complete&&(!archive.content_sha256||cached.verified_content_sha256===archive.content_sha256)?cached.session:null;}this.controlEventView();if(this.controlIntegrityErrors?.[day])return null;return a.session?.day===day?a.session:cached?.archive_id?null:cached?.session;}
  async loadControlArchive(archive,force=false){
   const day=archive.day,cached=this.controlCache?.[day];
   if(!force&&cached?.archive_id===archive.archive_id&&cached.archive_complete&&(!archive.content_sha256||cached.verified_content_sha256===archive.content_sha256))return;
@@ -217,14 +223,18 @@ class NightPriorityCard extends HTMLElement {
   const transport=this.controlData().transport,prior=this.controlCache?.[day]||{};
   const cached=prior.stream_id===transport.stream_id?prior:{};
   const expectedNow=this.controlData().session?.day===day?this.controlData().session:this.controlData().sessions?.find(s=>s.day===day);
-  if(!force&&cached.history_complete&&cached.session?.closed_at&&expectedNow?.closed_at&&cached.events?.length===expectedNow.event_count&&cached.samples?.length===expectedNow.statistics?.sample_count)return;
-  if(!force&&cached.loadedAt&&Date.now()-cached.loadedAt<10000)return;
+  if(!force&&!this.controlIntegrityErrors?.[day]&&cached.history_complete&&cached.session?.closed_at&&expectedNow?.closed_at&&cached.events?.length===expectedNow.event_count&&cached.samples?.length===expectedNow.statistics?.sample_count)return;
+  if(!force&&!this.controlIntegrityErrors?.[day]&&cached.loadedAt&&Date.now()-cached.loadedAt<10000)return;
   this.controlLoading=true;
   try{
-   const receipt=transport.days?.[day];const begin=receipt?.first_recorded_at?Date.parse(receipt.first_recorded_at)-2000:Date.parse(day+'T00:00:00Z')-7200000,end=Date.now();
+   const receipt=transport.days?.[day],lastRecorded=Date.parse(receipt?.last_recorded_at);
+   const begin=receipt?.first_recorded_at?Date.parse(receipt.first_recorded_at)-2000:Date.parse(day+'T00:00:00Z')-7200000;
+   // Pozdní předání může ležet mimo 03–05. Omezujeme potvrzený přenos, ne okno regulace.
+   const closedConfirmed=expectedNow?.closed_at&&receipt?.queued_chunks>0&&receipt.recorded_chunks===receipt.queued_chunks&&Number.isFinite(lastRecorded)&&lastRecorded>=begin;
+   const end=closedConfirmed?Math.min(Date.now(),lastRecorded+2000):Date.now();
    // A missing part keeps the original cursor. Later reloads must be able to recover it.
    const recovery=!cached.history_complete&&receipt?.recorded_chunks===receipt?.queued_chunks&&receipt?.recorded_chunks>0;
-   const from=recovery?begin:Math.max(begin,(cached.cursor||begin)-60000);
+   const from=recovery?begin:Math.max(begin,Math.min(end-1,(cached.cursor||begin)-60000));
    const rows=await this._hass.callApi('GET','history/period/'+new Date(from).toISOString()+'?filter_entity_id=sensor.nocni_stinovy_denik_prirustky&end_time='+encodeURIComponent(new Date(end).toISOString())+'&significant_changes_only=0');
    const parts=new Map(cached.parts||[]),events=new Map((cached.events||[]).map(x=>[x.id,x])),samples=new Map((cached.samples||[]).map(x=>[x.at,x]));let session=cached.session;
    for(const series of rows||[])for(const state of series||[]){const a=state.attributes||{};if(a.format!=='journal-chunks-v1'||a.stream_id!==transport.stream_id||a.day!==day)continue;
@@ -235,13 +245,18 @@ class NightPriorityCard extends HTMLElement {
     const ordered=[...group.values()].sort((a,b)=>a.part_index-b.part_index);if(first.last_seq!==first.first_seq+first.part_count-1||ordered.some((p,i)=>p.seq!==first.first_seq+i||p.part_count!==first.part_count||p.first_seq!==first.first_seq||p.last_seq!==first.last_seq||p.encoding!=='zlib-json-v1'||p.unpacked_bytes!==first.unpacked_bytes))throw Error('Journal batch mismatch');
     const compressed=ordered.map(p=>atob(p.data)).join(''),data=btoa(compressed);const delta=await this.inflatePayload(data,first.unpacked_bytes,batch);
     if(delta.session?.day!==day)throw Error('Journal day mismatch');if(first.last_seq>latestSeq){session=delta.session;latestSeq=first.last_seq;}
-    for(const e of delta.events||[])if(e.day===day&&Number.isInteger(e.id))events.set(e.id,e);for(const s of delta.samples||[])if(s.day===day)samples.set(s.at,s);decoded.add(batch);
+    for(const e of delta.events||[])if(e.day===day&&Number.isInteger(e.id))NIGHT_ADD_IMMUTABLE(events,e.id,e);for(const s of delta.samples||[])if(s.day===day)NIGHT_ADD_IMMUTABLE(samples,s.at,s);decoded.add(batch);
    }
+   // Ověřit i živý náhled; do potvrzené cache jej nezapočítáváme.
+   const checkedEvents=new Map(events),checkedSamples=new Map(samples);
+   for(const e of this.controlData().recent_events||[])if(e.day===day)NIGHT_ADD_IMMUTABLE(checkedEvents,e.id,e);
+   for(const sample of this.controlData().recent_samples||[])if(sample.day===day)NIGHT_ADD_IMMUTABLE(checkedSamples,sample.at,sample);
+   if(this.controlIntegrityErrors)delete this.controlIntegrityErrors[day];
    const live=this.controlData().session,expected=live?.day===day?live:this.controlData().sessions?.find(s=>s.day===day)||session;
    const complete=!!expected&&events.size===expected.event_count&&samples.size===expected.statistics?.sample_count;
    this.controlCache=this.controlCache||{};this.controlCache[day]={session,events:[...events.values()],samples:[...samples.values()],parts:[...parts],decoded_batches:[...decoded],session_seq:latestSeq,stream_id:transport.stream_id,history_complete:complete,cursor:end,loadedAt:Date.now()};
    this.controlError=!complete;this.controlPending=!complete&&transport.pending_chunks>0;this.controlTransportError=transport.status==='degraded';
-  }catch{this.controlError=true;this.controlPending=false;}finally{this.controlLoading=false;if(this._hass)this.render();}
+  }catch(error){if(error instanceof NightJournalConflict){this.controlIntegrityErrors=this.controlIntegrityErrors||{};this.controlIntegrityErrors[day]=true;}this.controlError=true;this.controlPending=false;}finally{this.controlLoading=false;if(this._hass)this.render();}
  }
  controlCurrentChart(rows,ram=false,events=[]){
   const pts=rows.filter(x=>Number.isFinite(Date.parse(x.at)));if(pts.length<2)return '<p class="foot">Graf A DC se naplní průběhem relace. Chybějící úseky nejsou nula.</p>';
@@ -284,12 +299,15 @@ class NightPriorityCard extends HTMLElement {
  controlEventView(){
   const a=this.controlData(),day=this.controlSelectedDay(),archiveMode=this.controlUseArchive(day),archive=this.controlArchives().find(x=>x.day===day),stored=this.controlCache?.[day]||{},cache=archiveMode?(stored.archive_id===archive?.archive_id?stored:{}):(stored.archive_id?{}:stored);
   const events=new Map((cache.events||[]).map(x=>[x.id,x])),samples=new Map((cache.samples||[]).map(x=>[x.at,x]));
-  for(const e of archiveMode?[]:a.recent_events||[])if(e.day===day)events.set(e.id,e);
-  for(const s of archiveMode?[]:a.recent_samples||[])if(s.day===day)samples.set(s.at,s);
+  try{
+   for(const e of archiveMode?[]:a.recent_events||[])if(e.day===day)NIGHT_ADD_IMMUTABLE(events,e.id,e);
+   for(const s of archiveMode?[]:a.recent_samples||[])if(s.day===day)NIGHT_ADD_IMMUTABLE(samples,s.at,s);
+  }catch(error){if(!(error instanceof NightJournalConflict))throw error;this.controlIntegrityErrors=this.controlIntegrityErrors||{};this.controlIntegrityErrors[day]=true;this.controlError=true;}
+  if(!archiveMode&&this.controlIntegrityErrors?.[day]){events.clear();samples.clear();}
   const all=[...events.values()].sort((x,y)=>x.id-y.id),windowKey=day+'|'+(archiveMode?archive?.archive_id:'live');
   if(this.controlWindowKey!==windowKey){this.controlWindowKey=windowKey;this.controlRecentEnd=null;}
   if(this.controlRecentEnd==null&&all.length)this.controlRecentEnd=all.at(-1).id;
-  const pageSize=20,pages=Math.max(1,Math.ceil(all.length/pageSize)),page=Math.min(pages-1,Math.max(0,this.controlPage||0)),shown=this.controlShowAll?all.slice(page*pageSize,(page+1)*pageSize):all.filter(e=>e.id<=this.controlRecentEnd).slice(-pageSize),newCount=all.filter(e=>e.id>this.controlRecentEnd).length;
+  const pageSize=10,pages=Math.max(1,Math.ceil(all.length/pageSize)),page=Math.min(pages-1,Math.max(0,this.controlPage||0)),shown=this.controlShowAll?all.slice(page*pageSize,(page+1)*pageSize):all.filter(e=>e.id<=this.controlRecentEnd).slice(-pageSize),newCount=all.filter(e=>e.id>this.controlRecentEnd).length;
   return {all,shown,page,pages,pageSize,newCount,samples};
  }
  openControlDetails(event){
@@ -306,7 +324,7 @@ class NightPriorityCard extends HTMLElement {
   return shown.map(e=>'<tr data-ui-key="event-'+e.id+'"><th>'+ES(TM(e.at))+'<small>'+ES(NIGHT_CLOCK.format(new Date(e.at)))+'</small></th><td>'+ES(kinds[e.kind]||e.kind)+'<small>'+ES(parameter(e.entity_id,e.label))+(e.entity_id?' · '+ES(e.entity_id):'')+'</small></td><td>'+ES(value(e.before))+' → '+ES(value(e.after))+'</td><td>'+ES(String(reasons[e.reason]||e.reason||'—').length>160?String(reasons[e.reason]||e.reason).slice(0,160)+'…':reasons[e.reason]||e.reason||'—')+(e.diagnostic?.phase?'<small>L'+ES(e.diagnostic.phase)+' · |P|/(U×I) '+NF(e.diagnostic.power_to_va_ratio,3)+' · data jsou přítomná, ale rozporná</small>':'')+(ram&&e.diagnostic||String(e.reason||'').length>160?'<details data-ui-key="event-detail-'+ES(this.controlWindowKey||this.controlSelectedDay())+'-'+e.id+'" data-event-id="'+e.id+'"><summary>'+(e.diagnostic?'Podklady neplatného snímku':'Úplný důvod')+'</summary><pre data-event-details data-ui-key="event-details-'+ES(this.controlWindowKey||this.controlSelectedDay())+'-'+e.id+'" data-ui-preserve></pre></details>':'')+(e.decision?.binding_phase?'<small>Omezuje L'+ES(e.decision.binding_phase)+' · baterie '+KW(e.decision.battery_ac_w)+'</small>':'')+'</td></tr>').join('');
  }
  controlPager({all,page,pages,pageSize,newCount}){
-  return '<div id="control-pages" class="journal-pages"><button id="control-prev" '+(!this.controlShowAll?'hidden ':'')+(page===0?'disabled':'')+'>Předchozí</button><span id="control-page-count" '+(!this.controlShowAll?'hidden':'')+'>'+NF(page*pageSize+1,0)+'–'+NF(Math.min((page+1)*pageSize,all.length),0)+' z '+NF(all.length,0)+'</span><button id="control-next" '+(!this.controlShowAll?'hidden ':'')+(page===pages-1?'disabled':'')+'>Další</button><button id="control-latest" '+(this.controlShowAll||!newCount?'hidden':'')+'>Nové události · '+NF(newCount,0)+' · zobrazit</button><button id="control-all">'+(this.controlShowAll?'Zobrazit posledních 20':'Procházet celý deník')+'</button></div>';
+  return '<div id="control-pages" class="journal-pages"><button id="control-prev" '+(!this.controlShowAll?'hidden ':'')+(page===0?'disabled':'')+'>Předchozí</button><span id="control-page-count" '+(!this.controlShowAll?'hidden':'')+'>'+NF(page*pageSize+1,0)+'–'+NF(Math.min((page+1)*pageSize,all.length),0)+' z '+NF(all.length,0)+'</span><button id="control-next" '+(!this.controlShowAll?'hidden ':'')+(page===pages-1?'disabled':'')+'>Další</button><button id="control-latest" '+(this.controlShowAll||!newCount?'hidden':'')+'>Nové události · '+NF(newCount,0)+' · zobrazit</button><button id="control-all">'+(this.controlShowAll?'Zobrazit posledních 10':'Procházet celý deník')+'</button></div>';
  }
  updateControlPage(resetScroll=false){
   const node=this.shadowRoot.querySelector('#control-events'),tbody=node?.querySelector('tbody');
@@ -327,7 +345,7 @@ class NightPriorityCard extends HTMLElement {
   if(next){next.hidden=!this.controlShowAll;next.disabled=view.page===view.pages-1;}
   if(count){count.hidden=!this.controlShowAll;count.textContent=NF(view.page*view.pageSize+1,0)+'–'+NF(Math.min((view.page+1)*view.pageSize,view.all.length),0)+' z '+NF(view.all.length,0);}
   if(latest){latest.hidden=this.controlShowAll||!view.newCount;latest.textContent='Nové události · '+NF(view.newCount,0)+' · zobrazit';}
-  if(all)all.textContent=this.controlShowAll?'Zobrazit posledních 20':'Procházet celý deník';
+  if(all)all.textContent=this.controlShowAll?'Zobrazit posledních 10':'Procházet celý deník';
  }
  controlPanelBody(){
   const a=this.controlData(),day=this.controlSelectedDay(),archiveMode=this.controlUseArchive(day),archive=this.controlArchives().find(x=>x.day===day),stored=this.controlCache?.[day]||{},cache=archiveMode?(stored.archive_id===archive?.archive_id?stored:{}):(stored.archive_id?{}:stored),run=this.controlSession();
@@ -357,6 +375,7 @@ class NightPriorityCard extends HTMLElement {
    '<div class="audit-counts"><span>'+(ram?'Zvýšení výkonu':'Zvýšení A DC')+' <b>'+NF((ram?run?.counts?.power_increases:run?.counts?.current_increases)||0,0)+'</b></span><span>'+(ram?'Snížení výkonu':'Snížení A DC')+' <b>'+NF((ram?run?.counts?.power_decreases:run?.counts?.current_decreases)||0,0)+'</b></span><span>Zastavení / blokování <b>'+NF(run?.counts?.stops||0,0)+'</b></span><span>Obnova <b>'+ES(run?.restoration_status?reasons[run.restoration_status]||run.restoration_status:'Ještě neproběhla')+'</b></span></div>'+
    '<p class="foot">Navržený proud min / max '+NF(run?.statistics?.current_min_a,1)+' / '+NF(run?.statistics?.current_max_a,1)+' A DC · průměr '+NF(run?.statistics?.covered_s>0?run.statistics.current_amp_seconds/run.statistics.covered_s:null,1)+' A DC · pokryté úseky '+NF((run?.statistics?.covered_s||0)/60,1)+' min · vzorky modelu nad 25 A '+NF(run?.statistics?.model_exceedance_samples||0,0)+' · hlášené vzorky nad 25 A '+NF(run?.statistics?.measured_exceedance_samples||0,0)+'. Proudově neověřené snímky '+NF(run?.statistics?.unverified_current_samples,0)+' · chybějící proudové fáze '+NF(run?.statistics?.missing_current_phase_samples,0)+'. Jde o dostupné reporty, nikoli záruku fyzického proudu či nepřetržitého limitu.</p>'+
    '<div class="control-chart">'+this.controlCurrentChart([...samples.values()].sort((x,y)=>Date.parse(x.at)-Date.parse(y.at)),ram,all)+'</div><div class="legend"><span style="--c:#5fdfbc">'+(ram?'Odhad A DC z požadavku výkonu':'Virtuální nastavení limitu A DC')+'</span><span style="--c:#94a9bb">'+(ram?'Trvalý limit A DC · pouze čtení':'Skutečné nastavení v HA')+'</span><span style="--c:#66b9ff">Měřený proud baterie</span></div>'+
+   (!archiveMode&&this.controlIntegrityErrors?.[day]?'<p class="input-bad">Konflikt obsahu deníku: stejná událost nebo vzorek má různé hodnoty. Výsledek nelze ověřit.</p>':'')+
    (this.controlError?'<p class="input-bad">Historii deníku z HA se nepodařilo načíst úplně. Chybějící události ani vzorky se nevydávají za nulu; soukromý úplný archiv zůstává na RPi.</p>':'')+
    (run?.late_start_seconds>30?'<p class="input-bad">Relace začala opožděně o '+NF(run.late_start_seconds/60,1)+' min; předchozí kroky se nedoplňují zpětně.</p>':'')+
    '<p class="foot">Načteno '+all.length+' z '+count+' událostí relace. Zobrazeno '+shown.length+'. '+(all.length<count?'Pro starší kroky načtěte deník noci; chybějící archiv HA není nula.':'')+'</p>'+

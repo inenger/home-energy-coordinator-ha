@@ -1,0 +1,17 @@
+geometry 1280 {"sameScroll":true,"sameDetails":true,"independentDetails":true,"sameFocus":true,"topShift":0,"leftShift":0,"viewportShift":0,"duration":63.19999998807907,"timings":{"controlPanel":0.800000011920929,"controllerPanel":0.19999998807907104,"inputHealth":0.699999988079071,"optimizerPanel":2.199999988079071,"chart":2.700000047683716,"auditPanels":4,"automationPanel":0.19999998807907104,"updateDOM":45.200000047683716}}
+geometry 390 {"sameScroll":true,"sameDetails":true,"independentDetails":true,"sameFocus":true,"topShift":0,"leftShift":0,"viewportShift":0,"duration":72.90000003576279,"timings":{"controlPanel":0.6000000238418579,"controllerPanel":0.19999998807907104,"inputHealth":0.699999988079071,"optimizerPanel":2.199999988079071,"chart":1.699999988079071,"auditPanels":3.800000011920929,"automationPanel":0.19999998807907104,"updateDOM":58.5}}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Page rendering exceeds 100ms budget: 203.9000000357628
+    at file:///share/hec-recovery/fix-0616/repo/scripts/test_card_scroll_browser.mjs:49:119 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
