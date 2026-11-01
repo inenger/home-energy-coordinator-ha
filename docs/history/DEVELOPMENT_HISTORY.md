@@ -68,3 +68,7 @@ git log archive/rpi-through-0615
 
 ## 0.6.16 · opravy po auditu
 Vstup main85b0c14; [chronologie pokusů a odmítnutých variant](../../priority_shadow/docs/AUDIT_FIXES_0616.md). Veřejná evidence obsahuje syntetické testy, původní FAIL logy a SHA-256 soukromých podkladů. Nasazení a publikace mají vlastní záznam.
+
+
+## Audit noci a doplňku 1.11.2026
+[Zpráva A16-01/A16-02/O16-03](../../priority_shadow/docs/AUDIT_0616_20261101.md) uchovává první neúspěšné hypotézy o EV periodě, chybu výběru integračního horizontu, nesprávný adresář fixture i původní browser FAIL. Jde o audit bez nasazení oprav.

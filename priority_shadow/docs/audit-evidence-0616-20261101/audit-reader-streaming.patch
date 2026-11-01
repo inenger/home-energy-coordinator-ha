@@ -1,0 +1,11 @@
+--- audit-reader-before.py
++++ audit-reader-streaming.py
+@@ -6,7 +6,7 @@
+ from energy.soc_evidence import verify
+ from energy.monitor_payload import unpacked
+ db=sqlite3.connect('file:'+str(r/'snapshot.sqlite')+'?mode=ro',uri=True)
+-decisions=[unpack(p)for p, in db.execute('SELECT payload FROM soc_decisions WHERE day=? ORDER BY at',('2026-11-01',))]
++decisions=(unpack(p)for p, in db.execute('SELECT payload FROM soc_decisions WHERE day=? ORDER BY at',('2026-11-01',)))
+ rows=[]
+ def availability(value,issued,path=''):
+  out=[]

@@ -1,0 +1,15 @@
+node:fs:621
+  return binding.open(
+                 ^
+
+Error: ENOENT: no such file or directory, open '/share/hec-recovery/audit-0616-2026-11-01/proof-prior-frontend/controller-failure-fixture.json'
+    at Object.openSync (node:fs:621:18)
+    at Object.readFileSync (node:fs:487:35)
+    at file:///share/hec-recovery/audit-0616-2026-11-01/repo/scripts/audit_deep_0612.mjs:16:29 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/share/hec-recovery/audit-0616-2026-11-01/proof-prior-frontend/controller-failure-fixture.json'
+}
+
+Node.js v24.22.1

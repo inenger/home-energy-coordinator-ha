@@ -1,0 +1,11 @@
+{
+  "checked_at": "2026-11-01T11:42:04.381730+00:00",
+  "runtime_version": "0.6.16",
+  "health": "ok",
+  "source_hashes_unchanged": true,
+  "tracked_files": 137,
+  "protected_configurations_unchanged": true,
+  "original_night_rows_unchanged": true,
+  "all_night_rows_device_actions_zero": true,
+  "actual_recorder_rows_verified": true
+}
