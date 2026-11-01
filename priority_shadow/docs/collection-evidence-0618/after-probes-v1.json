@@ -1,0 +1,58 @@
+[
+  {
+    "poll_override": 2.5,
+    "work_s": 0,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 34
+  },
+  {
+    "poll_override": 2.5,
+    "work_s": 1,
+    "expiry_stops": 3,
+    "other_stops": [],
+    "samples": 34
+  },
+  {
+    "poll_override": 2.5,
+    "work_s": 2,
+    "expiry_stops": 3,
+    "other_stops": [],
+    "samples": 34
+  },
+  {
+    "poll_override": 2.5,
+    "work_s": 3,
+    "expiry_stops": 6,
+    "other_stops": [],
+    "samples": 32
+  },
+  {
+    "poll_override": null,
+    "work_s": 0,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 31
+  },
+  {
+    "poll_override": null,
+    "work_s": 1,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 31
+  },
+  {
+    "poll_override": null,
+    "work_s": 2,
+    "expiry_stops": 0,
+    "other_stops": [],
+    "samples": 32
+  },
+  {
+    "poll_override": null,
+    "work_s": 3,
+    "expiry_stops": 3,
+    "other_stops": [],
+    "samples": 32
+  }
+]

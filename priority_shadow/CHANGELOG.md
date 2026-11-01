@@ -1,3 +1,11 @@
+## 0.6.18 · rychlý sběr a přednost regulátoru
+
+RAM rozhoduje před analytikou z aktuální cache; krátká platnost návrhu může
+analytiku odložit. Noční poll 1 s, komplexní REST kontext oddělený od živých
+reportů. Každý řídicí vzorek uchovává přesný zdroj a dobu získání dat.
+[Opravy, regresní důkazy a slepé cesty](docs/COLLECTION_FIXES_0618.md).
+Pouze observe_only; karta ani staré rekonstrukce se nepřepisují.
+
 ## 0.6.17 · časování obnovy, přesný stop a rychlejší deník
 
 Smyčka přebírá novou cache před lease deadline; nemění původní reporty/TTL.

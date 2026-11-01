@@ -1,10 +1,12 @@
 """Read-only measurements and strictly allowlisted weather/metadata queries; no device actions."""
 from __future__ import annotations
 import argparse
+import copy
 import fcntl
 import gzip
 import json
 import os
+import time
 from pathlib import Path
 import shutil
 from datetime import datetime, timezone
@@ -61,6 +63,17 @@ class ReadOnlyHA:
         if not isinstance(rows,list) or any(not isinstance(s,list) for s in rows):raise ValueError('Invalid history response')
         return rows
 
+    def priority_context(self,refresh=False):
+        """Cache jen komplexních atributů. Živé hodnoty/reporty vždy z template."""
+        now=time.monotonic()
+        if refresh or not hasattr(self,'_priority_context') or now-self._priority_context_at>=60:
+            rows=self.get('/api/states')
+            from . import night,priority,soc_runtime
+            complex_ids={night.IDS['forecast_today'],priority.EXTRA['forecast_tomorrow'],soc_runtime.IDS['forecast_day3'],soc_runtime.IDS['tariff']}
+            self._priority_context=[x for x in rows if x['entity_id']in complex_ids or x['entity_id'].startswith('weather.')]
+            self._priority_context_at=time.monotonic()
+        return self._priority_context
+
     def priority_states(self):
         """Rychlé hodnoty a jejich metadata z jediného živého HA snímku.
 
@@ -69,7 +82,7 @@ class ReadOnlyHA:
         Čtení nikdy nevytváří nový čas hlášení zařízení.
         """
         from . import night,priority,automation_context,soc_runtime,control_journal,ram_control
-        all_states=self.get('/api/states')
+        all_states=self.priority_context()
         weather_ids={s['entity_id']for s in all_states if s['entity_id'].startswith('weather.')}
         ids=sorted(set(night.IDS.values())|set(priority.EXTRA.values())|set(automation_context.ENTITY_IDS)|set(soc_runtime.IDS.values())|set(control_journal.ENTITY_IDS)|set(ram_control.ENTITY_IDS)|weather_ids)
         complex_ids=weather_ids|{night.IDS['forecast_today'],priority.EXTRA['forecast_tomorrow'],soc_runtime.IDS['forecast_day3'],soc_runtime.IDS['tariff']}
@@ -91,11 +104,11 @@ class ReadOnlyHA:
                 if eid in complex_ids:
                     old=rest.get(eid)
                     if old and old['state']==row['state']and old.get('last_updated')==row['last_updated']:
-                        row={**row,'attributes':old.get('attributes',{})}
+                        row={**row,'attributes':copy.deepcopy(old.get('attributes',{}))}
                     else:row={**row,'snapshot_error':'snapshot_race'};races.append(eid)
                 out.append(row)
             if not races or attempt:return out
-            all_states=self.get('/api/states')
+            all_states=self.priority_context(refresh=True)
 
     def _query(self, path, payload, text=False):
         req=urllib.request.Request(self.base+path,data=json.dumps(payload).encode(),method='POST',

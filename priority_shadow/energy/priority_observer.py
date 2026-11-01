@@ -72,8 +72,18 @@ def next_wait(at,work_s,journal=None):
             remaining=(instant(expiry)-instant(at)).total_seconds()
             # Rezerva pro převzetí čerstvé cache. Při skutečné ztrátě dat
             # řídicí vrstva stále zastaví přesně na původní deadline.
-            delay=min(delay,max(.25,remaining-1.))
+            delay=min(delay,max(.25,remaining-max(1.,work_s+.25)))
     return delay
+
+
+
+def observe_control(store,states,result,at):
+    points=priority.checked_points(states,at)
+    current={'at':at,'session':result.get('session'),
+        'priority':priority.LABELS.get(priority.value(points,'priority')),
+        'actual':{k:priority.value(points,k)for k in ('battery_a','battery_v','battery_soc','ev_w')},
+        'collection_snapshot':{**(states[0].get('collection_snapshot',{})if states else {}),'read_at':at}}
+    return control_journal.observe(store,states,current)
 
 
 def main():
@@ -81,13 +91,13 @@ def main():
     optionfile=Path('/data/options.json');opts=json.loads(optionfile.read_text()) if optionfile.exists() else {}
     if opts.get('mode','observe_only')!='observe_only':raise ValueError('Only observe_only is supported')
     cfg={'ha_base_url':'http://supervisor/core','token_file':None}
-    client=SnapshotCollector(ReadOnlyHA(cfg['ha_base_url']),period=2.5,failure_path=DATA/'collection-failure.json').start()
+    client=SnapshotCollector(ReadOnlyHA(cfg['ha_base_url']),period=2.5,night_period=1.,failure_path=DATA/'collection-failure.json').start()
     maintenance=Maintenance(DATA/'evidence.sqlite',opts,backup)
     journal_publisher=journal_transport.Publisher(DATA/'evidence.sqlite').start()
     monitoring=MonitorPublisher(cfg).start()
     for sig in (signal.SIGINT,signal.SIGTERM):signal.signal(sig,lambda *_:STOP.set())
     print(json.dumps({'version':VERSION,'component':'local_priority_shadow','mode':'observe_only','device_actions':0}),flush=True)
-    last_success=None;failure_pending=None
+    last_success=None;failure_pending=None;last_priority_result=None;analysis_budget_s=1.
     try:
         previous=json.loads((DATA/'priority-live.json').read_text())
         last_success=previous.get('at')
@@ -102,23 +112,53 @@ def main():
             store=Store(DATA/'evidence.sqlite',timeout=.25)
             try:
                 night.ensure_schema(store.db);priority.schema(store.db)
-                archive_forecasts(store,states,at)
-                maintenance.submit(states,at)
-                slow=maintenance.snapshot();optimizer=slow.get('soc_optimizer',{})
-                result=observe_priority(store,states,at,finish_closed=False)
+                # RAM má přednost před analytikou. Zmrazený model/prognóza se
+                # přebírá jen ze stejného dne a již dokončeného výpočtu.
+                cached=last_priority_result if ((last_priority_result or {}).get('session')or{}).get('day')==local.date().isoformat() else None
+                early=None
+                if cached:
+                    if failure_pending:
+                        control_journal.record_failure(store,failure_pending,'collection_failure_pending');failure_pending=None
+                    early=observe_control(store,states,cached,datetime.now(timezone.utc).isoformat())
+                run=(early or {}).get('session')or {}
+                expiry=(run.get('last_intent')or {}).get('expires_at')
+                headroom=(instant(expiry)-instant(at)).total_seconds()if expiry and run.get('target_ac_w',0)>0 else None
+                # Krátký platný lease se nesmí spotřebovat pomalou analytikou.
+                # Při odkladu zůstává poslední analytický čas pravdivě původní.
+                deferred=headroom is not None and headroom<=analysis_budget_s
+                slow=maintenance.snapshot()
+                if not deferred:
+                    analysis_start=time.monotonic()
+                    archive_forecasts(store,states,at)
+                    maintenance.submit(states,at)
+                    result=observe_priority(store,states,at,finish_closed=False)
+                    analysis_budget_s=max(1.,time.monotonic()-analysis_start+.5)
+                else:
+                    result=dict(cached)
+                optimizer=slow.get('soc_optimizer',{})
+                result['collection_snapshot']={**(states[0].get('collection_snapshot',{})if states else {}),'read_at':at}
                 result['soc_optimizer']=optimizer
                 result['maintenance']={k:v for k,v in slow.items() if k not in ('soc_optimizer','fve_soc_audit')}
+                result['collection_health']=dict(result['collection_health'])
                 result['collection_health']['summary_errors']=slow.get('summary_errors',[])
                 if slow.get('maintenance_error') or slow.get('summary_errors'):result['collection_health']['status']='degraded'
-                if failure_pending:
-                    control_journal.record_failure(store,failure_pending,'collection_failure_pending');failure_pending=None
-                result['control_journal']=control_journal.observe(store,states,result)
+                if early is None:
+                    # První model se vytvořil až v tomto kroku: před prvním
+                    # návrhem znovu převzít cache a použít aktuální čas.
+                    if failure_pending:
+                        control_journal.record_failure(store,failure_pending,'collection_failure_pending');failure_pending=None
+                    control_states=client.priority_states()
+                    early=observe_control(store,control_states,result,datetime.now(timezone.utc).isoformat())
+                result['control_journal']=early
+                result['analytics_scheduling']={'deferred_for_control_deadline':deferred,'work_budget_s':analysis_budget_s}
                 result['control_journal']['transport']=journal_transport.enqueue(store,result['control_journal'])
                 if result['control_journal']['transport'].get('status')=='degraded':
                     result['collection_health']['status']='degraded'
                     result['collection_health']['journal_transport_error']=result['control_journal']['transport'].get('error_code')
-                priority_audit.journal(store,result)
-                result['command_audit']=priority_audit.command_summary(store,at)
+                if not deferred:
+                    priority_audit.journal(store,result)
+                    result['command_audit']=priority_audit.command_summary(store,at)
+                    last_priority_result=dict(result)
                 result['fve_soc_audit']=slow.get('fve_soc_audit',{})
             finally:store.close()
             loop_journal=result['control_journal']

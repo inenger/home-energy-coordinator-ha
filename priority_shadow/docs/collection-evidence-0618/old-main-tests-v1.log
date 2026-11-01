@@ -1,0 +1,19 @@
+test_deadline_aware_main_keeps_valid_delayed_ev_data_continuous (test_audit_fixes_0617.AuditFixTests.test_deadline_aware_main_keeps_valid_delayed_ev_data_continuous) ... ok
+test_real_ev_dropout_still_stops_and_requires_two_new_solax_frames (test_audit_fixes_0617.AuditFixTests.test_real_ev_dropout_still_stops_and_requires_two_new_solax_frames) ... ok
+test_stat_exception_preserves_earlier_worker_stop (test_audit_fixes_0617.AuditFixTests.test_stat_exception_preserves_earlier_worker_stop) ... ok
+test_storage_budget_preserves_earlier_worker_stop_and_energy (test_audit_fixes_0617.AuditFixTests.test_storage_budget_preserves_earlier_worker_stop_and_energy) ... ok
+test_wait_respects_lease_work_and_outside_window (test_audit_fixes_0617.AuditFixTests.test_wait_respects_lease_work_and_outside_window) ... FAIL
+
+======================================================================
+FAIL: test_wait_respects_lease_work_and_outside_window (test_audit_fixes_0617.AuditFixTests.test_wait_respects_lease_work_and_outside_window)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<synthetic-test-checkout>/priority_shadow/tests/test_audit_fixes_0617.py", line 97, in test_wait_respects_lease_work_and_outside_window
+    self.assertEqual(obs.next_wait(stamp(5),4,journal),1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0.5499999999999998 != 1
+
+----------------------------------------------------------------------
+Ran 5 tests in 3.734s
+
+FAILED (failures=1)

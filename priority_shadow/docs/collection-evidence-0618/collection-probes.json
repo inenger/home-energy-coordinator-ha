@@ -1,0 +1,48 @@
+{
+  "work_0": {
+    "work_s": 0,
+    "samples": 31,
+    "logical_expirations": 0,
+    "stops": 0,
+    "control_only_ticks": 0,
+    "atomic_receipts_retained": true,
+    "original_report_evidence_retained": true,
+    "physical_actions": 0
+  },
+  "work_1": {
+    "work_s": 1,
+    "samples": 31,
+    "logical_expirations": 0,
+    "stops": 0,
+    "control_only_ticks": 0,
+    "atomic_receipts_retained": true,
+    "original_report_evidence_retained": true,
+    "physical_actions": 0
+  },
+  "work_2": {
+    "work_s": 2,
+    "samples": 32,
+    "logical_expirations": 0,
+    "stops": 0,
+    "control_only_ticks": 0,
+    "atomic_receipts_retained": true,
+    "original_report_evidence_retained": true,
+    "physical_actions": 0
+  },
+  "work_3": {
+    "work_s": 3,
+    "samples": 34,
+    "logical_expirations": 0,
+    "stops": 0,
+    "control_only_ticks": 3,
+    "atomic_receipts_retained": true,
+    "original_report_evidence_retained": true,
+    "physical_actions": 0
+  },
+  "dropout": {
+    "stops": 1,
+    "invalid_samples": 4,
+    "invalid_samples_all_zero": true,
+    "physical_actions": 0
+  }
+}
