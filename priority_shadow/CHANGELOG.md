@@ -1,3 +1,9 @@
+## 0.6.18 · audit živé noci 2.11.2026
+
+Audit nemění runtime. Nové syntetické regrese pokrývají SQLite writer
+kolizi přes main/stop/outbox a blokaci nekonzistentních fázových údajů.
+[Závěry, meze a slepé cesty](docs/AUDIT_NIGHT_0618_20261102.md).
+
 ## 0.6.18 · rychlý sběr a přednost regulátoru
 
 RAM rozhoduje před analytikou z aktuální cache; krátká platnost návrhu může

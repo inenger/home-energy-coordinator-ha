@@ -1,0 +1,16 @@
+test_inconsistent_power_current_is_blocked_with_exact_evidence_and_recovery (test_night_audit_0618.NightAuditTests.test_inconsistent_power_current_is_blocked_with_exact_evidence_and_recovery) ... FAIL
+test_real_writer_contention_reaches_main_stop_outbox_and_recovery (test_night_audit_0618.NightAuditTests.test_real_writer_contention_reaches_main_stop_outbox_and_recovery) ... ok
+
+======================================================================
+FAIL: test_inconsistent_power_current_is_blocked_with_exact_evidence_and_recovery (test_night_audit_0618.NightAuditTests.test_inconsistent_power_current_is_blocked_with_exact_evidence_and_recovery)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<synthetic-test-checkout>/priority_shadow/tests/test_night_audit_0618.py", line 47, in test_inconsistent_power_current_is_blocked_with_exact_evidence_and_recovery
+    self.assertEqual(sample['input_reports']['grid_l1_a_reported']['value'],4)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: -0.3 != 4
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.968s
+
+FAILED (failures=1)
