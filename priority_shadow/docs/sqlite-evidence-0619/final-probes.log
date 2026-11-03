@@ -1,0 +1,13 @@
+test_external_sqlite_failure_keeps_native_code_message_in_main_and_journal (test_sqlite_writes_0619.SQLiteWritesTests.test_external_sqlite_failure_keeps_native_code_message_in_main_and_journal) ... ok
+test_local_wait_is_bounded_and_released_after_exception (test_sqlite_writes_0619.SQLiteWritesTests.test_local_wait_is_bounded_and_released_after_exception) ... ok
+test_main_control_keeps_local_background_writer_out_of_decision_scope (test_sqlite_writes_0619.SQLiteWritesTests.test_main_control_keeps_local_background_writer_out_of_decision_scope) ... ok
+test_other_sqlite_errors_are_not_treated_as_retryable_collection_success (test_sqlite_writes_0619.SQLiteWritesTests.test_other_sqlite_errors_are_not_treated_as_retryable_collection_success) ... ok
+test_plain_read_remains_available_during_background_write (test_sqlite_writes_0619.SQLiteWritesTests.test_plain_read_remains_available_during_background_write) ... ok
+test_soc_compression_does_not_hold_writer_gate (test_sqlite_writes_0619.SQLiteWritesTests.test_soc_compression_does_not_hold_writer_gate) ... ok
+test_waiting_control_has_priority_over_queued_background_writer (test_sqlite_writes_0619.SQLiteWritesTests.test_waiting_control_has_priority_over_queued_background_writer) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 4.091s
+
+OK
+{"guard_disabled_baseline": "failed_as_expected", "coordinated_contracts": 7, "all_passed": true, "real_sqlite_and_threads": true, "external_busy_still_fails_safe": true, "compression_outside_writer": true, "native_error_details_retained": true, "private_inputs": false}

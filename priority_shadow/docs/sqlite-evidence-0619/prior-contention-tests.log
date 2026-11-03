@@ -1,0 +1,7 @@
+test_inconsistent_power_current_is_blocked_with_exact_evidence_and_recovery (test_night_audit_0618.NightAuditTests.test_inconsistent_power_current_is_blocked_with_exact_evidence_and_recovery) ... ok
+test_real_writer_contention_reaches_main_stop_outbox_and_recovery (test_night_audit_0618.NightAuditTests.test_real_writer_contention_reaches_main_stop_outbox_and_recovery) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 2.440s
+
+OK

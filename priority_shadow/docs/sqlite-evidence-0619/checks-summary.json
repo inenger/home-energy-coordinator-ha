@@ -1,0 +1,27 @@
+{
+  "shadow_tests": 473,
+  "legacy_tests": 164,
+  "checks": {
+    "shadow": 0,
+    "legacy": 0,
+    "metadata": 0,
+    "node-syntax": 0,
+    "main-probes": 0,
+    "test_audit_fixes_0616": 0,
+    "test_card_updates": 0,
+    "test_controller_summary": 0,
+    "test_deep_fixes_0613": 0,
+    "test_http_integrity": 0,
+    "test_independent_fixes_0614": 0,
+    "test_journal_transport": 0,
+    "test_partial_card": 0,
+    "test_same_day_reconstruction": 0,
+    "packaged-replay": 0,
+    "prior-backend": 0,
+    "prior-frontend": 0,
+    "prior-independent": 0,
+    "prior-collector": 0
+  },
+  "card_changed": false,
+  "browser_rerun": false
+}

@@ -1,3 +1,10 @@
+## 0.6.19 · koordinace SQLite zápisů
+
+Zápisy regulátoru, analytiky a transportu mají společnou koordinaci s předností
+krátkého řídicího kroku. Velká komprese je mimo zapisující kontext; skutečná
+SQLite selhání zachovávají kód/název/hlášku a bezpečný stop.
+[Opravy, testy a meze](docs/SQLITE_FIXES_0619.md). Pouze observe_only.
+
 ## 0.6.18 · rychlý sběr a přednost regulátoru
 
 RAM rozhoduje před analytikou z aktuální cache; krátká platnost návrhu může

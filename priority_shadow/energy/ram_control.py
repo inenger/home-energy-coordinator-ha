@@ -379,7 +379,7 @@ def observe(store,states,result):
     return view(store,at,states)
 
 
-def record_failure(store,at,error_code):
+def record_failure(store,at,error_code,diagnostics=None):
     schema(store.db)
     with store.db:
         for day,p in list(store.db.execute('SELECT day,payload FROM ram_control_sessions ORDER BY day DESC')):
@@ -388,7 +388,7 @@ def record_failure(store,at,error_code):
             # Krátký, již platný požadavek končí skutečným stopem, ne posledním vzorkem.
             advance_previous(run,at)
             stop(store.db,run,at,'collection_failure')
-            if run.get('status')!='waiting_for_recovery':event(store.db,run,at,'collection_failure',reason=error_code)
+            if run.get('status')!='waiting_for_recovery':event(store.db,run,at,'collection_failure',reason=error_code,**({'storage_error':diagnostics}if diagnostics else {}))
             run.update(status='waiting_for_recovery',last_signature=None)
             if instant(at)>=instant(run['window_end']):close(store.db,run,{}, {},[],at)
             store.db.execute('UPDATE ram_control_sessions SET payload=? WHERE day=?',(pack(run),day))

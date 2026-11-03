@@ -10,6 +10,7 @@ from . import ram_control as control_journal
 from .priority_maintenance import Maintenance
 from . import journal_transport,monitor_payload
 from .storage import sqlite_bytes
+from .sqlite_writes import details as storage_details
 import traceback
 from .priority_publication import MonitorPublisher
 from .priority_collection import SnapshotCollector,CollectionFailure
@@ -53,12 +54,15 @@ def observe_priority(store,states,at,finish_closed=True):
 
 def failure_result(at,error,last_success):
     """Nové hlášení chyby nesmí vydávat staré výkony za čerstvé měření."""
-    return {'at':last_success,'version':VERSION,'mode':'observe_only','device_actions':0,
+    result={'at':last_success,'version':VERSION,'mode':'observe_only','device_actions':0,
         'selected':{'reason':'collection_failed','ev_ac_w':None,'battery_ac_w':None,'grid_model_w':None},
         'collection_health':{'status':'failed','checked_at':at,'last_successful_collection_at':last_success,
                              'error_code':type(error).__name__,'summary_errors':[],
                               'error_location':[{'file':Path(f.filename).name,'line':f.lineno,'function':f.name}for f in traceback.extract_tb(error.__traceback__)[-6:]],
                               'error_file':Path(error.filename).name if isinstance(error,OSError)and error.filename else None}}
+    detail=storage_details(error)
+    if detail:result['collection_health']['storage_error']=detail
+    return result
 
 
 
@@ -77,13 +81,18 @@ def next_wait(at,work_s,journal=None):
 
 
 
-def observe_control(store,states,result,at):
-    points=priority.checked_points(states,at)
-    current={'at':at,'session':result.get('session'),
-        'priority':priority.LABELS.get(priority.value(points,'priority')),
-        'actual':{k:priority.value(points,k)for k in ('battery_a','battery_v','battery_soc','ev_w')},
-        'collection_snapshot':{**(states[0].get('collection_snapshot',{})if states else {}),'read_at':at}}
-    return control_journal.observe(store,states,current)
+def observe_control(store,states,result,at,client=None):
+    # Počkat na místní writer před získáním snímku a času rozhodnutí.
+    # Cache read je bez síťového HTTP; zámek se nedrží během analytiky.
+    with store.db:
+        if client is not None:
+            states=client.priority_states();at=datetime.now(timezone.utc).isoformat()
+        points=priority.checked_points(states,at)
+        current={'at':at,'session':result.get('session'),
+            'priority':priority.LABELS.get(priority.value(points,'priority')),
+            'actual':{k:priority.value(points,k)for k in ('battery_a','battery_v','battery_soc','ev_w')},
+            'collection_snapshot':{**(states[0].get('collection_snapshot',{})if states else {}),'read_at':at}}
+        return control_journal.observe(store,states,current)
 
 
 def main():
@@ -119,10 +128,10 @@ def main():
                 if cached:
                     if failure_pending:
                         control_journal.record_failure(store,failure_pending,'collection_failure_pending');failure_pending=None
-                    early=observe_control(store,states,cached,datetime.now(timezone.utc).isoformat())
+                    early=observe_control(store,states,cached,at,client=client)
                 run=(early or {}).get('session')or {}
                 expiry=(run.get('last_intent')or {}).get('expires_at')
-                headroom=(instant(expiry)-instant(at)).total_seconds()if expiry and run.get('target_ac_w',0)>0 else None
+                headroom=(instant(expiry)-instant((early or {}).get('observed_at')or at)).total_seconds()if expiry and run.get('target_ac_w',0)>0 else None
                 # Krátký platný lease se nesmí spotřebovat pomalou analytikou.
                 # Při odkladu zůstává poslední analytický čas pravdivě původní.
                 deferred=headroom is not None and headroom<=analysis_budget_s
@@ -147,8 +156,7 @@ def main():
                     # návrhem znovu převzít cache a použít aktuální čas.
                     if failure_pending:
                         control_journal.record_failure(store,failure_pending,'collection_failure_pending');failure_pending=None
-                    control_states=client.priority_states()
-                    early=observe_control(store,control_states,result,datetime.now(timezone.utc).isoformat())
+                    early=observe_control(store,states,result,at,client=client)
                 result['control_journal']=early
                 result['analytics_scheduling']={'deferred_for_control_deadline':deferred,'work_budget_s':analysis_budget_s}
                 result['control_journal']['transport']=journal_transport.enqueue(store,result['control_journal'])
@@ -186,14 +194,14 @@ def main():
                 journal_store=Store(DATA/'evidence.sqlite',timeout=.25)
                 try:
                     if isinstance(e,monitor_payload.PayloadOverflow):monitor_payload.record_overflow(journal_store,e,datetime.now(timezone.utc).isoformat())
-                    failed['control_journal']=control_journal.record_failure(journal_store,failure_pending,type(e).__name__)
+                    failed['control_journal']=control_journal.record_failure(journal_store,failure_pending,type(e).__name__,diagnostics=storage_details(e))
                     failed['control_journal']['transport']=journal_transport.enqueue(journal_store,failed['control_journal'])
                     if pending_collection:client.acknowledge_failure(pending_collection['generation'])
                     elif isinstance(e,CollectionFailure):client.acknowledge_failure(e.generation)
                     failure_pending=None
                 finally:journal_store.close()
             except Exception as journal_error:
-                failed['control_journal']={'status':'error','error_code':type(journal_error).__name__,'device_actions':0}
+                failed['control_journal']={'status':'error','error_code':type(journal_error).__name__,'storage_error':storage_details(journal_error),'device_actions':0}
             loop_journal=failed.get('control_journal')
             if failure_pending:failed['unpersisted_failure_at']=failure_pending
             print(json.dumps({'priority_collection':'failed',**failed['collection_health'],'device_actions':0}),flush=True)

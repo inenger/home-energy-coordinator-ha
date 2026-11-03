@@ -155,9 +155,9 @@ def calibration_weather(store,now):
 
 
 def record_decision(store,result):
-    result=seal(result)
+    result=seal(result);payload=pack(result)
     with store.db:store.db.execute('INSERT OR IGNORE INTO soc_decisions VALUES(?,?,?,?)',
-       (result['issued_at'],result['day'],result['decision_hash'],pack(result)))
+       (result['issued_at'],result['day'],result['decision_hash'],payload))
     return result
 
 

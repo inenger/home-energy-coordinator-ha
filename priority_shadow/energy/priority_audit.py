@@ -249,9 +249,10 @@ def update_day_audit(store,client,at):
     result['model_covered_s']=model.get('covered_s')
     result['model_soc_05']=model.get('soc_pct') if model.get('covered_s',0)>=7200 else None
     h=result['source_hash']
+    history_payload=pack(histories);result_payload=pack(result)
     with store.db:
-        store.db.execute('INSERT OR IGNORE INTO objects VALUES(?,?,?)',(h,'priority_day_history',pack(histories)))
-        store.db.execute('INSERT OR IGNORE INTO priority_day_audit_revisions VALUES(?,?,?)',(day,EVALUATION_VERSION+':'+h,pack(result)))
+        store.db.execute('INSERT OR IGNORE INTO objects VALUES(?,?,?)',(h,'priority_day_history',history_payload))
+        store.db.execute('INSERT OR IGNORE INTO priority_day_audit_revisions VALUES(?,?,?)',(day,EVALUATION_VERSION+':'+h,result_payload))
 
 
 def day_summary(store,at,error=None):
