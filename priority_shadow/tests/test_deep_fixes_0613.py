@@ -3,7 +3,8 @@ import copy,contextlib,io,json,tempfile,threading,time,unittest
 from pathlib import Path
 from datetime import datetime,timedelta
 from unittest.mock import patch,MagicMock
-from energy import ram_control as c,journal_transport as t,priority_observer as obs,priority_publication as publication
+from energy import ram_control as c,journal_transport as t,priority_publication as publication
+import historical_observer_0619 as obs
 from energy.store import Store,unpack
 from test_ram_control import data,result,stamp
 

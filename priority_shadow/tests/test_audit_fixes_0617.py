@@ -3,7 +3,8 @@ import unittest,tempfile,time,copy,contextlib,io,math
 from pathlib import Path
 from datetime import datetime
 from unittest.mock import patch,MagicMock
-from energy import priority_observer as obs,priority_collection as collection,ram_control as c,night,priority
+from energy import priority_collection as collection,ram_control as c,night,priority
+import historical_observer_0619 as obs
 from energy.priority_collection import SnapshotCollector
 from energy.store import Store,unpack
 from test_ram_control import data,result,stamp

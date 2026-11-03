@@ -5,6 +5,7 @@ from datetime import datetime
 from unittest.mock import patch,MagicMock
 repo=Path(__file__).resolve().parents[1];sys.path[:0]=[str(repo/'priority_shadow'),str(repo/'priority_shadow/tests')]
 from energy import ram_control as c,priority_observer as obs,priority_collection as collection,journal_transport,night,priority
+import historical_observer_0619 as obs  # explicit coupled-loop historical baseline
 from energy.priority_collection import SnapshotCollector
 from energy.store import Store,unpack
 from test_ram_control import data,result,stamp

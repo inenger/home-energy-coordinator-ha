@@ -1,3 +1,4 @@
+# Historical coupled-loop regression baseline; current runtime proof: verify_control_isolation_0620.py
 """Synthetic verification of complete main/RAM/SQLite/outbox fixes; no HA calls."""
 import sys,os,json,math
 from pathlib import Path

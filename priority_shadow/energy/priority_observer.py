@@ -95,126 +95,21 @@ def observe_control(store,states,result,at,client=None):
         return control_journal.observe(store,states,current)
 
 
+
 def main():
+    from .isolated_control import EvidenceBridge,MonitorBridge,run_loop
     os.umask(0o077);DATA.mkdir(parents=True,exist_ok=True,mode=0o700)
-    optionfile=Path('/data/options.json');opts=json.loads(optionfile.read_text()) if optionfile.exists() else {}
+    optionfile=Path('/data/options.json')
+    opts=json.loads(optionfile.read_text()) if optionfile.exists()else {}
     if opts.get('mode','observe_only')!='observe_only':raise ValueError('Only observe_only is supported')
-    cfg={'ha_base_url':'http://supervisor/core','token_file':None}
-    client=SnapshotCollector(ReadOnlyHA(cfg['ha_base_url']),period=2.5,night_period=1.,failure_path=DATA/'collection-failure.json').start()
-    maintenance=Maintenance(DATA/'evidence.sqlite',opts,backup)
-    journal_publisher=journal_transport.Publisher(DATA/'evidence.sqlite').start()
-    monitoring=MonitorPublisher(cfg).start()
     for sig in (signal.SIGINT,signal.SIGTERM):signal.signal(sig,lambda *_:STOP.set())
-    print(json.dumps({'version':VERSION,'component':'local_priority_shadow','mode':'observe_only','device_actions':0}),flush=True)
-    last_success=None;failure_pending=None;last_priority_result=None;analysis_budget_s=1.
-    try:
-        previous=json.loads((DATA/'priority-live.json').read_text())
-        last_success=previous.get('at')
-        if previous.get('collection_health',{}).get('status')=='failed':failure_pending=previous.get('unpersisted_failure_at') or previous['collection_health'].get('checked_at')
-    except (OSError,ValueError,TypeError):pass
-    while not STOP.is_set():
-        started=time.monotonic();now=datetime.now(timezone.utc);loop_journal=None
-        try:
-            used=sqlite_bytes(DATA,required=last_success is not None)
-            if used>int(opts.get('storage_limit_mb',2048))*1024*1024:raise RuntimeError('STORAGE_BUDGET_EXCEEDED_NO_DELETE')
-            input_started=time.monotonic();states=client.priority_states();input_read_s=time.monotonic()-input_started;db_started=time.monotonic();at=datetime.now(timezone.utc).isoformat();local=datetime.now(TZ)
-            store=Store(DATA/'evidence.sqlite',timeout=.25)
-            try:
-                night.ensure_schema(store.db);priority.schema(store.db)
-                # RAM má přednost před analytikou. Zmrazený model/prognóza se
-                # přebírá jen ze stejného dne a již dokončeného výpočtu.
-                cached=last_priority_result if ((last_priority_result or {}).get('session')or{}).get('day')==local.date().isoformat() else None
-                early=None
-                if cached:
-                    if failure_pending:
-                        control_journal.record_failure(store,failure_pending,'collection_failure_pending');failure_pending=None
-                    early=observe_control(store,states,cached,at,client=client)
-                run=(early or {}).get('session')or {}
-                expiry=(run.get('last_intent')or {}).get('expires_at')
-                headroom=(instant(expiry)-instant((early or {}).get('observed_at')or at)).total_seconds()if expiry and run.get('target_ac_w',0)>0 else None
-                # Krátký platný lease se nesmí spotřebovat pomalou analytikou.
-                # Při odkladu zůstává poslední analytický čas pravdivě původní.
-                deferred=headroom is not None and headroom<=analysis_budget_s
-                slow=maintenance.snapshot()
-                if not deferred:
-                    analysis_start=time.monotonic()
-                    archive_forecasts(store,states,at)
-                    maintenance.submit(states,at)
-                    result=observe_priority(store,states,at,finish_closed=False)
-                    analysis_budget_s=max(1.,time.monotonic()-analysis_start+.5)
-                else:
-                    result=dict(cached)
-                optimizer=slow.get('soc_optimizer',{})
-                result['collection_snapshot']={**(states[0].get('collection_snapshot',{})if states else {}),'read_at':at}
-                result['soc_optimizer']=optimizer
-                result['maintenance']={k:v for k,v in slow.items() if k not in ('soc_optimizer','fve_soc_audit')}
-                result['collection_health']=dict(result['collection_health'])
-                result['collection_health']['summary_errors']=slow.get('summary_errors',[])
-                if slow.get('maintenance_error') or slow.get('summary_errors'):result['collection_health']['status']='degraded'
-                if early is None:
-                    # První model se vytvořil až v tomto kroku: před prvním
-                    # návrhem znovu převzít cache a použít aktuální čas.
-                    if failure_pending:
-                        control_journal.record_failure(store,failure_pending,'collection_failure_pending');failure_pending=None
-                    early=observe_control(store,states,result,at,client=client)
-                result['control_journal']=early
-                result['analytics_scheduling']={'deferred_for_control_deadline':deferred,'work_budget_s':analysis_budget_s}
-                result['control_journal']['transport']=journal_transport.enqueue(store,result['control_journal'])
-                if result['control_journal']['transport'].get('status')=='degraded':
-                    result['collection_health']['status']='degraded'
-                    result['collection_health']['journal_transport_error']=result['control_journal']['transport'].get('error_code')
-                if not deferred:
-                    priority_audit.journal(store,result)
-                    result['command_audit']=priority_audit.command_summary(store,at)
-                    last_priority_result=dict(result)
-                result['fve_soc_audit']=slow.get('fve_soc_audit',{})
-            finally:store.close()
-            loop_journal=result['control_journal']
-            result['monitor_publication']=monitoring.snapshot()
-            if result['monitor_publication'].get('status')=='degraded':
-                result['collection_health'].update(status='degraded',monitor_publication_error=result['monitor_publication'].get('error_code'))
-            result['fast_loop']={'target_interval_s':5 if night.window(at) else 60,'last_work_duration_s':time.monotonic()-started,'physical_control_ready':False,'monitoring_http_in_control_thread':False,'collection_http_in_control_thread':False,'collection_worker':client.snapshot(),'input_read_s':input_read_s,'database_processing_s':time.monotonic()-db_started}
-            monitoring.submit(result)
-            result['fast_loop']['last_work_duration_s']=time.monotonic()-started
-            atomic_json(DATA/'priority-live.json',result)
-            last_success=at
-            print(json.dumps({'priority_collection':'ok','at':at,'active':result['active'],'priority':result['priority'],
-                              'reason':result['selected']['reason'],'collection_health':result['collection_health'],'soc_planner':optimizer.get('status'),
-                              'soc_target_pct':optimizer.get('target_soc_pct'),'fast_work_duration_s':time.monotonic()-started,'monitor_publication':monitoring.snapshot(),'device_actions':0}),flush=True)
-        except Exception as e:
-            failed=failure_result(datetime.now(timezone.utc).isoformat(),e,last_success)
-            failure_at=e.failure_at if isinstance(e,CollectionFailure) else failed['collection_health']['checked_at']
-            # Jiná chyba (např. stat/storage budget) nesmí zakrýt starší
-            # dosud nepřevzatý výpadek síťového workeru.
-            pending_collection=client.snapshot().get('pending_failure')
-            pending_at=pending_collection['first_at'] if pending_collection else None
-            failure_pending=min(filter(None,[failure_pending,failure_at,pending_at]),key=instant)
-            if pending_collection:failed['collection_health']['pending_collection_failure']=pending_collection
-            try:
-                journal_store=Store(DATA/'evidence.sqlite',timeout=.25)
-                try:
-                    if isinstance(e,monitor_payload.PayloadOverflow):monitor_payload.record_overflow(journal_store,e,datetime.now(timezone.utc).isoformat())
-                    failed['control_journal']=control_journal.record_failure(journal_store,failure_pending,type(e).__name__,diagnostics=storage_details(e))
-                    failed['control_journal']['transport']=journal_transport.enqueue(journal_store,failed['control_journal'])
-                    if pending_collection:client.acknowledge_failure(pending_collection['generation'])
-                    elif isinstance(e,CollectionFailure):client.acknowledge_failure(e.generation)
-                    failure_pending=None
-                finally:journal_store.close()
-            except Exception as journal_error:
-                failed['control_journal']={'status':'error','error_code':type(journal_error).__name__,'storage_error':storage_details(journal_error),'device_actions':0}
-            loop_journal=failed.get('control_journal')
-            if failure_pending:failed['unpersisted_failure_at']=failure_pending
-            print(json.dumps({'priority_collection':'failed',**failed['collection_health'],'device_actions':0}),flush=True)
-            try:
-                atomic_json(DATA/'priority-live.json',failed)
-                monitoring.submit(failed,failure=True)
-            except Exception as monitor_error:
-                print(json.dumps({'priority_failure_publication':'failed','error_code':type(monitor_error).__name__}),flush=True)
-        STOP.wait(next_wait(datetime.now(timezone.utc).isoformat(),time.monotonic()-started,loop_journal))
-    client.close();publisher_closed=journal_publisher.close();monitoring_closed=monitoring.close()
-    if maintenance.close() and publisher_closed and monitoring_closed:
-        try:backup()
-        except Exception:pass
-    print(json.dumps({'priority_runtime':'stopped','device_actions':0}),flush=True)
+    # Spawn procesy nemají zděděná SQLite spojení ani zámky vláken.
+    evidence=EvidenceBridge(DATA/'evidence.sqlite',opts).start()
+    monitor=MonitorBridge({'ha_base_url':'http://supervisor/core','token_file':None}).start()
+    client=SnapshotCollector(ReadOnlyHA('http://supervisor/core'),period=2.5,night_period=1.,
+                             failure_path=DATA/'collection-failure.json').start()
+    try:run_loop(client,evidence,monitor,STOP)
+    finally:
+        client.close();evidence.close();monitor.close()
 
 if __name__=='__main__':main()

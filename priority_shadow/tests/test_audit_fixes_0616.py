@@ -4,7 +4,8 @@ from pathlib import Path
 from datetime import datetime
 from unittest.mock import patch,MagicMock
 from energy.priority_collection import SnapshotCollector,CollectionFailure
-from energy import priority_collection as collection,priority_observer as obs,ram_control as c
+from energy import priority_collection as collection,ram_control as c
+import historical_observer_0619 as obs
 from energy.store import Store,unpack
 from test_ram_control import data,result,stamp
 

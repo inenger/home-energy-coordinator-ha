@@ -86,7 +86,7 @@ class NightFixTests(unittest.TestCase):
   import sqlite3,copy,contextlib,io,json
   from unittest.mock import patch,MagicMock
   from datetime import datetime
-  from energy import priority_observer as obs
+  import historical_observer_0619 as obs
   with tempfile.TemporaryDirectory()as folder:
    folder=Path(folder);path=folder/'evidence.sqlite';s=Store(path)
    for t in [0,5]:c.observe(s,data(stamp(t)),result(stamp(t)))

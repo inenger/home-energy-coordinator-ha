@@ -15,6 +15,7 @@ class SnapshotCollector:
     def __init__(self,client,period=5,max_age=7.5,failure_path=None,night_period=None):
         self.client=client;self.period=period;self.max_age=max_age;self.night_period=night_period
         self.sequence=0;self.receipt=None
+        self.persistence_lock=threading.Lock();self.ack_wake=threading.Event();self.ack_requested=None;self.ack_thread=None
         self.condition=threading.Condition();self.stop=threading.Event()
         self.states=None;self.received=None;self.error=None;self.duration=None;self.thread=None
         self.failure_path=Path(failure_path) if failure_path else None
@@ -28,30 +29,55 @@ class SnapshotCollector:
                 datetime.fromisoformat(self.pending_failure['first_at'])
                 if self.pending_failure['generation']!=self.generation:raise ValueError('Invalid pending collection generation')
 
-    def persist(self,pending):
+    def persist(self,pending,generation=None):
         if self.failure_path:
-            atomic_json(self.failure_path,{'generation':self.generation,'pending':pending})
+            atomic_json(self.failure_path,{'generation':self.generation if generation is None else generation,'pending':pending})
 
     def failed(self,error):
-        # Nejstarší nezpracovaný výpadek zůstává zachovaný. Novější generaci
-        # nesmí potvrdit konzument, který viděl jen starší generaci.
+        # Krátký zámek chrání cache. Diskové fsync nikdy neběží pod ním.
         with self.condition:
             self.generation+=1
-            self.pending_failure={'generation':self.generation,
+            generation=self.generation
+            self.pending_failure={'generation':generation,
                 'first_at':(self.pending_failure or {}).get('first_at') or datetime.now(timezone.utc).isoformat(),
                 'error_code':type(error).__name__}
             self.states=None;self.error=type(error).__name__
-            try:self.persist(self.pending_failure);self.persistence_error=None
-            except Exception as problem:self.persistence_error=type(problem).__name__
             self.condition.notify_all()
+        with self.persistence_lock:
+            with self.condition:pending=copy.deepcopy(self.pending_failure);generation=self.generation
+            try:
+                self.persist(pending,generation=generation)
+                problem=None
+            except Exception as error:problem=type(error).__name__
+            with self.condition:
+                if self.generation==generation:self.persistence_error=problem
 
     def acknowledge_failure(self,generation):
-        """Až po trvalém stopu a enqueue. Souběžná novější chyba zůstane čekat."""
+        """Až po trvalém stopu/outboxu. Persistence neblokuje přístup ke cache."""
+        with self.persistence_lock:
+            with self.condition:
+                if not self.pending_failure or self.pending_failure['generation']!=generation:return False
+            self.persist(None,generation=generation)
+            with self.condition:
+                if not self.pending_failure or self.pending_failure['generation']!=generation:return False
+                self.pending_failure=None;self.persistence_error=None
+                return True
+
+    def request_acknowledge_failure(self,generation):
+        """Řídicí proces jen předá generaci; nesahá na disk a nečeká na fsync."""
         with self.condition:
-            if not self.pending_failure or self.pending_failure['generation']!=generation:return False
-            self.persist(None)
-            self.pending_failure=None;self.persistence_error=None
-            return True
+            if not self.pending_failure or self.pending_failure['generation']!=generation:return
+            self.ack_requested=generation
+        self.ack_wake.set()
+
+    def run_acknowledgements(self):
+        while not self.stop.is_set():
+            self.ack_wake.wait(.25);self.ack_wake.clear()
+            with self.condition:generation=self.ack_requested;self.ack_requested=None
+            if generation is None:continue
+            try:self.acknowledge_failure(generation)
+            except Exception as error:
+                with self.condition:self.persistence_error=type(error).__name__
 
     def effective_period(self,at=None):
         return self.night_period if self.night_period is not None and night.window(at or datetime.now(timezone.utc).isoformat()) else self.period
@@ -74,6 +100,8 @@ class SnapshotCollector:
             self.stop.wait(max(.1,period-(time.monotonic()-start)))
 
     def start(self):
+        self.ack_thread=threading.Thread(target=self.run_acknowledgements,name='collection-failure-ack',daemon=True)
+        self.ack_thread.start()
         self.thread=threading.Thread(target=self.run,name='priority-inputs',daemon=True)
         self.thread.start();return self
 
@@ -99,5 +127,6 @@ class SnapshotCollector:
                 'failure_generation':self.generation,'failure_persistence_error':self.persistence_error}
 
     def close(self):
-        self.stop.set()
+        self.stop.set();self.ack_wake.set()
         if self.thread:self.thread.join(timeout=1)
+        if self.ack_thread:self.ack_thread.join(timeout=1)

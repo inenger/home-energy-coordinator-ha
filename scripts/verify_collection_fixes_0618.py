@@ -1,3 +1,4 @@
+# Historical coupled-loop regression baseline; current runtime proof: verify_control_isolation_0620.py
 """Syntetické důkazy celé main cesty; bez HA a bez soukromých vstupů."""
 import sys,os,json
 from pathlib import Path
