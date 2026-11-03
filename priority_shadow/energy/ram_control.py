@@ -398,7 +398,7 @@ def record_failure(store,at,error_code,diagnostics=None):
 def summary(run):
     """Projekce původní relace; uložené modely ani minulá data nepřepočítává."""
     if not run:return None
-    fields=('day','status','started_at','closed_at','counts','event_count','restoration_status','statistics','policy','persistent_writes','software_version','shadow_model','target_ac_w','last_processed_at','last_intent')
+    fields=('day','status','started_at','closed_at','counts','event_count','restoration_status','statistics','policy','persistent_writes','software_version','shadow_model','target_ac_w','last_processed_at','last_intent','evidence_integrity')
     return {**{k:run.get(k)for k in fields},'model_scope':'ramped_controller_shadow'}
 
 

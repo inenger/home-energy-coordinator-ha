@@ -1,3 +1,4 @@
+# Historical coupled-loop regression baseline; current runtime proof: verify_control_isolation_0620.py
 """Syntetické důkazy SQLite koordinace, bez HA a soukromých dat."""
 import json,os,sys,unittest
 from pathlib import Path

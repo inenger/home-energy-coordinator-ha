@@ -128,7 +128,7 @@ class AuditTests(unittest.TestCase):
   else:self.fail('Expected visible overflow')
   row=self.store.db.execute('SELECT payload FROM monitor_overflow_evidence').fetchone();self.assertEqual(unpack(row[0]),attrs)
  def test_internal_journal_failure_reaches_main_fail_closed_path(self):
-  from energy import priority_observer as obs
+  import historical_observer_0619 as obs
   from datetime import datetime
   import contextlib,io
   self.ready();published=[];folder=Path(self.tmp.name);(folder/'options.json').write_text('{}')
