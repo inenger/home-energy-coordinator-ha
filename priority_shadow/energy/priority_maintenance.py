@@ -1,6 +1,7 @@
 """Pomalé přepočty mimo rychlou smyčku. Vlastní SQLite spojení a HTTP klient."""
 import copy,threading,time
 from .store import Store
+from .sqlite_writes import details as storage_details
 from . import night,priority,priority_audit,soc_runtime
 from .collector import ReadOnlyHA
 
@@ -25,7 +26,7 @@ class Maintenance:
             errors=[]
             for day in priority.closed_days(store,at):
                 try:priority.finish(store,day)
-                except Exception as error:errors.append({'day':day,'error_code':type(error).__name__})
+                except Exception as error:errors.append({'day':day,'error_code':type(error).__name__,'storage_error':storage_details(error)})
             optimizer=planner.observe(store,states,at,self.client)
             if time.monotonic()>=self.next_audit:
                 try:priority_audit.update_day_audit(store,self.client,at);self.audit_error=None
@@ -49,7 +50,7 @@ class Maintenance:
                 out=self.work(states,at) if self.work else self.compute(states,at)
                 with self.lock:self.output=out
             except Exception as error:
-                with self.lock:self.output={**self.output,'maintenance_error':type(error).__name__,'maintenance_error_at':at}
+                with self.lock:self.output={**self.output,'maintenance_error':type(error).__name__,'maintenance_error_at':at,'maintenance_storage_error':storage_details(error)}
             next_run=time.monotonic()+self.period
             if not self.work and time.monotonic()>=self.next_backup:
                 try:self.backup();self.next_backup=time.monotonic()+3600

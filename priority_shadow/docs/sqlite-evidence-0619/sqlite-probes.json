@@ -1,0 +1,10 @@
+{
+  "guard_disabled_baseline": "failed_as_expected",
+  "coordinated_contracts": 7,
+  "all_passed": true,
+  "real_sqlite_and_threads": true,
+  "external_busy_still_fails_safe": true,
+  "compression_outside_writer": true,
+  "native_error_details_retained": true,
+  "private_inputs": false
+}

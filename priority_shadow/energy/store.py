@@ -5,6 +5,7 @@ import sqlite3
 import zlib
 from pathlib import Path
 from .core import canonical, digest, instant
+from .sqlite_writes import Connection
 
 def pack(value):
     return zlib.compress(canonical(value).encode(), 6)
@@ -16,29 +17,34 @@ class Store:
     def __init__(self, path, timeout=10):
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        self.db = sqlite3.connect(path, timeout=timeout)
-        self.db.execute('PRAGMA journal_mode=WAL')
-        self.db.execute('PRAGMA synchronous=FULL')
-        self.db.executescript('''
-            CREATE TABLE IF NOT EXISTS samples(
-              id INTEGER PRIMARY KEY, available_at TEXT NOT NULL UNIQUE,
-              day TEXT NOT NULL, season TEXT NOT NULL, payload BLOB NOT NULL);
-            CREATE INDEX IF NOT EXISTS samples_day ON samples(day);
-            CREATE TABLE IF NOT EXISTS objects(
-              hash TEXT PRIMARY KEY, kind TEXT NOT NULL, payload BLOB NOT NULL);
-            CREATE TABLE IF NOT EXISTS versions(
-              id INTEGER PRIMARY KEY, entity TEXT NOT NULL, available_at TEXT NOT NULL,
-              hash TEXT NOT NULL REFERENCES objects(hash));
-            CREATE INDEX IF NOT EXISTS version_lookup ON versions(entity,available_at);
-            CREATE TABLE IF NOT EXISTS decisions(
-              sample_id INTEGER PRIMARY KEY REFERENCES samples(id), payload BLOB NOT NULL);
-            CREATE TABLE IF NOT EXISTS failures(
-              id INTEGER PRIMARY KEY, at TEXT NOT NULL, code TEXT NOT NULL);
-            CREATE TABLE IF NOT EXISTS calibrations(
-              hash TEXT PRIMARY KEY, available_at TEXT NOT NULL, payload BLOB NOT NULL);
-            CREATE TABLE IF NOT EXISTS manifests(
-              hash TEXT PRIMARY KEY, at TEXT NOT NULL, payload BLOB NOT NULL);
-        ''')
+        self.db = sqlite3.connect(path, timeout=timeout, factory=Connection)
+        self.db.configure(path,timeout)
+        try:
+            with self.db:
+                self.db.execute('PRAGMA journal_mode=WAL')
+                self.db.execute('PRAGMA synchronous=FULL')
+                self.db.executescript('''
+                    CREATE TABLE IF NOT EXISTS samples(
+                      id INTEGER PRIMARY KEY, available_at TEXT NOT NULL UNIQUE,
+                      day TEXT NOT NULL, season TEXT NOT NULL, payload BLOB NOT NULL);
+                    CREATE INDEX IF NOT EXISTS samples_day ON samples(day);
+                    CREATE TABLE IF NOT EXISTS objects(
+                      hash TEXT PRIMARY KEY, kind TEXT NOT NULL, payload BLOB NOT NULL);
+                    CREATE TABLE IF NOT EXISTS versions(
+                      id INTEGER PRIMARY KEY, entity TEXT NOT NULL, available_at TEXT NOT NULL,
+                      hash TEXT NOT NULL REFERENCES objects(hash));
+                    CREATE INDEX IF NOT EXISTS version_lookup ON versions(entity,available_at);
+                    CREATE TABLE IF NOT EXISTS decisions(
+                      sample_id INTEGER PRIMARY KEY REFERENCES samples(id), payload BLOB NOT NULL);
+                    CREATE TABLE IF NOT EXISTS failures(
+                      id INTEGER PRIMARY KEY, at TEXT NOT NULL, code TEXT NOT NULL);
+                    CREATE TABLE IF NOT EXISTS calibrations(
+                      hash TEXT PRIMARY KEY, available_at TEXT NOT NULL, payload BLOB NOT NULL);
+                    CREATE TABLE IF NOT EXISTS manifests(
+                      hash TEXT PRIMARY KEY, at TEXT NOT NULL, payload BLOB NOT NULL);
+                ''')
+        except BaseException:
+            self.db.close();raise
         self.path.chmod(0o600)
 
     def record(self, sample, decision, forecasts, manifest):

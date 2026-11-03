@@ -6,6 +6,7 @@ POST/GET a opakuje nepotvrzené části; nedotýká se fyzických HA služeb.
 import base64,hashlib,json,threading,time,uuid,zlib
 from datetime import datetime,timedelta,timezone
 from .store import Store,pack,unpack
+from .sqlite_writes import details as storage_details
 from .monitor_payload import encoded,MAX_ATTRIBUTES_BYTES
 from .core import instant
 SENSOR='sensor.nocni_stinovy_denik_prirustky'
@@ -122,12 +123,12 @@ class Publisher:
             waiting=max([(now-instant(v['first_at'])).total_seconds()for v in sent.values()]or[0])
             with db:put(db,'sent',sent);put(db,'health',{'status':'degraded'if waiting>30 else 'ok','checked_at':at,'error_code':'RECORDER_CONFIRMATION_TIMEOUT'if waiting>30 else None,'recording_wait_s':waiting})
         except Exception as error:
-            with db:put(db,'health',{'status':'degraded','checked_at':at,'error_code':type(error).__name__})
+            with db:put(db,'health',{'status':'degraded','checked_at':at,'error_code':type(error).__name__,'storage_error':storage_details(error)})
         finally:store.close()
     def run(self):
         while not self.stop.is_set():
             try:self.tick()
-            except Exception as error:print(json.dumps({'journal_transport_error':type(error).__name__,'device_actions':0}),flush=True)
+            except Exception as error:print(json.dumps({'journal_transport_error':type(error).__name__,'storage_error':storage_details(error),'device_actions':0}),flush=True)
             self.stop.wait(1)
     def start(self):
         self.thread=threading.Thread(target=self.run,name='journal-recorder',daemon=True);self.thread.start();return self
