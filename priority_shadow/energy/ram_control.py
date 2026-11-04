@@ -25,6 +25,9 @@ ENTITY_IDS=(*legacy.ENTITY_IDS,RUN_MODE,REMOTE_MODE,*READBACKS,'sensor.solax_inv
 FAST_KEYS=tuple(k for i in (1,2,3) for k in (f'grid_l{i}_a',f'grid_voltage_l{i}_v',f'grid_l{i}_w',f'inverter_l{i}_w',f'ev_l{i}_w'))
 SOLAX_KEYS=tuple(k for k in FAST_KEYS if not k.startswith('ev_'))
 MAX_AGE_S=15
+CONTROL_STATE_IDS=(RUN_MODE,REMOTE_MODE,READBACKS[0],legacy.MODE,legacy.FORCE)
+PASSIVE_WORK_MODES=('Back Up Mode','Self Use Mode','Feedin Priority')
+MANUAL_SUBMODES=('Stop Charge and Discharge','Force Charge','Force Discharge')
 MAX_REPORT_SKEW_S=2
 RAMP_UP_AC_W_S=100
 POWER_STEP_W=100
@@ -67,7 +70,7 @@ def input_valid_until(points,by,window_end):
     limits.extend((points[k],age) for k,age in
         [('battery_v',30),('battery_limit_a',7*86400),('battery_soc',10800)])
     limits.extend(({'last_reported':by[e].get('last_reported')},MAX_AGE_S)
-        for e in (RUN_MODE,REMOTE_MODE,READBACKS[0]))
+        for e in CONTROL_STATE_IDS)
     return min([instant(window_end)]+[instant(p['last_reported'])+timedelta(seconds=age) for p,age in limits])
 
 
@@ -153,6 +156,25 @@ def changes(db,run,values,by,at):
     if observed not in (None,'unknown','unavailable','Disabled') or readback not in (None,'unknown','unavailable','Disabled'):
         if not run.get('suspended'):event(db,run,at,'control_blocked',reason='unowned_remote_control')
         run['suspended']=True
+
+
+def manual_control(states,at):
+    """Volba podrežimu je aktivní jen v Manual Mode; oba reporty musí být známé a čerstvé."""
+    by={s['entity_id']:s for s in states}
+    reports={eid:night.point(by.get(eid),at)for eid in (legacy.MODE,legacy.FORCE)}
+    errors=[]
+    for eid,p in reports.items():
+        age=p.get('age_seconds')
+        if age is None or not 0<=age<MAX_AGE_S:errors.append('control_mode_missing_or_stale:'+eid)
+    mode=reports[legacy.MODE].get('value');submode=reports[legacy.FORCE].get('value')
+    if mode not in (*PASSIVE_WORK_MODES,'Manual Mode'):errors.append('unverified_work_mode')
+    if submode not in MANUAL_SUBMODES:errors.append('unverified_manual_submode')
+    verified=not errors
+    active=(mode=='Manual Mode'and submode in ('Force Charge','Force Discharge'))if verified else None
+    if active:errors.append('unowned_manual_charge_or_discharge')
+    return {'work_mode':mode,'stored_manual_submode':submode,
+        'manual_submode_applies':(mode=='Manual Mode')if verified else None,'manual_charge_or_discharge_active':active,
+        'reports':reports,'blocking_reasons':sorted(set(errors))}
 
 
 def owner_errors(by,at):
@@ -265,7 +287,9 @@ def observe(store,states,result):
             if allocation.get('ev_reallocated_w',0)>max(100,(priority.value(points,'ev_w') or 0)*.03):errors.append('requires_ev_control_not_implemented')
             for eid in legacy.MANAGED:
                 if values.get(eid,{}).get('value') is None:errors.append('missing_managed_state:'+eid)
-            if values.get(legacy.FORCE,{}).get('value') not in (None,'Stop Charge and Discharge'):errors.append('unowned_manual_charge_or_discharge')
+            mode_context=manual_control(states,at)
+            errors.extend(mode_context['blocking_reasons'])
+            diagnostic['manual_control']=mode_context
             errors.extend(owner_errors(by,at))
             if run.get('owned'):changes(db,run,values,by,at)
             if run.get('suspended'):errors.append('external_control_change')
@@ -355,7 +379,8 @@ def observe(store,states,result):
                 'input_valid_until':valid_until.isoformat() if valid_until else None,
                 'collection_snapshot':result.get('collection_snapshot'),
                 'input_reports':{k:points[k]for k in (*FAST_KEYS,'ev_w','battery_v','battery_a','battery_limit_a','battery_soc','priority',*(f'grid_l{i}_a_reported'for i in (1,2,3)))},
-                'owner_reports':{eid:night.point(by.get(eid),at)for eid in (RUN_MODE,REMOTE_MODE,READBACKS[0])}}
+                'manual_control':mode_context,
+                'owner_reports':{eid:night.point(by.get(eid),at)for eid in CONTROL_STATE_IDS}}
             stats=run['statistics'];stats['sample_count']+=1
             for key in ('unverified_current_samples','missing_current_phase_samples'):stats.setdefault(key,0)
             stats['unverified_current_samples']+=int(any(p['current_quality']=='unverified_phase' for p in phase))
@@ -422,7 +447,7 @@ def view(store,at,states):
     return {**old,'legacy_handoffs':handoffs,'observed_at':at,'next_window_start':datetime.combine(next_day,time(3),TZ).isoformat(),'policy':POLICY,
         'status':run['status'] if run else 'waiting_for_window','session':run,'sessions':summaries or old.get('sessions',[]),
         'recent_events':events or old.get('recent_events',[]),'recent_samples':samples or old.get('recent_samples',[]),
-        'interface':capabilities(states),'device_actions':0,'applied_to_control':False,'persistent_writes':0,
+        'interface':capabilities(states),'manual_control':manual_control(states,at),'device_actions':0,'applied_to_control':False,'persistent_writes':0,
         'cadence_s':5,'cautions':['Pouze logický výkonový model. Převod do VPP paketu, AC/DC hranice a vypršení povelu nejsou ověřené.',
             'Žádné změny proudového registru, strategie nabíjení ani ručního povelu SolaXu.','Čerstvost HA hlášení není fyzický heartbeat; atomická měření nejsou doložená.'],
         'preview':[{'entity_id':e,'label':v.get('label',e),'actual_value':v['value'],'role':'pause_conflicting_automation' if e in legacy.AUTOMATIONS else 'read_only_persistent_setting'} for e,v in legacy.read(states).items() if e in legacy.MANAGED]}
