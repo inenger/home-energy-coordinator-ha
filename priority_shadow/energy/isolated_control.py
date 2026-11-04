@@ -248,18 +248,25 @@ def monitor_worker(cfg,inbox,output,stopping):
     """Příprava/komprese i HTTP monitorů jsou mimo řídicí proces."""
     from .priority_publication import MonitorPublisher
     os.nice(5)
-    monitoring=MonitorPublisher(cfg).start()
+    monitoring=MonitorPublisher(cfg).start();preparation_error=None
+    def health():
+        value=monitoring.snapshot()
+        if preparation_error:
+            return {**value,'status':'degraded','error_code':preparation_error,'stage':'monitor_preparation'}
+        return value
     try:
         while not stopping.is_set():
             try:result=inbox.get(timeout=.25)
             except queue.Empty:
-                latest(output,monitoring.snapshot());continue
+                latest(output,health());continue
             result=drain(inbox,result)
             try:
                 monitoring.submit(result,failure=result.get('collection_health',{}).get('status')=='failed')
-                latest(output,monitoring.snapshot())
+                preparation_error=None
+                latest(output,health())
             except Exception as error:
-                latest(output,{'status':'degraded','error_code':type(error).__name__,'stage':'monitor_preparation'})
+                preparation_error=type(error).__name__
+                latest(output,health())
     finally:monitoring.close()
 
 class EvidenceBridge:

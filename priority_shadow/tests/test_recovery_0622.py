@@ -232,6 +232,26 @@ class RecoveryTests(unittest.TestCase):
    if hasattr(bridge,'bootstrap'):channels.append(bridge.bootstrap)
    for q in channels:q.close()
 
+ def test_monitor_heartbeat_cannot_hide_preparation_failure(self):
+  inbox=queue.Queue();output=queue.Queue(2);stop=threading.Event()
+  publisher=MagicMock();publisher.start.return_value=publisher
+  publisher.snapshot.return_value={'status':'ok','published_packets':0,'pending_entities':0}
+  publisher.submit.side_effect=[ValueError('synthetic malformed result'),None]
+  with patch('energy.priority_publication.MonitorPublisher',return_value=publisher),patch.object(iso.os,'nice'):
+   thread=threading.Thread(target=iso.monitor_worker,args=({},inbox,output,stop),daemon=True);thread.start()
+   try:
+    inbox.put({'synthetic_revision':1})
+    wait_for(self,lambda:publisher.submit.call_count==1,2)
+    time.sleep(.65) # nejméně dva idle heartbeat cykly po chybě přípravy
+    health=iso.drain(output,{})
+    self.assertEqual(health['status'],'degraded')
+    self.assertEqual(health['stage'],'monitor_preparation')
+    inbox.put({'synthetic_revision':2})
+    wait_for(self,lambda:publisher.submit.call_count==2,2)
+    time.sleep(.3)
+    self.assertEqual(iso.drain(output,{})['status'],'ok')
+   finally:stop.set();thread.join(2)
+
  def test_entrypoint_requires_deferred_failure_persistence(self):
   import inspect
   from energy import priority_observer
