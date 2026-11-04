@@ -8,11 +8,11 @@ from . import night
 class CollectionFailure(RuntimeError):
     def __init__(self, failure):
         self.generation=failure['generation']
-        self.failure_at=failure['first_at']
+        self.failure_at=failure.get('control_first_at',failure['first_at'])
         super().__init__('COLLECTION_WORKER_FAILED:'+failure['error_code'])
 
 class SnapshotCollector:
-    def __init__(self,client,period=5,max_age=7.5,failure_path=None,night_period=None):
+    def __init__(self,client,period=5,max_age=7.5,failure_path=None,night_period=None,defer_failure_persistence=False):
         self.client=client;self.period=period;self.max_age=max_age;self.night_period=night_period
         self.sequence=0;self.receipt=None
         self.persistence_lock=threading.Lock();self.ack_wake=threading.Event();self.ack_requested=None;self.ack_thread=None
@@ -20,6 +20,8 @@ class SnapshotCollector:
         self.states=None;self.received=None;self.error=None;self.duration=None;self.thread=None
         self.failure_path=Path(failure_path) if failure_path else None
         self.pending_failure=None;self.generation=0;self.persistence_error=None
+        self.consumed_generation=0
+        self.defer_failure_persistence=defer_failure_persistence;self.failure_dirty=False
         if self.failure_path and self.failure_path.exists():
             saved=json.loads(self.failure_path.read_text())
             self.generation=saved['generation']
@@ -36,13 +38,24 @@ class SnapshotCollector:
     def failed(self,error):
         # Krátký zámek chrání cache. Diskové fsync nikdy neběží pod ním.
         with self.condition:
+            previous=self.pending_failure or {}
+            control_first=previous.get('control_first_at',previous.get('first_at')) if previous.get('generation',0)>self.consumed_generation else None
             self.generation+=1
             generation=self.generation
             self.pending_failure={'generation':generation,
                 'first_at':(self.pending_failure or {}).get('first_at') or datetime.now(timezone.utc).isoformat(),
-                'error_code':type(error).__name__}
+                'error_code':type(error).__name__,
+                'control_first_at':control_first or datetime.now(timezone.utc).isoformat()}
             self.states=None;self.error=type(error).__name__
             self.condition.notify_all()
+        if self.defer_failure_persistence:
+            with self.condition:self.failure_dirty=True
+            self.ack_wake.set()
+            return
+        self.persist_failure()
+
+    def persist_failure(self):
+        """Jen pomocné vlákno smí v produkci čekat na disk."""
         with self.persistence_lock:
             with self.condition:pending=copy.deepcopy(self.pending_failure);generation=self.generation
             try:
@@ -51,6 +64,17 @@ class SnapshotCollector:
             except Exception as error:problem=type(error).__name__
             with self.condition:
                 if self.generation==generation:self.persistence_error=problem
+
+    def consume_failure(self,generation):
+        """Stop už byl proveden v RAM; trvalé potvrzení evidence je nezávislé.
+
+        Jen přesná generace smí uvolnit novou cache. Po restartu začíná
+        consumed_generation od nuly: neuložená chyba se znovu bezpečně převezme.
+        """
+        with self.condition:
+            if not self.pending_failure or self.pending_failure['generation']!=generation:return False
+            self.consumed_generation=generation
+            return True
 
     def acknowledge_failure(self,generation):
         """Až po trvalém stopu/outboxu. Persistence neblokuje přístup ke cache."""
@@ -73,7 +97,10 @@ class SnapshotCollector:
     def run_acknowledgements(self):
         while not self.stop.is_set():
             self.ack_wake.wait(.25);self.ack_wake.clear()
-            with self.condition:generation=self.ack_requested;self.ack_requested=None
+            with self.condition:
+                generation=self.ack_requested;self.ack_requested=None
+                dirty=self.failure_dirty;self.failure_dirty=False
+            if dirty:self.persist_failure()
             if generation is None:continue
             try:self.acknowledge_failure(generation)
             except Exception as error:
@@ -109,7 +136,8 @@ class SnapshotCollector:
         with self.condition:
             if self.received is None and self.error is None and self.pending_failure is None:
                 self.condition.wait_for(lambda:self.received is not None or self.error is not None or self.pending_failure is not None,timeout=1)
-            if self.pending_failure:raise CollectionFailure(dict(self.pending_failure))
+            if self.pending_failure and self.pending_failure['generation']>self.consumed_generation:
+                raise CollectionFailure(dict(self.pending_failure))
             if self.error:raise RuntimeError('COLLECTION_WORKER_FAILED:'+self.error)
             if self.received is None or time.monotonic()-self.received>self.max_age:raise RuntimeError('COLLECTION_SNAPSHOT_EXPIRED')
             states=copy.deepcopy(self.states)
@@ -124,7 +152,7 @@ class SnapshotCollector:
             return {'snapshot_age_s':time.monotonic()-self.received if self.received is not None else None,
                 'request_duration_s':self.duration,'error_code':self.error,'max_snapshot_age_s':self.max_age,
                 'poll_interval_s':self.effective_period(),'base_poll_interval_s':self.period,'night_poll_interval_s':self.night_period,'pending_failure':copy.deepcopy(self.pending_failure),
-                'failure_generation':self.generation,'failure_persistence_error':self.persistence_error}
+                'failure_generation':self.generation,'control_consumed_generation':self.consumed_generation,'failure_persistence_error':self.persistence_error}
 
     def close(self):
         self.stop.set();self.ack_wake.set()

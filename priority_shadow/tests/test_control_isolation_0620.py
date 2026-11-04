@@ -139,9 +139,10 @@ class ControlIsolationTests(unittest.TestCase):
   bridge.inbox=queue.Queue(1);bridge.output=queue.Queue(2);bridge.bootstrap=queue.Queue(1)
   value={'at':stamp(0)};rows={'ram_control_events':[(1,)],'ram_control_samples':[(1,)]}
   self.assertTrue(bridge.submit(rows,[],value));self.assertFalse(bridge.submit(rows,[],value))
-  self.assertEqual(bridge.loss['batches'],1);bridge.inbox.get()
+  self.assertEqual(bridge.loss['batches'],1);bridge.flush_pending();bridge.inbox.get()
+  bridge.last={'ack':1};bridge.snapshot()
   self.assertTrue(bridge.submit({},[],value))
-  batch=bridge.inbox.get();self.assertEqual(batch['loss']['events'],1);self.assertEqual(batch['loss']['samples'],1)
+  bridge.flush_pending();batch=bridge.inbox.get();self.assertEqual(batch['loss']['events'],1);self.assertEqual(batch['loss']['samples'],1)
   self.assertEqual(batch['loss']['first_at'],stamp(0))
 
  def test_blocked_failure_ack_fsync_does_not_hold_collector_cache_lock(self):

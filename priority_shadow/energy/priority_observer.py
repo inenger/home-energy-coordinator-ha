@@ -107,7 +107,7 @@ def main():
     evidence=EvidenceBridge(DATA/'evidence.sqlite',opts).start()
     monitor=MonitorBridge({'ha_base_url':'http://supervisor/core','token_file':None}).start()
     client=SnapshotCollector(ReadOnlyHA('http://supervisor/core'),period=2.5,night_period=1.,
-                             failure_path=DATA/'collection-failure.json').start()
+                             failure_path=DATA/'collection-failure.json',defer_failure_persistence=True).start()
     try:run_loop(client,evidence,monitor,STOP)
     finally:
         client.close();evidence.close();monitor.close()
