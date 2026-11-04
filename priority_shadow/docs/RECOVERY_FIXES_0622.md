@@ -71,6 +71,19 @@ nepokračuje ve staré lease; fyzický watchdog zařízení stále chybí.
 
 První implementace prošla9novými testy, plnou sadou508shadow+164legacy
 a20kontrolami. Následná kontrola souběhu shutdown/obnova přidala zábranu
-startu potomka po zastavení dohledu a dvě další regrese. Finální nová
-sada má11případů; plná shadow sada510. Staré selhávající reprodukce
+startu potomka po zastavení dohledu a dvě další regrese. Před závěrečnou kontrolou nová
+sada měla11případů; plná shadow sada510. Staré selhávající reprodukce
 jsou zachované odděleně od výsledků opraveného vydání.
+
+### Závěrečná korekce kandidáta před předáním
+
+Dvanáctá regrese odhalila, že nový idle heartbeat mohl přepsat degraded
+po chybě přípravy monitoru starým stavem publisheru ok. Nejde o původní
+R21-02/R21-03, ale o vadu první implementace dohledu. Zachovaný nový test
+nejprve selhal ok!=degraded. Monitor worker nově uchovává chybu přípravy
+přes všechny heartbeat zprávy a vymaže ji až po úspěšném submit dalšího
+výsledku. Dokud příprava selhává, heartbeat nepotvrzuje zdravou publikaci.
+
+Finální kandidát stejného vydání0.6.22 má12nových regresí a511shadow
+testů. První sestavení nebylo vydáváno za dokončené předání; finální
+zdroj a nativní sestavení se znovu ověřují podle přesného Git stromu.
