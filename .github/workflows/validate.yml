@@ -9,8 +9,16 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Recovery gate must reject hidden failures
+        run: python scripts/robustness/test_gate_policy.py
+      - name: Repeated production recovery gate
+        run: python scripts/verify_robustness.py --repetitions 3
       - name: Validate shell and app metadata
         run: |
           bash -n scripts/migrate_local_to_repo.sh
@@ -37,3 +45,15 @@ jobs:
           node ../scripts/test_deep_fixes_0613.mjs
           node ../scripts/test_independent_fixes_0614.mjs
           node ../scripts/test_audit_fixes_0616.mjs
+  recovery-python314:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - name: Recovery gate must reject hidden failures
+        run: python scripts/robustness/test_gate_policy.py
+      - name: Repeated production recovery gate
+        run: python scripts/verify_robustness.py --repetitions 3
