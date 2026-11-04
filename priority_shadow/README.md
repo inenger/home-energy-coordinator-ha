@@ -1,3 +1,12 @@
+## 0.6.21 · aktuální stav a audit připravenosti
+
+Pouze observe_only, bez fyzického akčního adaptéru. Výkonový stav je od
+0.6.20 v soukromé RAM; disková evidence a monitoring běží v oddělených
+procesech. 0.6.21 opravuje vyhodnocení uloženého ručního podrežimu.
+[Audit připravenosti a otevřené blokátory](docs/READINESS_AUDIT_0621.md)
+obsahuje nové reprodukované vady obnovy/evidence. Zelené testy nejsou
+schválení ostrého řízení. Následující kapitoly popisují historická vydání.
+
 ## 0.6.19 · koordinace SQLite zápisů
 
 Zápisy regulátoru, analytiky a transportu mají společnou koordinaci s předností
