@@ -112,6 +112,9 @@ class MemoryControl:
         for day,payload in list(self.db.execute('SELECT day,payload FROM ram_control_sessions')):
             if not loss.get('days',{}).get(day):continue
             run=unpack(payload)
+            # Uzavřený snapshot je neměnný i v RAM; pozdější ztráta je
+            # samostatný trvalý doklad v control_evidence_batches.payload.
+            if run.get('closed_at'):continue
             run['evidence_integrity']={'status':'incomplete','reason':'bounded_volatile_queue_overflow',
                 'lost_batches':loss['days'][day],'runtime_loss_first_at':loss.get('first_at'),
                 'runtime_loss_last_at':loss.get('last_at')}
@@ -173,6 +176,11 @@ def evidence_worker(path,options,inbox,output,bootstrap,stopping):
     os.nice(10)
     path=__import__('pathlib').Path(path);maintenance=None;publisher=None
     pending=None;ack=0;ack_generation=None;analysis={};transport={};booted=False
+    last_response={'ack':0,'storage_health':{'status':'starting'}}
+    def emit(value):
+        nonlocal last_response
+        last_response=value
+        latest(output,value)
     try:
         while not stopping.is_set():
             try:
@@ -185,7 +193,8 @@ def evidence_worker(path,options,inbox,output,bootstrap,stopping):
                     publisher=journal_transport.Publisher(path).start();booted=True
                 if pending is None:
                     try:pending=inbox.get(timeout=.25)
-                    except queue.Empty:continue
+                    except queue.Empty:
+                        latest(output,last_response);continue
                 from .storage import sqlite_bytes
                 used=sqlite_bytes(path.parent,required=True)
                 if used>int(options.get('storage_limit_mb',2048))*1024*1024:
@@ -197,7 +206,7 @@ def evidence_worker(path,options,inbox,output,bootstrap,stopping):
                     transport=journal_transport.enqueue(store,pending['result'].get('control_journal',{}))
                     ack=pending['seq'];ack_generation=pending.get('failure_generation')or ack_generation
                 finally:store.close()
-                latest(output,{'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
+                emit({'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
                                'transport':transport,'storage_health':{'status':'ok','checked_at':utcnow()}})
                 item=pending;pending=None
                 # Pomalá evidence/analytika nesmí být chybou řídicího procesu.
@@ -217,14 +226,14 @@ def evidence_worker(path,options,inbox,output,bootstrap,stopping):
                         analysis['command_audit']=priority_audit.command_summary(store,at)
                     finally:store.close()
                     atomic_json(path.parent/'priority-live.json',item['result'])
-                    latest(output,{'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
+                    emit({'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
                                    'transport':transport,'storage_health':{'status':'ok','checked_at':utcnow()}})
                 except Exception as error:
-                    latest(output,{'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
+                    emit({'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
                         'transport':transport,'storage_health':{'status':'degraded','checked_at':utcnow(),
                         'stage':'analytics_or_live_snapshot','error_code':type(error).__name__,'storage_error':details(error)}})
             except Exception as error:
-                latest(output,{'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
+                emit({'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
                     'transport':transport,'storage_health':{'status':'degraded','checked_at':utcnow(),
                     'stage':'bootstrap_or_evidence','error_code':type(error).__name__,'storage_error':details(error)}})
                 stopping.wait(.5)
@@ -243,7 +252,8 @@ def monitor_worker(cfg,inbox,output,stopping):
     try:
         while not stopping.is_set():
             try:result=inbox.get(timeout=.25)
-            except queue.Empty:continue
+            except queue.Empty:
+                latest(output,monitoring.snapshot());continue
             result=drain(inbox,result)
             try:
                 monitoring.submit(result,failure=result.get('collection_health',{}).get('status')=='failed')
@@ -254,45 +264,91 @@ def monitor_worker(cfg,inbox,output,stopping):
 
 class EvidenceBridge:
     def __init__(self,path,options,capacity=QUEUE_BATCHES):
-        ctx=mp.get_context('spawn')
-        self.inbox=ctx.Queue(capacity);self.output=ctx.Queue(2);self.bootstrap=ctx.Queue(1);self.stop=ctx.Event()
-        self.process=ctx.Process(target=evidence_worker,args=(str(path),options,self.inbox,self.output,self.bootstrap,self.stop),daemon=True)
+        from .process_supervision import WorkerGuard
+        self.ctx=mp.get_context('spawn');self.path=str(path);self.options=options;self.capacity=capacity
+        self.inbox=self.ctx.Queue(capacity);self.output=self.ctx.Queue(2);self.bootstrap=self.ctx.Queue(1);self.stop=self.ctx.Event()
+        self.process=self.new_process()
         self.runtime=uuid.uuid4().hex;self.seq=0;self.ack=0;self.last={};self.last_accepted=0;self.inflight={}
         self.reader_stop=threading.Event();self.reader_lock=threading.Lock();self.seed_value=None;self.reader=None
+        self.seed_consumed=False;self.epoch=0;self.last_reply=time.monotonic()
+        self.replay={};self.sent=set();self.guard=WorkerGuard(self)
         self.loss={'batches':0,'events':0,'samples':0,'first_at':None,'last_at':None,'days':{}}
+    def new_process(self):
+        return self.ctx.Process(target=evidence_worker,args=(self.path,self.options,self.inbox,self.output,self.bootstrap,self.stop),daemon=True)
+    def start_reader(self):
+        self.reader=threading.Thread(target=self.read_responses,args=(self.bootstrap,self.output,self.epoch),name='evidence-ipc-reader',daemon=True)
+        self.reader.start()
     def start(self):
-        self.process.start()
-        self.reader=threading.Thread(target=self.read_responses,name='evidence-ipc-reader',daemon=True)
-        self.reader.start();return self
-    def read_responses(self):
+        self.process.start();self.last_reply=time.monotonic();self.start_reader();self.guard.start();return self
+    def read_responses(self,bootstrap,output,epoch):
         seeded=False
-        while not self.reader_stop.is_set():
-            if not seeded:
-                try:
-                    seed=self.bootstrap.get(timeout=.05)
-                    with self.reader_lock:self.seed_value=seed
-                    seeded=True
-                except queue.Empty:pass
-            try:value=self.output.get(timeout=.05)
-            except queue.Empty:continue
-            with self.reader_lock:self.last=value
+        while not self.reader_stop.is_set() and epoch==self.epoch:
+            try:
+                if not seeded:
+                    try:
+                        seed=bootstrap.get(timeout=.05)
+                        with self.reader_lock:
+                            if epoch!=self.epoch:return
+                            if not self.seed_consumed:self.seed_value=seed
+                            self.last_reply=time.monotonic()
+                        seeded=True
+                    except queue.Empty:pass
+                try:value=output.get(timeout=.05)
+                except queue.Empty:continue
+                with self.reader_lock:
+                    if epoch!=self.epoch:return
+                    self.last_reply=time.monotonic();self.last=value
+                    self.ack=max(self.ack,value.get('ack',0))
+                    self.replay={s:b for s,b in self.replay.items()if s>self.ack}
+                    self.sent.intersection_update(self.replay)
+            except (EOFError,OSError,ValueError):return
     def seed(self):
         with self.reader_lock:
             value=self.seed_value;self.seed_value=None
+            if value is not None:self.seed_consumed=True
             return value
+    def worker_problem(self,now,timeout):
+        if self.process.pid is not None and not self.process.is_alive():return 'EVIDENCE_PROCESS_EXITED'
+        if now-self.last_reply>timeout:return 'EVIDENCE_PROCESS_UNRESPONSIVE'
+    def flush_pending(self):
+        # Celé IPC předání běží v pomocném vlákně, včetně feeder serializace.
+        with self.reader_lock:
+            for seq,batch in self.replay.items():
+                if seq in self.sent:continue
+                try:self.inbox.put_nowait(batch)
+                except queue.Full:break
+                self.sent.add(seq)
+    def restart_worker(self):
+        from .process_supervision import retire
+        old=self.process;channels=(self.inbox,self.output,self.bootstrap)
+        # Nová generace nemůže sdílet poškozený multiprocessing pipe/semafor.
+        with self.reader_lock:self.epoch+=1
+        retire(old,channels)
+        if self.guard.stop.is_set():return
+        inbox=self.ctx.Queue(self.capacity);output=self.ctx.Queue(2);bootstrap=self.ctx.Queue(1);stop=self.ctx.Event()
+        with self.reader_lock:
+            self.inbox=inbox;self.output=output;self.bootstrap=bootstrap;self.stop=stop
+            self.sent.clear();self.last_reply=time.monotonic()
+            self.last={**self.last,'storage_health':{'status':'starting','error_code':'EVIDENCE_PROCESS_RECOVERING'}}
+        self.process=self.new_process();self.process.start();self.start_reader()
     def snapshot(self):
-        with self.reader_lock:last=self.last
-        self.ack=last.get('ack',self.ack)
-        self.inflight={seq:at for seq,at in self.inflight.items()if seq>self.ack}
+        with self.reader_lock:
+            last=self.last;self.ack=max(self.ack,last.get('ack',0))
+            self.replay={s:b for s,b in self.replay.items()if s>self.ack}
+            self.inflight={seq:at for seq,at in self.inflight.items()if seq>self.ack}
+            oldest=min(self.inflight.values(),default=None)
         status=dict(last.get('storage_health',{'status':'starting'}))
-        if self.process.pid is not None and not self.process.is_alive():status={'status':'degraded','error_code':'EVIDENCE_PROCESS_EXITED'}
-        oldest=min(self.inflight.values(),default=None)
+        problem=self.worker_problem(time.monotonic(),self.guard.timeout)
+        if problem:status={'status':'degraded','error_code':problem}
         if oldest and (instant(utcnow())-instant(oldest)).total_seconds()>15:
-            status={**status,'status':'degraded','error_code':'EVIDENCE_LAG'}
+            status={**status,'status':'degraded','error_code':status.get('error_code')or 'EVIDENCE_LAG'}
         if self.loss['batches']:status={**status,'status':'degraded','integrity':'volatile_evidence_loss'}
+        supervision=self.guard.snapshot()
+        if supervision['supervision_error']or supervision['restart_budget_exhausted']:
+            status={**status,'status':'degraded','error_code':'EVIDENCE_SUPERVISION_FAILED'}
         return {**status,'runtime':self.runtime,'submitted_seq':self.seq,'committed_seq':self.ack,
-                'pending_or_lost_batches':self.seq-self.ack,'capacity_batches':QUEUE_BATCHES,
-                'max_batch_bytes':MAX_BATCH_BYTES,'loss':copy.deepcopy(self.loss),
+                'pending_or_lost_batches':self.seq-self.ack,'capacity_batches':self.capacity,
+                'max_batch_bytes':MAX_BATCH_BYTES,'loss':copy.deepcopy(self.loss),'supervision':supervision,
                 'ack_generation':last.get('ack_generation'),'analysis':last.get('analysis',{}),
                 'transport':last.get('transport',{})}
     def submit(self,rows,states,result,failure_generation=None):
@@ -301,8 +357,10 @@ class EvidenceBridge:
                'result':result,'loss':copy.deepcopy(self.loss),'failure_generation':failure_generation}
         accepted=False
         if len(pickle.dumps(batch,protocol=pickle.HIGHEST_PROTOCOL))<=MAX_BATCH_BYTES:
-            try:self.inbox.put_nowait(batch);accepted=True
-            except queue.Full:pass
+            with self.reader_lock:
+                if len(self.replay)<self.capacity:
+                    self.replay[self.seq]=batch;accepted=True
+                    self.last_accepted=self.seq;self.inflight[self.seq]=at
         if not accepted:
             self.loss['batches']+=1
             day=instant(at).astimezone(TZ).date().isoformat()
@@ -310,15 +368,14 @@ class EvidenceBridge:
             self.loss['events']+=sum(len(v)for k,v in rows.items()if k.endswith('events'))
             self.loss['samples']+=sum(len(v)for k,v in rows.items()if k.endswith('samples'))
             self.loss['first_at']=self.loss['first_at']or at;self.loss['last_at']=at
-        if accepted:self.last_accepted=self.seq;self.inflight[self.seq]=at
         return accepted
     def close(self,timeout=12):
-        # Omezený shutdown drain; čeká se pouze při ukončování, nikdy v regulaci.
+        self.guard.closing=True
         deadline=time.monotonic()+timeout
         while time.monotonic()<deadline and self.process.is_alive():
-            if self.inbox.empty() and self.snapshot()['committed_seq']>=self.last_accepted:break
+            if self.snapshot()['committed_seq']>=self.last_accepted:break
             time.sleep(.05)
-        self.stop.set();self.process.join(timeout=12)
+        self.guard.close();self.stop.set();self.process.join(timeout=12)
         alive=self.process.is_alive()
         if alive:self.process.terminate();self.process.join(timeout=2)
         self.reader_stop.set()
@@ -328,16 +385,26 @@ class EvidenceBridge:
 
 class MonitorBridge:
     def __init__(self,cfg):
-        ctx=mp.get_context('spawn');self.inbox=ctx.Queue(1);self.output=ctx.Queue(1);self.stop=ctx.Event();self.last={}
-        self.process=ctx.Process(target=monitor_worker,args=(cfg,self.inbox,self.output,self.stop),daemon=True)
-        self.condition=threading.Condition();self.pending=None;self.stopping=False;self.sender=None;self.reader=None
+        from .process_supervision import WorkerGuard
+        self.ctx=mp.get_context('spawn');self.cfg=cfg
+        self.inbox=self.ctx.Queue(1);self.output=self.ctx.Queue(1);self.stop=self.ctx.Event();self.last={}
+        self.process=self.new_process()
+        self.condition=threading.Condition();self.pending=None;self.latest_result=None
+        self.stopping=False;self.sender=None;self.reader=None
+        self.epoch=0;self.last_reply=time.monotonic();self.last_progress=self.last_reply;self.published=0
+        self.guard=WorkerGuard(self)
+    def new_process(self):
+        return self.ctx.Process(target=monitor_worker,args=(self.cfg,self.inbox,self.output,self.stop),daemon=True)
+    def start_reader(self):
+        self.reader=threading.Thread(target=self.read_responses,args=(self.output,self.epoch),name='monitor-ipc-reader',daemon=True)
+        self.reader.start()
     def start(self):
-        self.process.start()
+        self.process.start();self.last_reply=time.monotonic();self.last_progress=self.last_reply
         self.sender=threading.Thread(target=self.send_pending,name='monitor-ipc-sender',daemon=True)
-        self.reader=threading.Thread(target=self.read_responses,name='monitor-ipc-reader',daemon=True)
-        self.sender.start();self.reader.start();return self
+        self.sender.start();self.start_reader();self.guard.start();return self
     def submit(self,result):
-        with self.condition:self.pending=result;self.condition.notify_all()
+        with self.condition:
+            self.latest_result=result;self.pending=result;self.condition.notify_all()
         return True
     def send_pending(self):
         while True:
@@ -346,19 +413,51 @@ class MonitorBridge:
                 if self.stopping:return
                 value=self.pending;self.pending=None
             while not self.stopping:
-                try:self.inbox.put(value,timeout=.1);break
+                with self.condition:channel=self.inbox
+                try:channel.put(value,timeout=.1);break
                 except queue.Full:
                     with self.condition:
                         if self.pending is not None:value=self.pending;self.pending=None
-    def read_responses(self):
-        while not self.stopping:
-            try:value=self.output.get(timeout=.1)
+                except (OSError,ValueError):continue
+    def read_responses(self,output,epoch):
+        while not self.stopping and epoch==self.epoch:
+            try:value=output.get(timeout=.1)
             except queue.Empty:continue
-            with self.condition:self.last=value
+            except (EOFError,OSError,ValueError):return
+            with self.condition:
+                if epoch!=self.epoch:return
+                self.last_reply=time.monotonic();count=value.get('published_packets',0)
+                if count!=self.published or not value.get('pending_entities'):
+                    self.last_progress=self.last_reply;self.published=count
+                self.last=value
+    def worker_problem(self,now,timeout):
+        if self.process.pid is not None and not self.process.is_alive():return 'MONITOR_PROCESS_EXITED'
+        if now-self.last_reply>timeout:return 'MONITOR_PROCESS_UNRESPONSIVE'
+        with self.condition:
+            if self.last.get('pending_entities') and now-self.last_progress>timeout:return 'MONITOR_PUBLICATION_STALLED'
+    def flush_pending(self):pass
+    def restart_worker(self):
+        from .process_supervision import retire
+        with self.condition:self.epoch+=1
+        retire(self.process,(self.inbox,self.output))
+        if self.guard.stop.is_set():return
+        inbox=self.ctx.Queue(1);output=self.ctx.Queue(1);stop=self.ctx.Event()
+        with self.condition:
+            self.inbox=inbox;self.output=output;self.stop=stop
+            self.last={'status':'starting','error_code':'MONITOR_PROCESS_RECOVERING'}
+            self.last_reply=time.monotonic();self.last_progress=self.last_reply;self.published=0
+            self.pending=self.latest_result;self.condition.notify_all()
+        self.process=self.new_process();self.process.start();self.start_reader()
     def snapshot(self):
-        if self.process.pid is not None and not self.process.is_alive():return {'status':'degraded','error_code':'MONITOR_PROCESS_EXITED'}
-        with self.condition:return self.last
+        with self.condition:last=dict(self.last)
+        problem=self.worker_problem(time.monotonic(),self.guard.timeout)
+        if problem:last={**last,'status':'degraded','error_code':problem}
+        supervision=self.guard.snapshot()
+        if supervision['supervision_error']or supervision['restart_budget_exhausted']:
+            last={**last,'status':'degraded','error_code':'MONITOR_SUPERVISION_FAILED'}
+        return {**last,'supervision':supervision}
     def close(self):
+        self.guard.close()
         with self.condition:self.stopping=True;self.condition.notify_all()
         self.stop.set();self.process.join(timeout=8)
         alive=self.process.is_alive()
@@ -402,9 +501,12 @@ def run_loop(client,evidence,monitor,stop,clock=utcnow,monotonic=time.monotonic)
                 result=failure_result(at,error,last_success)
                 pending=client.snapshot().get('pending_failure')
                 failure_at=getattr(error,'failure_at',at)
-                pending_at=min(filter(None,[pending_at,failure_at,(pending or {}).get('first_at')]),key=instant)
+                pending_at=min(filter(None,[pending_at,failure_at,(pending or {}).get('control_first_at',(pending or {}).get('first_at'))]),key=instant)
                 pending_generation=(pending or {}).get('generation')
                 journal=memory.failure(pending_at,error)
+                consume=getattr(client,'consume_failure',None)
+                if consume and pending_generation is not None:consume(pending_generation)
+                pending_at=None
                 result['control_journal']=journal;result['at']=at
                 if pending:result['collection_health']['pending_collection_failure']=pending
             journal['transport']=health.get('transport',{})

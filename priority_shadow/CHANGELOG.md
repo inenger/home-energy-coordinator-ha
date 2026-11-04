@@ -1,3 +1,9 @@
+# 0.6.22 · nezávislá obnova a dohled pomocných procesů
+
+Po převzetí chyby regulátorem v RAM se čerstvá cache obnoví nezávisle na trvalém potvrzení deníku. Produkční sběr nikdy nezapisuje chybu na disk ve vstupním vlákně. Pozdější ztráta evidence nepřepisuje uzavřenou relaci; má samostatný trvalý doklad. Pomocné procesy mají heartbeat a nejvýše tři automatické obnovy za běh; nepotvrzené dávky se idempotentně opakují. Zaseknutá publikace se hlásí jako degraded. Pouze observe_only.
+
+[Opravy, reprodukce, slepé cesty a meze](docs/RECOVERY_FIXES_0622.md).
+
 # 0.6.21 · oprava falešné blokace ručním podrežimem
 
 Uložená Force Charge/Force Discharge při čerstvém známém Back Up Mode, Self Use Mode nebo Feedin Priority neblokuje stínové převzetí. Aktivní ruční nabíjení/vybíjení v Manual Mode, neznámé režimy, cizí vlastník a zastaralé vstupy dál blokují. Reporty pracovní strategie a podrežimu omezují platnost intentu. Pouze observe_only.
