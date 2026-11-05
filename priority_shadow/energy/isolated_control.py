@@ -149,9 +149,12 @@ def persist_batch(store,batch):
     """Idempotentní FIFO flush. Potvrzení až po commit, bez přepisů immutable řádků."""
     db=store.db;control.schema(db);legacy.schema(db)
     db.executescript('CREATE TABLE IF NOT EXISTS control_evidence_batches(runtime TEXT,seq INTEGER,at TEXT,payload BLOB,PRIMARY KEY(runtime,seq));')
+    from .ancillary_analytics import schema as analytics_schema
+    analytics_schema(db)
     key=(batch['runtime'],batch['seq'])
     if db.execute('SELECT 1 FROM control_evidence_batches WHERE runtime=? AND seq=?',key).fetchone():return
     from .store import pack
+    analytic_payload=pack({k:batch[k]for k in ('at','states','result')}) if 'states'in batch and 'result'in batch else None
     with db:
         for name,rows in batch['rows'].items():
             if name not in TABLES:raise ValueError('Unexpected evidence table')
@@ -167,14 +170,15 @@ def persist_batch(store,batch):
                         if tuple(previous)!=tuple(row):raise ValueError('IMMUTABLE_CONTROL_EVIDENCE_CONFLICT')
                     else:db.execute('INSERT INTO '+name+' VALUES('+','.join('?'for _ in row)+')',row)
         db.execute('INSERT INTO control_evidence_batches VALUES(?,?,?,?)',(*key,batch['at'],pack(batch['loss'])))
+        if analytic_payload is not None:
+            db.execute('INSERT INTO control_analytics_pending(runtime,seq,at,payload) VALUES(?,?,?,?)',(*key,batch['at'],analytic_payload))
 
 def evidence_worker(path,options,inbox,output,bootstrap,stopping):
     """Disk a analytika mají vlastní proces, spojení i chybovou větev."""
-    from . import priority_observer as observer,priority_audit,journal_transport
+    from . import priority_observer as observer,journal_transport
     from .priority_maintenance import Maintenance
-    from .collector import atomic_json
     os.nice(10)
-    path=__import__('pathlib').Path(path);maintenance=None;publisher=None
+    path=__import__('pathlib').Path(path);maintenance=None;publisher=None;analytics=None
     pending=None;ack=0;ack_generation=None;analysis={};transport={};booted=False
     last_response={'ack':0,'storage_health':{'status':'starting'}}
     def emit(value):
@@ -190,11 +194,15 @@ def evidence_worker(path,options,inbox,output,bootstrap,stopping):
                     finally:store.close()
                     bootstrap.put(seed)
                     maintenance=Maintenance(path,options,observer.backup)
-                    publisher=journal_transport.Publisher(path).start();booted=True
+                    publisher=journal_transport.Publisher(path).start()
+                    from .ancillary_analytics import Analytics
+                    analytics=Analytics(path,maintenance).start();booted=True
                 if pending is None:
                     try:pending=inbox.get(timeout=.25)
                     except queue.Empty:
-                        latest(output,last_response);continue
+                        auxiliary=analytics.snapshot()
+                        emit({**last_response,'analysis':auxiliary.get('analysis',analysis),
+                              'analytics_health':auxiliary.get('health',{'status':'starting'})});continue
                 from .storage import sqlite_bytes
                 used=sqlite_bytes(path.parent,required=True)
                 if used>int(options.get('storage_limit_mb',2048))*1024*1024:
@@ -206,32 +214,13 @@ def evidence_worker(path,options,inbox,output,bootstrap,stopping):
                     transport=journal_transport.enqueue(store,pending['result'].get('control_journal',{}))
                     ack=pending['seq'];ack_generation=pending.get('failure_generation')or ack_generation
                 finally:store.close()
+                auxiliary=analytics.snapshot();analysis=auxiliary.get('analysis',analysis)
                 emit({'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
-                               'transport':transport,'storage_health':{'status':'ok','checked_at':utcnow()}})
-                item=pending;pending=None
-                # Pomalá evidence/analytika nesmí být chybou řídicího procesu.
-                try:
-                    store=Store(path,timeout=.25)
-                    try:
-                        night.ensure_schema(store.db);priority.schema(store.db)
-                        at=item['at'];states=item['states']
-                        observer.archive_forecasts(store,states,at)
-                        maintenance.submit(states,at)
-                        analysis=observer.observe_priority(store,states,at,finish_closed=False)
-                        slow=maintenance.snapshot()
-                        analysis.update(soc_optimizer=slow.get('soc_optimizer',{}),
-                            fve_soc_audit=slow.get('fve_soc_audit',{}),
-                            maintenance={k:v for k,v in slow.items()if k not in ('soc_optimizer','fve_soc_audit')})
-                        priority_audit.journal(store,analysis)
-                        analysis['command_audit']=priority_audit.command_summary(store,at)
-                    finally:store.close()
-                    atomic_json(path.parent/'priority-live.json',item['result'])
-                    emit({'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
-                                   'transport':transport,'storage_health':{'status':'ok','checked_at':utcnow()}})
-                except Exception as error:
-                    emit({'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
-                        'transport':transport,'storage_health':{'status':'degraded','checked_at':utcnow(),
-                        'stage':'analytics_or_live_snapshot','error_code':type(error).__name__,'storage_error':details(error)}})
+                      'analytics_health':auxiliary.get('health',{'status':'starting'}),
+                      'transport':transport,'storage_health':{'status':'ok','checked_at':utcnow()}})
+                pending=None
+                analytics.wake.set()
+
             except Exception as error:
                 emit({'ack':ack,'ack_generation':ack_generation,'analysis':analysis,
                     'transport':transport,'storage_health':{'status':'degraded','checked_at':utcnow(),
@@ -241,6 +230,7 @@ def evidence_worker(path,options,inbox,output,bootstrap,stopping):
         if booted:
             try:observer.backup()
             except Exception:pass
+        if analytics:analytics.close()
         if publisher:publisher.close()
         if maintenance:maintenance.close()
 
@@ -248,9 +238,11 @@ def monitor_worker(cfg,inbox,output,stopping):
     """Příprava/komprese i HTTP monitorů jsou mimo řídicí proces."""
     from .priority_publication import MonitorPublisher
     os.nice(5)
-    monitoring=MonitorPublisher(cfg).start();preparation_error=None
+    from .monitor_overflow import OverflowArchive
+    archive=OverflowArchive(cfg)
+    monitoring=MonitorPublisher(cfg,overflow=archive.capture).start();preparation_error=None
     def health():
-        value=monitoring.snapshot()
+        value={**monitoring.snapshot(),**archive.health()}
         if preparation_error:
             return {**value,'status':'degraded','error_code':preparation_error,'stage':'monitor_preparation'}
         return value
@@ -261,6 +253,7 @@ def monitor_worker(cfg,inbox,output,stopping):
                 latest(output,health());continue
             result=drain(inbox,result)
             try:
+                archive.begin()
                 monitoring.submit(result,failure=result.get('collection_health',{}).get('status')=='failed')
                 preparation_error=None
                 latest(output,health())
@@ -278,7 +271,7 @@ class EvidenceBridge:
         self.runtime=uuid.uuid4().hex;self.seq=0;self.ack=0;self.last={};self.last_accepted=0;self.inflight={}
         self.reader_stop=threading.Event();self.reader_lock=threading.Lock();self.seed_value=None;self.reader=None
         self.seed_consumed=False;self.epoch=0;self.last_reply=time.monotonic()
-        self.replay={};self.sent=set();self.guard=WorkerGuard(self)
+        self.replay={};self.sent=set();self.retired_readers=[];self.retired_feeders=[];self.guard=WorkerGuard(self)
         self.loss={'batches':0,'events':0,'samples':0,'first_at':None,'last_at':None,'days':{}}
     def new_process(self):
         return self.ctx.Process(target=evidence_worker,args=(self.path,self.options,self.inbox,self.output,self.bootstrap,self.stop),daemon=True)
@@ -326,11 +319,13 @@ class EvidenceBridge:
                 except queue.Full:break
                 self.sent.add(seq)
     def restart_worker(self):
-        from .process_supervision import retire
+        from .process_supervision import retire,reader_budget,retire_reader
+        reader_budget(self)
         old=self.process;channels=(self.inbox,self.output,self.bootstrap)
         # Nová generace nemůže sdílet poškozený multiprocessing pipe/semafor.
         with self.reader_lock:self.epoch+=1
         retire(old,channels)
+        retire_reader(self,channels)
         if self.guard.stop.is_set():return
         inbox=self.ctx.Queue(self.capacity);output=self.ctx.Queue(2);bootstrap=self.ctx.Queue(1);stop=self.ctx.Event()
         with self.reader_lock:
@@ -357,7 +352,7 @@ class EvidenceBridge:
                 'pending_or_lost_batches':self.seq-self.ack,'capacity_batches':self.capacity,
                 'max_batch_bytes':MAX_BATCH_BYTES,'loss':copy.deepcopy(self.loss),'supervision':supervision,
                 'ack_generation':last.get('ack_generation'),'analysis':last.get('analysis',{}),
-                'transport':last.get('transport',{})}
+                'transport':last.get('transport',{}),'analytics_health':last.get('analytics_health',{})}
     def submit(self,rows,states,result,failure_generation=None):
         self.seq+=1;at=result['at']
         batch={'runtime':self.runtime,'seq':self.seq,'at':at,'rows':rows,'states':states,
@@ -398,8 +393,8 @@ class MonitorBridge:
         self.process=self.new_process()
         self.condition=threading.Condition();self.pending=None;self.latest_result=None
         self.stopping=False;self.sender=None;self.reader=None
-        self.epoch=0;self.last_reply=time.monotonic();self.last_progress=self.last_reply;self.published=0
-        self.guard=WorkerGuard(self)
+        self.epoch=0;self.last_reply=time.monotonic();self.last_progress=self.last_reply;self.published=0;self.attempts=0
+        self.retired_readers=[];self.retired_feeders=[];self.guard=WorkerGuard(self)
     def new_process(self):
         return self.ctx.Process(target=monitor_worker,args=(self.cfg,self.inbox,self.output,self.stop),daemon=True)
     def start_reader(self):
@@ -434,8 +429,9 @@ class MonitorBridge:
             with self.condition:
                 if epoch!=self.epoch:return
                 self.last_reply=time.monotonic();count=value.get('published_packets',0)
-                if count!=self.published or not value.get('pending_entities'):
-                    self.last_progress=self.last_reply;self.published=count
+                attempts=value.get('completed_attempts',0)
+                if count!=self.published or attempts!=self.attempts or not value.get('pending_entities'):
+                    self.last_progress=self.last_reply;self.published=count;self.attempts=attempts
                 self.last=value
     def worker_problem(self,now,timeout):
         if self.process.pid is not None and not self.process.is_alive():return 'MONITOR_PROCESS_EXITED'
@@ -444,15 +440,17 @@ class MonitorBridge:
             if self.last.get('pending_entities') and now-self.last_progress>timeout:return 'MONITOR_PUBLICATION_STALLED'
     def flush_pending(self):pass
     def restart_worker(self):
-        from .process_supervision import retire
+        from .process_supervision import retire,reader_budget,retire_reader
+        reader_budget(self)
         with self.condition:self.epoch+=1
         retire(self.process,(self.inbox,self.output))
+        retire_reader(self,(self.inbox,self.output))
         if self.guard.stop.is_set():return
         inbox=self.ctx.Queue(1);output=self.ctx.Queue(1);stop=self.ctx.Event()
         with self.condition:
             self.inbox=inbox;self.output=output;self.stop=stop
             self.last={'status':'starting','error_code':'MONITOR_PROCESS_RECOVERING'}
-            self.last_reply=time.monotonic();self.last_progress=self.last_reply;self.published=0
+            self.last_reply=time.monotonic();self.last_progress=self.last_reply;self.published=0;self.attempts=0
             self.pending=self.latest_result;self.condition.notify_all()
         self.process=self.new_process();self.process.start();self.start_reader()
     def snapshot(self):
@@ -522,6 +520,10 @@ def run_loop(client,evidence,monitor,stop,clock=utcnow,monotonic=time.monotonic)
                 result['collection_health']['status']='degraded'
                 if health.get('stage')!='analytics_or_live_snapshot':
                     result['collection_health']['journal_transport_error']=health.get('error_code')or 'EVIDENCE_STORAGE_DEGRADED'
+            auxiliary=health.get('analytics_health',{})
+            if auxiliary.get('status') in ('degraded','retrying'):
+                result['collection_health']['analytics_error']=auxiliary
+                if result['collection_health']['status']=='ok':result['collection_health']['status']='degraded'
             maintenance=analysis.get('maintenance',{})
             if maintenance.get('maintenance_error')or maintenance.get('summary_errors'):
                 result['collection_health']['summary_errors']=maintenance.get('summary_errors',[])

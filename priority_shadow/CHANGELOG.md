@@ -1,3 +1,9 @@
+# 0.6.23 · rozběh EV, odolná analytika a obnova monitorů
+
+Plně proveditelný naměřený rozběh EV se zachová i pod 6 A. Přetečení jedné entity má úplný soukromý archiv a pravdivý malý doklad; ostatní monitory pokračují. Analytika má trvalou FIFO frontu s retry mimo potvrzování řídicí evidence. Dohled rozlišuje odpovídající HTTP výpadek od zamrzlého publisheru, používá tři obnovy za 300 s a omezuje opuštěná IPC vlákna. Pouze observe_only.
+
+[Opravy, regresní případy, slepé cesty a meze](docs/NIGHT_FIXES_0623.md).
+
 # 0.6.22 · nezávislá obnova a dohled pomocných procesů
 
 Po převzetí chyby regulátorem v RAM se čerstvá cache obnoví nezávisle na trvalém potvrzení deníku. Produkční sběr nikdy nezapisuje chybu na disk ve vstupním vlákně. Pozdější ztráta evidence nepřepisuje uzavřenou relaci; má samostatný trvalý doklad. Pomocné procesy mají heartbeat a nejvýše tři automatické obnovy za běh; nepotvrzené dávky se idempotentně opakují. Zaseknutá publikace se hlásí jako degraded. Pouze observe_only.

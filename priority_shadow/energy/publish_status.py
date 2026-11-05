@@ -139,7 +139,7 @@ def priority_history_view(history,controllers=()):
     return rows
 
 
-def prepare_priority(result,failure=False):
+def prepare_priority(result,failure=False,overflow=None):
     """Pevný allowlist a neměnný bounded snapshot bez HTTP či credentialu."""
     if failure:
         entities=['sensor.nocni_stinovy_plan','sensor.nocni_stinovy_ev_vykon',
@@ -164,7 +164,10 @@ def prepare_priority(result,failure=False):
     for eid,payload in packets:
         if eid not in IDS:raise ValueError('Only exact monitoring IDs are allowed')
         try:payload={**payload,'attributes':bounded(payload['attributes'])}
-        except PayloadOverflow as error:error.entity_id=eid;raise
+        except PayloadOverflow as error:
+            error.entity_id=eid
+            if overflow is None:raise
+            payload={'state':'payload_overflow','attributes':bounded(overflow(error,result['at']))}
         prepared.append((eid,json.loads(encoded(payload))))
     return prepared
 
