@@ -11,15 +11,16 @@ from . import publish_status
 from .collector import NoRedirect,read_token
 
 class MonitorPublisher:
-    def __init__(self,cfg,send=None):
+    def __init__(self,cfg,send=None,overflow=None):
+        self.overflow=overflow
         self.cfg=cfg;self.send=send;self.condition=threading.Condition()
         self.pending=OrderedDict();self.stopping=False;self.thread=None
-        self.health={'status':'starting','pending_entities':0,'published_packets':0}
+        self.health={'status':'starting','pending_entities':0,'published_packets':0,'completed_attempts':0}
         self.failed=False;self.errors={}
 
     def submit(self,result,failure=False):
         # Příprava je čistá a kontroluje byte budget ještě v cestě fail-closed.
-        packets=publish_status.prepare_priority(result,failure)
+        packets=publish_status.prepare_priority(result,failure,overflow=self.overflow)
         with self.condition:
             urgent=failure and not self.failed;self.failed=failure
             for eid,payload in packets:self.pending[eid]=payload
@@ -62,7 +63,9 @@ class MonitorPublisher:
                     last_failure_at=at,last_publish_duration_s=time.monotonic()-started)
             return False
         finally:
-            with self.condition:self.health['pending_entities']=len(self.pending)
+            with self.condition:
+                self.health['pending_entities']=len(self.pending)
+                self.health['completed_attempts']+=1
         return True
 
     def run(self):

@@ -1,3 +1,7 @@
+## 0.6.23 · opravy nočního auditu
+
+Rozběh EV bez falešného stopu, trvalé opakování vedlejší analytiky, diagnostika a uchování přetečených monitorů a omezená klouzavá obnova pomocných procesů. [Chování, regrese a meze](docs/NIGHT_FIXES_0623.md). Pouze observe_only; fyzický akční adaptér stále chybí.
+
 ## 0.6.22 · obnova bez závislosti na deníku
 
 Opravené potvrzené vady obnovy a uzavřené evidence z auditu0.6.21.

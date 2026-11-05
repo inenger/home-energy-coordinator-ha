@@ -104,8 +104,9 @@ def allocate(points,at,session,model_soc,priority):
     def ev_fit(bat):
         f=min([1.]+[max(0.,r['budget_w']-bat/3)/e for r,e in zip(rows,ev_req) if e>0])
         es=[e*f for e in ev_req]
-        # Do not produce sub-6A charging on an active phase.
-        if any(0<e<6*r['voltage_v']-1e-6 for r,e in zip(rows,es)):es=[0.]*3
+        # The 6 A setting minimum applies to proposed curtailment, not to a
+        # fully feasible measured startup transient (no EV setting is requested).
+        if f<1. and any(0<e<6*r['voltage_v']-1e-6 for r,e in zip(rows,es)):es=[0.]*3
         return es
     if priority=='battery':
         bat=min(request,3*min(r['budget_w'] for r in rows));bat=math.floor((bat+1e-8)/100)*100
