@@ -206,6 +206,32 @@ class AnalyticsTests(unittest.TestCase):
    finally:release.set();stop.set();t.join(4)
 
 class SupervisionTests(unittest.TestCase):
+ def test_live_snapshots_never_poll_or_reap_auxiliary_processes(self):
+  for bridge in (iso.EvidenceBridge('/unused',{}),iso.MonitorBridge({})):
+   try:
+    with patch.object(bridge.process,'is_alive',side_effect=AssertionError('waitpid from live snapshot')):
+     for _ in range(20):bridge.snapshot()
+    bridge.guard.problem='synthetic process exited'
+    self.assertEqual(bridge.snapshot()['error_code'],'synthetic process exited')
+   finally:
+    channels=[bridge.inbox,bridge.output]
+    if hasattr(bridge,'bootstrap'):channels.append(bridge.bootstrap)
+    for channel in channels:channel.close()
+ def test_shutdown_drain_still_flushes_pending_without_starting_recovery(self):
+  from energy.process_supervision import WorkerGuard
+  owner=MagicMock();owner.worker_problem.return_value='synthetic failure'
+  guard=WorkerGuard(owner);guard.closing=True;guard.tick()
+  owner.flush_pending.assert_called_once();owner.restart_worker.assert_not_called()
+  guard.stop.set();guard.tick();self.assertEqual(owner.flush_pending.call_count,1)
+ def test_shutdown_never_reaps_concurrently_with_a_busy_supervisor(self):
+  for bridge in (iso.EvidenceBridge('/unused',{}),iso.MonitorBridge({})):
+   try:
+    with patch.object(bridge.guard,'close',return_value=False),patch.object(bridge.process,'join')as join,patch.object(bridge.process,'is_alive')as poll:
+     self.assertFalse(bridge.close());join.assert_not_called();poll.assert_not_called()
+   finally:
+    channels=[bridge.inbox,bridge.output]
+    if hasattr(bridge,'bootstrap'):channels.append(bridge.bootstrap)
+    for channel in channels:channel.close()
  def test_rolling_budget_recovers_without_erasing_cumulative_history(self):
   from energy.process_supervision import WorkerGuard
   owner=MagicMock();owner.worker_problem.return_value='synthetic stuck';now=[0.]

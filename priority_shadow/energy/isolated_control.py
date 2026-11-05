@@ -307,8 +307,8 @@ class EvidenceBridge:
             value=self.seed_value;self.seed_value=None
             if value is not None:self.seed_consumed=True
             return value
-    def worker_problem(self,now,timeout):
-        if self.process.pid is not None and not self.process.is_alive():return 'EVIDENCE_PROCESS_EXITED'
+    def worker_problem(self,now,timeout,check_process=True):
+        if check_process and self.process.pid is not None and not self.process.is_alive():return 'EVIDENCE_PROCESS_EXITED'
         if now-self.last_reply>timeout:return 'EVIDENCE_PROCESS_UNRESPONSIVE'
     def flush_pending(self):
         # Celé IPC předání běží v pomocném vlákně, včetně feeder serializace.
@@ -340,7 +340,7 @@ class EvidenceBridge:
             self.inflight={seq:at for seq,at in self.inflight.items()if seq>self.ack}
             oldest=min(self.inflight.values(),default=None)
         status=dict(last.get('storage_health',{'status':'starting'}))
-        problem=self.worker_problem(time.monotonic(),self.guard.timeout)
+        problem=self.worker_problem(time.monotonic(),self.guard.timeout,check_process=False) or self.guard.problem
         if problem:status={'status':'degraded','error_code':problem}
         if oldest and (instant(utcnow())-instant(oldest)).total_seconds()>15:
             status={**status,'status':'degraded','error_code':status.get('error_code')or 'EVIDENCE_LAG'}
@@ -374,10 +374,12 @@ class EvidenceBridge:
     def close(self,timeout=12):
         self.guard.closing=True
         deadline=time.monotonic()+timeout
-        while time.monotonic()<deadline and self.process.is_alive():
+        while time.monotonic()<deadline:
             if self.snapshot()['committed_seq']>=self.last_accepted:break
             time.sleep(.05)
-        self.guard.close();self.stop.set();self.process.join(timeout=12)
+        supervisor_stopped=self.guard.close();self.stop.set()
+        if not supervisor_stopped:return False
+        self.process.join(timeout=12)
         alive=self.process.is_alive()
         if alive:self.process.terminate();self.process.join(timeout=2)
         self.reader_stop.set()
@@ -433,8 +435,8 @@ class MonitorBridge:
                 if count!=self.published or attempts!=self.attempts or not value.get('pending_entities'):
                     self.last_progress=self.last_reply;self.published=count;self.attempts=attempts
                 self.last=value
-    def worker_problem(self,now,timeout):
-        if self.process.pid is not None and not self.process.is_alive():return 'MONITOR_PROCESS_EXITED'
+    def worker_problem(self,now,timeout,check_process=True):
+        if check_process and self.process.pid is not None and not self.process.is_alive():return 'MONITOR_PROCESS_EXITED'
         if now-self.last_reply>timeout:return 'MONITOR_PROCESS_UNRESPONSIVE'
         with self.condition:
             if self.last.get('pending_entities') and now-self.last_progress>timeout:return 'MONITOR_PUBLICATION_STALLED'
@@ -455,16 +457,18 @@ class MonitorBridge:
         self.process=self.new_process();self.process.start();self.start_reader()
     def snapshot(self):
         with self.condition:last=dict(self.last)
-        problem=self.worker_problem(time.monotonic(),self.guard.timeout)
+        problem=self.worker_problem(time.monotonic(),self.guard.timeout,check_process=False) or self.guard.problem
         if problem:last={**last,'status':'degraded','error_code':problem}
         supervision=self.guard.snapshot()
         if supervision['supervision_error']or supervision['restart_budget_exhausted']:
             last={**last,'status':'degraded','error_code':'MONITOR_SUPERVISION_FAILED'}
         return {**last,'supervision':supervision}
     def close(self):
-        self.guard.close()
+        supervisor_stopped=self.guard.close()
         with self.condition:self.stopping=True;self.condition.notify_all()
-        self.stop.set();self.process.join(timeout=8)
+        self.stop.set()
+        if not supervisor_stopped:return False
+        self.process.join(timeout=8)
         alive=self.process.is_alive()
         if alive:self.process.terminate();self.process.join(timeout=2)
         for t in (self.sender,self.reader):

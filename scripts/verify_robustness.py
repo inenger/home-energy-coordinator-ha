@@ -14,7 +14,7 @@ def main():
   print('Robustness iteration',iteration,flush=True)
   suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(name)for name in MODULES)
   result=unittest.TextTestRunner(verbosity=2,failfast=True).run(suite)
-  strict=result.wasSuccessful() and result.testsRun>=27 and not result.skipped and not result.expectedFailures
+  strict=result.wasSuccessful() and result.testsRun>=30 and not result.skipped and not result.expectedFailures
   outcomes.append({'iteration':iteration,'tests':result.testsRun,'passed':strict,'skipped':len(result.skipped),'expected_failures':len(result.expectedFailures)})
   if not strict:
    print(json.dumps({'python':platform.python_version(),'iterations':outcomes,'failed':True}));return 1

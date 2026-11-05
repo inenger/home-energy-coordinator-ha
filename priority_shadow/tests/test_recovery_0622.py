@@ -165,7 +165,7 @@ class RecoveryTests(unittest.TestCase):
     iso.run_loop(Client(clock),Adapter(),monitor,Stop(clock),clock.now,lambda:clock.sec)
     self.assertGreater(monitor.results[-1]['control_journal']['session']['target_ac_w'],0)
     wait_for(self,lambda:bridge.snapshot()['committed_seq']==bridge.last_accepted)
-    self.assertEqual(bridge.guard.restarts,1);self.assertEqual(bridge.loss['batches'],0)
+    self.assertEqual(bridge.guard.restarts,1,bridge.guard.snapshot());self.assertEqual(bridge.loss['batches'],0)
     store=Store(Path(folder)/'e.sqlite')
     try:
      self.assertEqual(store.db.execute('SELECT count(*)FROM ram_control_samples').fetchone()[0],len(monitor.results))
@@ -219,7 +219,7 @@ class RecoveryTests(unittest.TestCase):
     self.assertGreater(monitor.results[-1]['control_journal']['session']['target_ac_w'],0)
     bridge.last_reply=time.monotonic()-31
     wait_for(self,lambda:bridge.snapshot()['committed_seq']==bridge.last_accepted)
-    self.assertEqual(bridge.guard.restarts,1);self.assertEqual(bridge.loss['batches'],0)
+    self.assertEqual(bridge.guard.restarts,1,bridge.guard.snapshot());self.assertEqual(bridge.loss['batches'],0)
     self.assertEqual(bridge.guard.reason,'EVIDENCE_PROCESS_UNRESPONSIVE')
    finally:bridge.close()
 
