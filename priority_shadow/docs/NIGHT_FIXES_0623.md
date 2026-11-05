@@ -27,6 +27,16 @@ Příslušná entita publikuje `payload_overflow` a malý doklad s entitou, čas
 velikostí a hashem; ostatní entity pokračují. Monitoring zůstává degraded až
 do nové úspěšné přípravy. Idle heartbeat chybu nemaskuje.
 
+Finální realistický preflight navíc reprodukoval další příčinu velikosti:
+`evidence_pipeline.analysis` znovu vnořoval celou interní analytickou odpověď
+do monitoru plánu. Veřejný pohled pipeline tuto duplicitní interní odpověď
+neobsahuje, ostatní diagnostiku zachovává. Analytika se stále předává řídicí
+smyčce a publikuje příslušnými monitory. Projekce platí i při collection failure,
+nepozměňuje původní výsledek a má vlastní negativní regresi. První jednoduchý
+preflight měl pouze malou náhradu health a tento souběh neodhalil; proto byl
+rozšířen o skutečnou velikost analytické odpovědi. Historickou přesnou entitu
+přetečení 0.6.22 tím zpětně nedokazujeme.
+
 Archiv se automaticky nemaže a má limit 64 MiB. Chyba disku nebo vyčerpaný
 limit výslovně vrací `retained: false`; nesmí tvrdit uchování. Úplný obsah
 přetečeného monitoru není v recorderu ani automaticky dostupný kartě přes
@@ -72,10 +82,10 @@ klouzavých oken; neznamená, že lze vždy zotavit neopravitelný systémový s
 
 ## Ověření a zachované neúspěšné pokusy
 
-Nová sada `test_night_fixes_0623.py` má 12 testů včetně produkčního evidence
+Nová sada `test_night_fixes_0623.py` má 13 testů včetně produkčního evidence
 workeru se zablokovanou analytikou, skutečného místního writer zámku, restartu
 analytiky, částečného commitu, přetečení a nedostupného archivu. Rozšířená
-kritická brána obsahuje 26 případů opakovaných třikrát na Pythonu 3.12 a 3.14.
+kritická brána obsahuje 27 případů opakovaných třikrát na Pythonu 3.12 a 3.14.
 Stávající úplné testy a kontroly distribuce zůstávají součástí vydání.
 
 První cílený běh odhalil chyby testovacích přípravků: neexistující název priority

@@ -70,6 +70,20 @@ class StartupTests(unittest.TestCase):
   finally:mem.close()
 
 class MonitorOverflowTests(unittest.TestCase):
+ def test_duplicate_internal_analysis_does_not_overflow_normal_or_failure_plan(self):
+  from energy.monitor_payload import unpacked,encoded
+  value=noisy_result();noise=value.pop('soc_optimizer')
+  value['evidence_pipeline']={'status':'ok','committed_seq':7,'analysis':noise}
+  before=copy.deepcopy(value)
+  for failed in (False,True):
+   packets=publish_status.prepare_priority(value,failed)
+   plan=next(p for e,p in packets if e=='sensor.nocni_stinovy_plan')
+   attrs=unpacked(plan['attributes'])
+   self.assertEqual(attrs['evidence_pipeline'],{'status':'ok','committed_seq':7})
+   self.assertLessEqual(len(encoded(plan['attributes'])),14000)
+   if failed:self.assertEqual(plan['state'],'collection_failed')
+  self.assertEqual(value,before)
+  self.assertEqual(publish_status.priority_plan_view(value)['evidence_pipeline'],{'status':'ok','committed_seq':7})
  def test_overflow_preserves_full_payload_and_other_entities_publish_within_budget(self):
   from energy.monitor_overflow import OverflowArchive
   from energy.priority_publication import MonitorPublisher

@@ -11,7 +11,7 @@ class GatePolicy(unittest.TestCase):
     if kind=='skip':self.skipTest('synthetic disabled regression')
     if kind=='expected':self.fail('synthetic known defect')
   if kind=='expected':Case.runTest=unittest.expectedFailure(Case.runTest)
-  suite=unittest.TestSuite(Case()for _ in range(26))if kind!='empty'else unittest.TestSuite()
+  suite=unittest.TestSuite(Case()for _ in range(27))if kind!='empty'else unittest.TestSuite()
   with patch.object(gate,'MODULES',('synthetic',)),patch.object(gate.unittest.defaultTestLoader,'loadTestsFromName',return_value=suite),patch.object(sys,'argv',['verify_robustness','--repetitions','1']),contextlib.redirect_stdout(io.StringIO()),contextlib.redirect_stderr(io.StringIO()):
    return gate.main()
  def test_completed_contracts_are_accepted(self):self.assertEqual(self.invoke('pass'),0)

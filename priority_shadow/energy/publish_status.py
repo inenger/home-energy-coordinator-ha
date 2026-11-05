@@ -104,9 +104,15 @@ if __name__=='__main__':
         print(json.dumps({'publication':'failed','error_code':type(e).__name__}));raise SystemExit(1) from None
 
 
+def pipeline_view(pipeline):
+    # Analysis is an internal bridge response, published through the dedicated
+    # monitors. Do not re-embed the entire duplicate inside the plan monitor.
+    return {k:v for k,v in pipeline.items()if k!='analysis'}
+
 def priority_plan_view(result):
     """Bound UI attributes; full raw input and variants stay in SQLite evidence."""
     out={k:v for k,v in result.items() if k not in ('command_audit','fve_soc_audit','input_quality','history','alternatives','soc_optimizer','control_journal')}
+    if isinstance(out.get('evidence_pipeline'),dict):out['evidence_pipeline']=pipeline_view(out['evidence_pipeline'])
     if out.get('progress'):
         out['progress']={k:v for k,v in out['progress'].items() if k not in ('inputs','variants','session')}
     from .ram_control import summary
@@ -152,6 +158,7 @@ def prepare_priority(result,failure=False,overflow=None):
             journal=result.get('control_journal') if eid=='sensor.nocni_stinovy_ridici_denik' else None
             attrs={**(result if plan else {}),'mode':'observe_only','device_actions':0,
                 'software_version':VERSION,'observed_at':result['at'],'collection_health':result['collection_health']}
+            if isinstance(attrs.get('evidence_pipeline'),dict):attrs['evidence_pipeline']=pipeline_view(attrs['evidence_pipeline'])
             if journal:attrs.update(journal)
             packets.append((eid,{'state':journal.get('status','error') if journal else 'collection_failed' if plan else 'unknown','attributes':attrs}))
     else:
