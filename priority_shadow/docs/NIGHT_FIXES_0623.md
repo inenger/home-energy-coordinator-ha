@@ -102,7 +102,10 @@ Jediný dohled vlastní polling/retirement; shutdown přebírá proces až po
 potvrzeném konci dohledového vlákna. Pokud dohled včas neskončí, close vrátí
 False a nereapuje souběžně. Řídicí vlákno nečeká na tento lifecycle zámek.
 Regrese kontrolují zákaz `is_alive()` v živých snapshotech obou bridgeů a
-zákaz souběžného reaping při pomalém shutdownu. Původní test jedné obnovy
+zákaz souběžného reaping při pomalém shutdownu. Negativní baseline vyžaduje
+nenulový syntetický PID, aby skutečně zasáhl polling větev; první návrh testu
+s dosud nespouštěným procesem tuto větev nedokazoval a byl zesílen. Na starém
+zdroji nyní test výslovně selže na `waitpid from live snapshot`. Původní test jedné obnovy
 zůstává přísný a nyní v selhání vypíše i supervision snapshot.
 
 Revize navíc odmítla předčasné ukončení guard.tick při `closing`: během

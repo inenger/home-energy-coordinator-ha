@@ -209,8 +209,11 @@ class SupervisionTests(unittest.TestCase):
  def test_live_snapshots_never_poll_or_reap_auxiliary_processes(self):
   for bridge in (iso.EvidenceBridge('/unused',{}),iso.MonitorBridge({})):
    try:
-    with patch.object(bridge.process,'is_alive',side_effect=AssertionError('waitpid from live snapshot')):
+    with patch.object(bridge,'process')as process:
+     process.pid=12345
+     process.is_alive.side_effect=AssertionError('waitpid from live snapshot')
      for _ in range(20):bridge.snapshot()
+     process.is_alive.assert_not_called()
     bridge.guard.problem='synthetic process exited'
     self.assertEqual(bridge.snapshot()['error_code'],'synthetic process exited')
    finally:
