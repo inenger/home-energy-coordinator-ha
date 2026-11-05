@@ -80,12 +80,46 @@ Navíc se sledují opuštěná reader i feeder vlákna. Nejvýše tři od každ�
 chybou. Uzavírání nedovolí pozdní spawn. Mez chrání prostředky i během mnoha
 klouzavých oken; neznamená, že lze vždy zotavit neopravitelný systémový stav.
 
+## Dodatečný protipříklad: souběžné přebírání ukončení procesu
+
+Finální místní poruchová brána jednou zaznamenala dvě obnovy místo jedné v
+přísném testu zamrzlého zapisovače. Původní selhání nebylo potlačeno ani
+přepsáno. Deset izolovaných opakování a další 3x27 s diagnostikou prošlo;
+samotné další úspěchy však nevylučovaly souběh.
+
+Následný [deterministický syntetický reproduktor](../../scripts/reproduce_process_poll_race.py)
+prokázal, že současné `Process.is_alive()` / `waitpid()` ze živého snapshotu
+a dohledu může vrátit falešné `AUXILIARY_PROCESS_WOULD_NOT_EXIT`, přestože
+potomek skončil správně. Reproduktor nepoužívá produkční procesy a neposílá
+signál již převzatému PID. Jde o ukázku nebezpečného souběhu primitiv, nikoli
+o readiness test opravené cesty. Původní jednorázový běh neměl úplný trace,
+proto jeho přesnou událost nelze zpětně dokázat; nový protipříklad dokládá
+konkrétní opravenou chybu s odpovídajícím příznakem.
+
+Živé snapshoty nyní nikdy nevolají procesní polling ani čekání. Čtou stav
+procesu uchovaný dohledem a nezávisle kontrolují čas heartbeat/postupu.
+Jediný dohled vlastní polling/retirement; shutdown přebírá proces až po
+potvrzeném konci dohledového vlákna. Pokud dohled včas neskončí, close vrátí
+False a nereapuje souběžně. Řídicí vlákno nečeká na tento lifecycle zámek.
+Regrese kontrolují zákaz `is_alive()` v živých snapshotech obou bridgeů a
+zákaz souběžného reaping při pomalém shutdownu. Negativní baseline vyžaduje
+nenulový syntetický PID, aby skutečně zasáhl polling větev; první návrh testu
+s dosud nespouštěným procesem tuto větev nedokazoval a byl zesílen. Na starém
+zdroji nyní test výslovně selže na `waitpid from live snapshot`. Původní test jedné obnovy
+zůstává přísný a nyní v selhání vypíše i supervision snapshot.
+
+Revize navíc odmítla předčasné ukončení guard.tick při `closing`: během
+odvodnění se ještě musí předávat čekající evidence, pouze se nesmí spouštět
+obnova. Samostatná regrese vyžaduje flush při closing a žádný flush po stop.
+Jde o doplnění kandidáta 0.6.23 před jeho prvním nativním nasazením; původní
+commity i první zelené CI jsou zachované, nenahrazují finální ověření.
+
 ## Ověření a zachované neúspěšné pokusy
 
-Nová sada `test_night_fixes_0623.py` má 13 testů včetně produkčního evidence
+Nová sada `test_night_fixes_0623.py` má 16 testů včetně produkčního evidence
 workeru se zablokovanou analytikou, skutečného místního writer zámku, restartu
 analytiky, částečného commitu, přetečení a nedostupného archivu. Rozšířená
-kritická brána obsahuje 27 případů opakovaných třikrát na Pythonu 3.12 a 3.14.
+kritická brána obsahuje 30 případů opakovaných třikrát na Pythonu 3.12 a 3.14.
 Stávající úplné testy a kontroly distribuce zůstávají součástí vydání.
 
 První cílený běh odhalil chyby testovacích přípravků: neexistující název priority
