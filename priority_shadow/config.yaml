@@ -1,5 +1,5 @@
 name: "Noční nabíjení · stínové priority"
-version: "0.6.23"
+version: "0.6.24"
 slug: energy_priority_shadow
 description: "Porovnává priority elektromobil / baterie, fáze a noční statistiky. Pouze nanečisto, bez ovládání zařízení."
 arch:
@@ -7,7 +7,13 @@ arch:
 startup: application
 boot: auto
 stage: experimental
-backup: cold
+backup: hot
+backup_pre: "python3 -m energy.native_backup prepare"
+backup_post: "python3 -m energy.native_backup finish"
+backup_exclude:
+  - "native-backup-source-id"
+  - ".native-backup-*"
+  - ".native-backup.lock"
 init: true
 timeout: 60
 homeassistant_api: true

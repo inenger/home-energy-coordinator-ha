@@ -99,6 +99,11 @@ def observe_control(store,states,result,at,client=None):
 def main():
     from .isolated_control import EvidenceBridge,MonitorBridge,run_loop
     os.umask(0o077);DATA.mkdir(parents=True,exist_ok=True,mode=0o700)
+    from .native_backup import restore as restore_native_backup, finish as finish_native_backup
+    restored = restore_native_backup(root=DATA.parent, database=DATA/'evidence.sqlite')
+    if restored['status'] == 'restored_native_snapshot':
+        print(json.dumps({'native_backup_restore': restored}), flush=True)
+        finish_native_backup(root=DATA.parent)
     optionfile=Path('/data/options.json')
     opts=json.loads(optionfile.read_text()) if optionfile.exists()else {}
     if opts.get('mode','observe_only')!='observe_only':raise ValueError('Only observe_only is supported')
