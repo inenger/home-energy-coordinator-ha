@@ -376,3 +376,7 @@ Browserlimit100ms zůstal; zesílený skutečný test91.2/29.4ms,syntetický38.1
 Běhy postupně s RAM guardem; hromadné soukromé čtení jen streaming.
 Viz priority_shadow/docs/AUDIT_FIXES_0617.md. Nová celá noc/uživatelův HAshell
 neověřené. Nasazení/GitHub/CI se potvrzují samostatným dokončením.
+
+
+## 0.6.24 · záloha bez cold zastavení regulátoru
+N06-01: hot pre-hook vytváří ověřený online SQLite snímek; nativní obnova jej ověří před spuštěním workerů. Vyloučený sentinel brání přepsání novější živé DB při běžném restartu. Raw SQLite zůstává jako cesta pro již zastavenou aplikaci. Regrese zahrnují run_loop/outbox/restore, WAL writer, poškození a přerušenou obnovu. Snímek reprezentuje potvrzenou evidenci v čase manifestu, nikoli nulové RPO. N06-02 latence vstupů zůstává samostatný neprokázaný mechanismus. Podrobnosti a odmítnuté varianty: priority_shadow/docs/HOT_BACKUP_0624.md. Publikaci, CI a nasazení ověřit samostatně.

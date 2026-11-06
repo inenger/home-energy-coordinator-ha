@@ -1,3 +1,9 @@
+# 0.6.24 · záloha za běhu bez zastavení regulátoru
+
+Nativní hot záloha s ověřeným SQLite snímkem a kontrolovanou obnovou před workery. Běžný restart nesmí vrátit novější živou DB ke starému snímku. Zachovaná cesta pro zálohu již zastaveného doplňku. Pouze observe_only.
+
+[Kontrakt, regrese, odmítnuté varianty a meze](docs/HOT_BACKUP_0624.md).
+
 # 0.6.23 · rozběh EV, odolná analytika a obnova monitorů
 
 Plně proveditelný naměřený rozběh EV se zachová i pod 6 A. Přetečení jedné entity má úplný soukromý archiv a pravdivý malý doklad; ostatní monitory pokračují. Analytika má trvalou FIFO frontu s retry mimo potvrzování řídicí evidence. Dohled rozlišuje odpovídající HTTP výpadek od zamrzlého publisheru, používá tři obnovy za 300 s a omezuje opuštěná IPC vlákna. Pouze observe_only.

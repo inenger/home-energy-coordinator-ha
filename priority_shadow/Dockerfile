@@ -6,6 +6,7 @@ RUN apk add --no-cache tzdata
 WORKDIR /app
 COPY energy/ /app/energy/
 COPY config/ /app/config/
+COPY config.yaml /app/config.yaml
 COPY tests/ /app/tests/
 COPY scripts/ /app/scripts/
 RUN python3 -m unittest discover -s tests -q && rm -rf /app/tests
