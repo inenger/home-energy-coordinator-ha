@@ -70,3 +70,6 @@ Zdroj kontraktu Supervisor:
 https://contributors.home-assistant.io/apps/reference/configuration/#backups
 a supervisor/apps/app.py (begin_backup, _backup_command, backup,
 _is_excluded_by_filter). Selhání pre-hooku ukončí zálohu aplikace před tarováním.
+
+## Oprava odhalená CI prvního návrhu
+První veřejný commit 359239d73cb5fc06146c766c62fbe1ff6a56b41a prošel RPi sadou, ale CI 42261279161 selhalo v existujícím test_entrypoint_wires_isolated_runtime: restore používal /data i při přesměrovaném DATA, což na neroot runneru skončilo PermissionError. Runtime nyní předává DATA.parent i explicitní DB do obnovy a úklidu. Původní test ani jeho assertion nebyly oslabené. Chyba publikace před vytvořením větve vedla k API422 pro update_ref a následný PR; byla opravena create_branch, nikoli force přepisem.

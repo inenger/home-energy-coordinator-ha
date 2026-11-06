@@ -80,3 +80,5 @@ Vstup main85b0c14; [chronologie pokusů a odmítnutých variant](../../priority_
 
 ## 0.6.24 · záloha bez cold zastavení regulátoru
 N06-01: hot pre-hook vytváří ověřený online SQLite snímek; nativní obnova jej ověří před spuštěním workerů. Vyloučený sentinel brání přepsání novější živé DB při běžném restartu. Raw SQLite zůstává jako cesta pro již zastavenou aplikaci. Regrese zahrnují run_loop/outbox/restore, WAL writer, poškození a přerušenou obnovu. Snímek reprezentuje potvrzenou evidenci v čase manifestu, nikoli nulové RPO. N06-02 latence vstupů zůstává samostatný neprokázaný mechanismus. Podrobnosti a odmítnuté varianty: priority_shadow/docs/HOT_BACKUP_0624.md. Publikaci, CI a nasazení ověřit samostatně.
+
+0.6.24 první CI zachytilo natvrdo /data při přesměrovaném DATA (PermissionError v existujícím entrypoint testu). Opraveno předáním DATA.parent do restore/finish; test zachovaný, původní CI selhání a commit zachované v historii.
