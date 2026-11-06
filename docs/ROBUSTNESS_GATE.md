@@ -1,3 +1,7 @@
+# Aktuální sada a historický výchozí návrh
+
+Následující původní text popisuje sadu při zavedení0.6.22. Současný počet a členství určuje [runner](../scripts/verify_robustness.py); 0.6.23 ji rozšířila o další kontrakty. Používejte [aktuální mapu testů](TEST_MATRIX.md) a [workflow](../.github/workflows/validate.yml), nikoli historický počet níže. Kritérium odmítnutí FAIL/skip/expectedFailure se nemění.
+
 # Opakovaná kontrola odolnosti současného regulátoru
 
 Navazuje na finální0.6.22, main18fc62f4aa620e4ea9f809eee057998b11a9283c.

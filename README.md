@@ -3,7 +3,7 @@
 | Doplněk | Adresář | Verze |
 |---|---|---|
 | Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.4 |
-| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.17 |
+| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.24 |
 
 Oba balíčky mají vlastní Docker build context. Nový stínový doplněk nemění
 verzi ani provoz původního koordinátoru. Veřejné balíčky neobsahují soukromou
@@ -15,6 +15,11 @@ případy a dosud neověřené předpoklady. Další podrobnosti jsou v README
 jednotlivých doplňků. Provoz a soukromé analýzy patří na RPi.
 
 ## Dokumentace
+
+**Začněte [aktuálním stavem a rozcestníkem](docs/PROJECT_STATUS.md).**
+[Otevřené chyby](docs/KNOWN_ISSUES.md) · [Mapa regresí](docs/TEST_MATRIX.md) · [Postup vydání a obnovy](docs/RELEASE_RUNBOOK.md).
+
+Starší audity a zápisy v MEMORY jsou historie k danému vydání; jejich tehdejší stav nepřebírat jako dnešní měření.
 
 - [Přehled a architektura](priority_shadow/docs/ARCHITECTURE.md): oba doplňky, tok dat, hranice režimu pouze pozorování.
 - [Rozhodovací algoritmus](priority_shadow/docs/ALGORITHM.md): SOC, počasí, sezóna, čas výroby, ceny, EV a volba cíle.
