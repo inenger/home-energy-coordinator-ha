@@ -14,3 +14,5 @@
 12. Změna pouze dokumentace nemění runtime verzi. Udržuj dokumentaci podle skutečné implementace a jasně odděluj již implementované chování od budoucího návrhu.
 
 13. Na výslovný požadavek uživatele z 31. 10. 2026 průběžně publikuj na GitHub celý dohledatelný vývoj včetně chyb, neúspěšných testů, slepých cest a vyvrácených hypotéz. Uveď vstupní commit, pokus, výsledek, důvod odmítnutí a navazující opravu. Zachovej původní historii; neuváděj pouze úspěšný závěr. Soukromé podklady eviduj obecným popisem a SHA-256, tajemství ani provozní databáze do veřejného Gitu nepatří. Rozcestník: docs/history/DEVELOPMENT_HISTORY.md.
+
+14. Před opravou čti docs/PROJECT_STATUS.md a docs/KNOWN_ISSUES.md. Nový nález musí mít stabilní ID, stav, zdroj důkazu, odpovídající regresi a kritérium uzavření. Aktualizuj také docs/TEST_MATRIX.md a dohledatelnou historii; soukromé provozní podklady drž odděleně od veřejné dokumentace. Nález s neprokázanou příčinou neuzavírej jen kvůli jiné opravě; nezaměňuj historické countery a aktuální health. Před publikací spusť scripts/verify_documentation.py.
