@@ -145,6 +145,22 @@ def priority_history_view(history,controllers=()):
     return rows
 
 
+def bounded_priority_attributes(entity_id,attributes):
+    try:return bounded(attributes)
+    except PayloadOverflow:
+        # Preview rows are duplicates of the durable journal stream, never its
+        # authority. Keep complete immutable rows there, not shortened objects
+        # with the same IDs (the card correctly rejects conflicting duplicates).
+        transport=attributes.get('transport')or{}
+        if entity_id!='sensor.nocni_stinovy_ridici_denik' or transport.get('format')!='journal-chunks-v1' or not transport.get('stream_id'):
+            raise
+        projection={**attributes,'recent_events':[],'recent_samples':[],
+            'preview_source':'journal_transport',
+            'preview_omitted_counts':{'events':len(attributes.get('recent_events')or[]),
+                                      'samples':len(attributes.get('recent_samples')or[])}}
+        return bounded(projection)
+
+
 def prepare_priority(result,failure=False,overflow=None):
     """Pevný allowlist a neměnný bounded snapshot bez HTTP či credentialu."""
     if failure:
@@ -156,7 +172,7 @@ def prepare_priority(result,failure=False,overflow=None):
         for eid in entities:
             plan=eid=='sensor.nocni_stinovy_plan'
             journal=result.get('control_journal') if eid=='sensor.nocni_stinovy_ridici_denik' else None
-            attrs={**(result if plan else {}),'mode':'observe_only','device_actions':0,
+            attrs={**(priority_plan_view(result) if plan else {}),'mode':'observe_only','device_actions':0,
                 'software_version':VERSION,'observed_at':result['at'],'collection_health':result['collection_health']}
             if isinstance(attrs.get('evidence_pipeline'),dict):attrs['evidence_pipeline']=pipeline_view(attrs['evidence_pipeline'])
             if journal:attrs.update(journal)
@@ -170,7 +186,7 @@ def prepare_priority(result,failure=False,overflow=None):
     prepared=[]
     for eid,payload in packets:
         if eid not in IDS:raise ValueError('Only exact monitoring IDs are allowed')
-        try:payload={**payload,'attributes':bounded(payload['attributes'])}
+        try:payload={**payload,'attributes':bounded_priority_attributes(eid,payload['attributes'])}
         except PayloadOverflow as error:
             error.entity_id=eid
             if overflow is None:raise

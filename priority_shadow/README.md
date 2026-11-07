@@ -1,3 +1,7 @@
+# 0.6.25 · deník a krátké SQLite zápisy
+
+[Projekce monitoru, nezkrácené detaily a koordinace zápisů](docs/JOURNAL_SQLITE_0625.md). Pouze observe_only.
+
 # 0.6.24 · záloha za běhu
 
 [Hot záloha a bezpečná obnova](docs/HOT_BACKUP_0624.md). Záloha nezastavuje celý regulátor; stínový režim a bezpečnostní kontroly vstupů zůstávají.
