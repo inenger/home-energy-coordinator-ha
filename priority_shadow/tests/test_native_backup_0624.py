@@ -19,14 +19,22 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def archive_data(root, target):
     # Same suffix matching contract as Supervisor _is_excluded_by_filter.
-    excludes = [nb.SENTINEL, ".native-backup-*", ".native-backup.lock"]
-    with tarfile.open(target, "w") as tar:
-        def filter_item(item):
-            relative = PurePath(item.name).relative_to("data")
-            parts = relative.parts
-            paths = [PurePath(*parts[:i]) for i in range(1, len(parts) + 1)]
-            return None if any(p.match(x) for p in paths for x in excludes) else item
-        tar.add(root, arcname="data", filter=filter_item)
+    import re
+    section=(ROOT/'config.yaml').read_text().split('backup_exclude:',1)[1].split('init:',1)[0]
+    excludes=re.findall(r'  - "([^\"]+)"',section)
+    def excluded(name):
+        parts=PurePath(name).relative_to('data').parts
+        paths=[PurePath(*parts[:i])for i in range(1,len(parts)+1)]
+        return any(p.match(x)for p in paths for x in excludes)
+    # securetar filters each archive-relative name BEFORE stat/open/recursion.
+    with tarfile.open(target,'w')as tar:
+        def add(path,name):
+            if excluded(name):return
+            tar.add(path,arcname=name,recursive=False)
+            if path.is_dir() and not path.is_symlink():
+                for child in path.iterdir():add(child,name+'/'+child.name)
+        add(root,'data')
+
 
 def seed_database(root):
     clock = Clock(); evidence = Evidence(); monitor = Monitor()
@@ -41,6 +49,12 @@ def seed_database(root):
     return db, evidence, monitor
 
 class NativeBackupTests(unittest.TestCase):
+    def tearDown(self):
+        # Fixtures that delete the whole fake installation must reap the new
+        # hook child too; production finish runs in the separate post-hook.
+        from energy import native_backup_holder as holder
+        for root in tuple(holder._children):holder.stop(Path(root))
+
     def test_config_uses_hot_hooks_and_keeps_raw_sqlite_stopped_fallback(self):
         config = (ROOT / "config.yaml").read_text()
         self.assertIn("backup: hot", config)

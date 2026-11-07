@@ -1,6 +1,6 @@
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.25 -->
+<!-- shadow-version: 0.6.26 -->
 
 Stav veřejného zdroje k 7. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
@@ -8,7 +8,7 @@ rozcestník a [registr nálezů](KNOWN_ISSUES.md).
 
 | Oblast | Autoritativní zdroj |
 |---|---|
-| Stínový doplněk 0.6.25, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
+| Stínový doplněk 0.6.26, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
 | Původní koordinátor, samostatný balíček | [config](../energy_coordinator/config.yaml) |
 | Známé chyby, nejistoty a podmínky uzavření | [KNOWN_ISSUES](KNOWN_ISSUES.md) |
 | Chyba → regresní test → rozsah důkazu | [TEST_MATRIX](TEST_MATRIX.md) |
@@ -57,3 +57,9 @@ staré vady**. Pro novou verzi je rozhodující odpovídající regresní test.
 ## Připravený zdroj 0.6.25
 
 [Deník a SQLite](../priority_shadow/docs/JOURNAL_SQLITE_0625.md) opravují DB-02/MON-02. DB-01 a N06-02 nejsou tímto uzavřené. Publikace, CI a instalace se dokládají samostatně.
+
+## Připravená oprava 0.6.26
+
+[Stabilní nativní archiv a nečinné DB čtení](../priority_shadow/docs/BACKUP_IDLE_0626.md). BACKUP-02 má opravu v kódu; uzavření vyžaduje skutečný Supervisor archiv a oddělenou obnovu. DB-03 opravuje no-op DDL, nikoli všechny příčiny DB-01.
+
+[Historie vývoje 0.6.26](history/BACKUP_IDLE_0626.md) obsahuje i odmítnuté varianty a první neúspěšný kandidát.
