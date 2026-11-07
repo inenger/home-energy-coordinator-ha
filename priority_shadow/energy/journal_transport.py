@@ -24,30 +24,53 @@ def get(db,key,default=None):
 
 def put(db,key,value):db.execute('INSERT OR REPLACE INTO journal_transport_meta VALUES(?,?)',(key,pack(value)))
 
+class JournalQueueChanged(RuntimeError):
+    """Another enqueue committed first; retry the original durable batch."""
+
+
 def enqueue(store,journal):
-    """Atomicky připraví chybějící řádky každé relace; pozdní návrat patří původnímu dni."""
+    """Prepare compression outside the writer, then atomically compare cursors.
+
+    Evidence and its FIFO analytics input are already durable. A failed enqueue
+    remains unacknowledged and is safely retried; original rows are immutable.
+    """
     db=store.db;schema(db)
     if not db.execute("SELECT 1 FROM sqlite_master WHERE name='ram_control_sessions'").fetchone():return status(store)
     with db:
         stream=get(db,'stream')
         if not stream:stream=uuid.uuid4().hex;put(db,'stream',stream)
-        runs=[unpack(p)for p, in db.execute('SELECT payload FROM ram_control_sessions ORDER BY day')]
-        for run in runs:
-            day=run['day'];key='queued:'+day;cursor=get(db,key,{'event':0,'sample':0,'session_hash':None})
-            events=[{'id':i,**unpack(p)}for i,p in db.execute('SELECT id,payload FROM ram_control_events WHERE day=? AND id>? ORDER BY id LIMIT 128',(day,cursor['event']))]
-            samples=[(i,unpack(p))for i,p in db.execute('SELECT rowid,payload FROM ram_control_samples WHERE day=? AND rowid>? ORDER BY rowid LIMIT 128',(day,cursor['sample']))]
-            session_hash=hashlib.sha256(encoded(run)).hexdigest()
-            if not events and not samples and cursor.get('session_hash')==session_hash:continue
-            delta={'session':run,'events':events,'samples':[p for _,p in samples]};raw=encoded(delta)
-            if len(raw)>2*1024*1024:raise ValueError('JOURNAL_DELTA_TOO_LARGE_RETAINED_IN_SQLITE')
-            batch=hashlib.sha256(raw).hexdigest();blob=zlib.compress(raw,6);parts=[blob[i:i+PART_BYTES]for i in range(0,len(blob),PART_BYTES)]
-            seq=db.execute('SELECT coalesce(max(seq),0)FROM journal_transport_outbox').fetchone()[0];first=seq+1
-            for i,part in enumerate(parts):
-                seq+=1;attrs={'friendly_name':'Noční řídicí deník · přírůstky','format':FORMAT,'stream_id':stream,'seq':seq,'batch_id':batch,'part_index':i,'part_count':len(parts),'first_seq':first,'last_seq':first+len(parts)-1,'day':day,'at':journal.get('observed_at')or run.get('last_processed_at')or run['first_seen_at'],'encoding':'zlib-json-v1','unpacked_bytes':len(raw),'data':base64.b64encode(part).decode(),'device_actions':0}
+    runs=[unpack(p)for p, in db.execute('SELECT payload FROM ram_control_sessions ORDER BY day')]
+    prepared=[]
+    for run in runs:
+        day=run['day'];key='queued:'+day;cursor=get(db,key,{'event':0,'sample':0,'session_hash':None})
+        events=[{'id':i,**unpack(p)}for i,p in db.execute('SELECT id,payload FROM ram_control_events WHERE day=? AND id>? ORDER BY id LIMIT 128',(day,cursor['event']))]
+        samples=[(i,unpack(p))for i,p in db.execute('SELECT rowid,payload FROM ram_control_samples WHERE day=? AND rowid>? ORDER BY rowid LIMIT 128',(day,cursor['sample']))]
+        session_hash=hashlib.sha256(encoded(run)).hexdigest()
+        if not events and not samples and cursor.get('session_hash')==session_hash:continue
+        delta={'session':run,'events':events,'samples':[p for _,p in samples]};raw=encoded(delta)
+        if len(raw)>2*1024*1024:raise ValueError('JOURNAL_DELTA_TOO_LARGE_RETAINED_IN_SQLITE')
+        batch=hashlib.sha256(raw).hexdigest();blob=zlib.compress(raw,6);parts=[blob[i:i+PART_BYTES]for i in range(0,len(blob),PART_BYTES)]
+        # Sequence-independent work, including evidence decompression and the
+        # large JSON/zlib/base64 passes, does not hold a writer transaction.
+        common={'friendly_name':'Noční řídicí deník · přírůstky','format':FORMAT,'stream_id':stream,'batch_id':batch,'part_count':len(parts),'day':day,'at':journal.get('observed_at')or run.get('last_processed_at')or run['first_seen_at'],'encoding':'zlib-json-v1','unpacked_bytes':len(raw),'device_actions':0}
+        data=[base64.b64encode(part).decode()for part in parts]
+        following={'event':events[-1]['id']if events else cursor['event'],'sample':samples[-1][0]if samples else cursor['sample'],'session_hash':session_hash}
+        prepared.append((key,cursor,common,data,following))
+    with db:
+        # Validate every cursor before inserting anything; no partial advance.
+        for key,cursor,common,data,following in prepared:
+            if get(db,key,{'event':0,'sample':0,'session_hash':None})!=cursor:
+                raise JournalQueueChanged('JOURNAL_QUEUE_CURSOR_CHANGED_RETRY')
+        seq=db.execute('SELECT coalesce(max(seq),0)FROM journal_transport_outbox').fetchone()[0]
+        for key,cursor,common,data,following in prepared:
+            first=seq+1
+            for i,part in enumerate(data):
+                seq+=1;attrs={**common,'seq':seq,'part_index':i,'first_seq':first,'last_seq':first+len(data)-1,'data':part}
                 assert len(encoded(attrs))<MAX_ATTRIBUTES_BYTES
-                db.execute('INSERT INTO journal_transport_outbox VALUES(?,?,?,?)',(seq,day,attrs['at'],pack(attrs)))
-            put(db,key,{'event':events[-1]['id']if events else cursor['event'],'sample':samples[-1][0]if samples else cursor['sample'],'session_hash':session_hash})
+                db.execute('INSERT INTO journal_transport_outbox VALUES(?,?,?,?)',(seq,common['day'],common['at'],pack(attrs)))
+            put(db,key,following)
     return status(store)
+
 
 def status(store):
     schema(store.db);db=store.db

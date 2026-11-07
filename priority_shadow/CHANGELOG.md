@@ -1,3 +1,9 @@
+# 0.6.25 · deník bez duplicit a komprese mimo writer
+
+Velký živý náhled deníku používá existující úplný multipart stream; session a transport zůstávají v monitoru, vynechaný náhled je výslovně označen. Chybový plán neopakuje celý deník. Příprava transportu běží mimo writer gate, atomický commit kontroluje původní kurzory. Diagnostika rozlišuje držitele lokálního zámku a nativní SQLite chybu bez SQL parametrů. Pouze observe_only.
+
+[Regrese, neúspěšné pokusy a meze](docs/JOURNAL_SQLITE_0625.md).
+
 # 0.6.24 · záloha za běhu bez zastavení regulátoru
 
 Nativní hot záloha s ověřeným SQLite snímkem a kontrolovanou obnovou před workery. Běžný restart nesmí vrátit novější živou DB ke starému snímku. Zachovaná cesta pro zálohu již zastaveného doplňku. Pouze observe_only.

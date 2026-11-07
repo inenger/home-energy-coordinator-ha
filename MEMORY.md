@@ -629,3 +629,8 @@ CI/merge jsou samostatné následné kontroly a potvrzují se na GitHubu.
 N06-01: hot pre-hook vytváří ověřený online SQLite snímek; nativní obnova jej ověří před spuštěním workerů. Vyloučený sentinel brání přepsání novější živé DB při běžném restartu. Raw SQLite zůstává jako cesta pro již zastavenou aplikaci. Regrese zahrnují run_loop/outbox/restore, WAL writer, poškození a přerušenou obnovu. Snímek reprezentuje potvrzenou evidenci v čase manifestu, nikoli nulové RPO. N06-02 latence vstupů zůstává samostatný neprokázaný mechanismus. Podrobnosti a odmítnuté varianty: priority_shadow/docs/HOT_BACKUP_0624.md. Publikaci, CI a nasazení ověřit samostatně.
 
 0.6.24 první CI zachytilo natvrdo /data při přesměrovaném DATA (PermissionError v existujícím entrypoint testu). Opraveno předáním DATA.parent do restore/finish; test zachovaný, původní CI selhání a commit zachované v historii.
+
+
+## Veřejný zdroj 0.6.25 · syntetické opravy DB-02/MON-02
+
+Číst priority_shadow/docs/JOURNAL_SQLITE_0625.md, aktuální registr a test matrix. Komprese transportu je mimo gate s atomickým compare kurzorů; příliš velké duplicitní preview přechází na nezkrácený multipart stream. První baseline FAIL i neúplná failure-plan oprava jsou popsané. DB-01/N06-02 a fyzické blokátory neuzavřené. Instalaci/CI ověřit zvlášť; tento záznam není provozní důkaz.

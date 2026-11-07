@@ -23,3 +23,21 @@ served=all.map((a,i)=>i? a:{...a,data:Buffer.from('bad zlib').toString('base64')
 card=cardFor();delete card._hass.states[eid].attributes.transport;card._hass.callApi=async()=>[[]];await card.loadControlHistory(true);assert.equal(card.controlError,true);assert.equal(card.controlCache[day].history_complete,false);
 const hydrate=new Card();hydrate.render=()=>{};hydrate.loadHistory=async()=>{};hydrate.loadControlHistory=async()=>{};const source={states:{'sensor.nocni_stinovy_soc_optimalizace':{attributes:envelope}},callApi:async()=>[[]]};hydrate._rawHass=source;await hydrate.hydratePacked(source);assert.equal(hydrate._hass.states['sensor.nocni_stinovy_soc_optimalizace'].attributes.target_soc_pct,70);assert.equal(source.states['sensor.nocni_stinovy_soc_optimalizace'].attributes.packed_attributes.sha256,sha(raw));
 console.log('PASS: lossless packed monitor, integrity/size guards, multipart replay, duplicates/out-of-order, missing part recovery, past-day routing, incomplete legacy history, read-only hydration');
+
+// Optional Python-produced synthetic fixture traverses the real projection,
+// SQLite outbox, multipart codec and this unchanged production card loader.
+if(process.env.JOURNAL_PROJECTION_FIXTURE){
+ const f=JSON.parse(fs.readFileSync(process.env.JOURNAL_PROJECTION_FIXTURE,'utf8'));
+ const actual=new Card();actual.setConfig({});actual.controlDay=f.session.day;
+ actual._hass={states:{[eid]:{attributes:await actual.decodedAttributes(f.monitor)}},
+  callApi:async(method,url)=>{assert.equal(method,'GET');assert.match(url,/sensor.nocni_stinovy_denik_prirustky/);return [f.parts.map(attributes=>({attributes}))];},
+  callService(){throw Error('Physical service forbidden');}};
+ actual.lastEntity={attributes:{at:new Date().toISOString()}};
+ assert.equal(actual.controlData().preview_source,'journal_transport');
+ assert.equal(actual.controlData().recent_events.length,0);
+ await actual.loadControlHistory(true);
+ assert.equal(actual.controlError,false);assert.equal(actual.controlCache[f.session.day].history_complete,true);
+ assert.deepEqual(JSON.parse(JSON.stringify(actual.controlCache[f.session.day].events)).sort((a,b)=>a.id-b.id),f.events.sort((a,b)=>a.id-b.id));
+ assert.equal(actual.controlCache[f.session.day].samples.length,f.session.statistics.sample_count);
+ console.log('PASS: Python oversized preview → SQLite multipart outbox → complete card details');
+}

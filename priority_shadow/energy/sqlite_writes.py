@@ -1,5 +1,5 @@
 """Cooperative SQLite writers. No network or physical device access."""
-import sqlite3,threading,weakref
+import sqlite3,threading,time,weakref
 from pathlib import Path
 
 class WriterTimeout(RuntimeError):
@@ -7,7 +7,12 @@ class WriterTimeout(RuntimeError):
 
 class Gate:
     def __init__(self):
-        self.condition=threading.Condition();self.owner=None;self.depth=0;self.fast_waiters=0
+        self.condition=threading.Condition();self.owner=None;self.depth=0;self.fast_waiters=0;self.owner_thread=None;self.acquired_at=None
+    def diagnostic(self):
+        with self.condition:
+            return {'owner_thread':self.owner_thread,
+                    'held_seconds':max(0.,time.monotonic()-self.acquired_at)if self.acquired_at is not None else None,
+                    'fast_waiters':self.fast_waiters}
     def acquire(self,fast,timeout):
         ident=threading.get_ident()
         with self.condition:
@@ -15,8 +20,10 @@ class Gate:
             if fast:self.fast_waiters+=1;self.condition.notify_all()
             try:
                 if not self.condition.wait_for(lambda:self.owner is None and (fast or self.fast_waiters==0),timeout):
-                    raise WriterTimeout('Local SQLite writer wait exceeded')
-                self.owner=ident;self.depth=1
+                    error=WriterTimeout('Local SQLite writer wait exceeded')
+                    error.writer_diagnostic={**self.diagnostic(),'wait_timeout_s':timeout}
+                    raise error
+                self.owner=ident;self.depth=1;self.owner_thread=threading.current_thread().name;self.acquired_at=time.monotonic()
             finally:
                 if fast:self.fast_waiters-=1
                 self.condition.notify_all()
@@ -24,7 +31,7 @@ class Gate:
         with self.condition:
             if self.owner!=threading.get_ident():raise RuntimeError('SQLite writer owner mismatch')
             self.depth-=1
-            if not self.depth:self.owner=None;self.condition.notify_all()
+            if not self.depth:self.owner=None;self.owner_thread=None;self.acquired_at=None;self.condition.notify_all()
 
 _registry=weakref.WeakValueDictionary()
 _registry_lock=threading.Lock()
@@ -42,6 +49,10 @@ class Connection(sqlite3.Connection):
         self._owned=False;self._contexts=0
     def _acquire(self):
         if not self._owned:self._gate.acquire(self._fast,self._wait);self._owned=True
+    def _annotate(self,error,operation):
+        if isinstance(error,sqlite3.Error):
+            error.writer_diagnostic={**self._gate.diagnostic(),'operation':operation,
+                                     'connection_in_transaction':self.in_transaction}
     def _release_idle(self):
         if self._owned and not self._contexts and not self.in_transaction:
             self._owned=False;self._gate.release()
@@ -56,15 +67,18 @@ class Connection(sqlite3.Connection):
         writing=token not in ('SELECT','EXPLAIN')
         if writing:self._acquire()
         try:return super().execute(sql,parameters)
+        except sqlite3.Error as error:self._annotate(error,token);raise
         finally:
             if writing:self._release_idle()
     def executemany(self,sql,parameters):
         self._acquire()
         try:return super().executemany(sql,parameters)
+        except sqlite3.Error as error:self._annotate(error,'executemany');raise
         finally:self._release_idle()
     def executescript(self,sql):
         self._acquire()
         try:return super().executescript(sql)
+        except sqlite3.Error as error:self._annotate(error,'executescript');raise
         finally:self._release_idle()
     def commit(self):
         try:return super().commit()
@@ -79,8 +93,9 @@ class Connection(sqlite3.Connection):
 
 def details(error):
     if isinstance(error,WriterTimeout):
-        return {'source':'local_writer','sqlite_errorcode':None,'sqlite_errorname':None,'message':str(error)}
+        return {'source':'local_writer','sqlite_errorcode':None,'sqlite_errorname':None,'message':str(error),'writer_diagnostic':getattr(error,'writer_diagnostic',None)}
     if isinstance(error,sqlite3.Error):
         return {'source':'sqlite','sqlite_errorcode':getattr(error,'sqlite_errorcode',None),
-                'sqlite_errorname':getattr(error,'sqlite_errorname',None),'message':str(error)[:512]}
+                'sqlite_errorname':getattr(error,'sqlite_errorname',None),'message':str(error)[:512],
+                'writer_diagnostic':getattr(error,'writer_diagnostic',None)}
     return None
