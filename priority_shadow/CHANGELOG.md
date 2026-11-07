@@ -1,3 +1,7 @@
+# 0.6.26 · stabilní hot archiv a čtení bez writer zámku
+
+[Kontrakt, regrese, neúspěšné pokusy a meze](docs/BACKUP_IDLE_0626.md). Pouze observe_only.
+
 # 0.6.25 · deník bez duplicit a komprese mimo writer
 
 Velký živý náhled deníku používá existující úplný multipart stream; session a transport zůstávají v monitoru, vynechaný náhled je výslovně označen. Chybový plán neopakuje celý deník. Příprava transportu běží mimo writer gate, atomický commit kontroluje původní kurzory. Diagnostika rozlišuje držitele lokálního zámku a nativní SQLite chybu bez SQL parametrů. Pouze observe_only.

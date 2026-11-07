@@ -5,9 +5,10 @@ with current data. Completed immutable evidence is not rewritten.
 """
 import copy,threading,time
 from .store import Store,unpack
-from .sqlite_writes import details,WriterTimeout
+from .sqlite_writes import details,WriterTimeout,schema_ready
 
 def schema(db):
+    if schema_ready(db,('control_analytics_pending',)):return
     db.execute('''CREATE TABLE IF NOT EXISTS control_analytics_pending(
         id INTEGER PRIMARY KEY,runtime TEXT NOT NULL,seq INTEGER NOT NULL,
         at TEXT NOT NULL,payload BLOB NOT NULL,UNIQUE(runtime,seq))''')
@@ -53,6 +54,8 @@ class Analytics:
             if not row:
                 with self.lock:self.output['health']={**self.output['health'],'status':'ok','pending_items':0}
                 return False
+            # A nonempty job writes: yield before computation if a writer is already busy.
+            with store.db:pass
             key,payload=row;item=unpack(payload)
             analysis=self.work(store,item)if self.work else self.compute(store,item)
             with store.db:store.db.execute('DELETE FROM control_analytics_pending WHERE id=?',(key,))

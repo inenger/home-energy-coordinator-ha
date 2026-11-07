@@ -5,7 +5,7 @@ import sqlite3
 import zlib
 from pathlib import Path
 from .core import canonical, digest, instant
-from .sqlite_writes import Connection
+from .sqlite_writes import Connection,schema_ready
 
 def pack(value):
     return zlib.compress(canonical(value).encode(), 6)
@@ -20,9 +20,12 @@ class Store:
         self.db = sqlite3.connect(path, timeout=timeout, factory=Connection)
         self.db.configure(path,timeout)
         try:
+            names=('samples','samples_day','objects','versions','version_lookup','decisions','failures','calibrations','manifests')
+            if self.db.journal_mode=='wal' and schema_ready(self.db,names):
+                self.path.chmod(0o600)
+                return
             with self.db:
                 self.db.execute('PRAGMA journal_mode=WAL')
-                self.db.execute('PRAGMA synchronous=FULL')
                 self.db.executescript('''
                     CREATE TABLE IF NOT EXISTS samples(
                       id INTEGER PRIMARY KEY, available_at TEXT NOT NULL UNIQUE,

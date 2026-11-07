@@ -1,3 +1,7 @@
+# 0.6.26 · stabilní hot archiv a čtení bez writer zámku
+
+[Kontrakt, regrese, neúspěšné pokusy a meze](docs/BACKUP_IDLE_0626.md). Pouze observe_only.
+
 # 0.6.25 · deník a krátké SQLite zápisy
 
 [Projekce monitoru, nezkrácené detaily a koordinace zápisů](docs/JOURNAL_SQLITE_0625.md). Pouze observe_only.

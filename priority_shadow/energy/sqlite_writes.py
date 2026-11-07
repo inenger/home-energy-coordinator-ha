@@ -47,6 +47,9 @@ class Connection(sqlite3.Connection):
     def configure(self,path,timeout):
         self._gate=gate_for(path);self._wait=timeout;self._fast=timeout<=.25
         self._owned=False;self._contexts=0
+        # These affect/query this newly opened connection, without a DB write.
+        super().execute('PRAGMA synchronous=FULL')
+        self.journal_mode=super().execute('PRAGMA journal_mode').fetchone()[0]
     def _acquire(self):
         if not self._owned:self._gate.acquire(self._fast,self._wait);self._owned=True
     def _annotate(self,error,operation):
@@ -99,3 +102,7 @@ def details(error):
                 'sqlite_errorname':getattr(error,'sqlite_errorname',None),'message':str(error)[:512],
                 'writer_diagnostic':getattr(error,'writer_diagnostic',None)}
     return None
+
+def schema_ready(db,names):
+    names=tuple(names)
+    return db.execute('SELECT count(*) FROM sqlite_master WHERE name IN('+','.join('?'for _ in names)+')',names).fetchone()[0]==len(names)

@@ -66,55 +66,70 @@ def checked_copy(source, target, deadline):
     with target.open("rb") as stream:
         os.fsync(stream.fileno())
 
-def prepare(root=Path("/data"), database=None, timeout=90):
+def _prepare_snapshot(root=Path("/data"), database=None, timeout=90):
     root = Path(root)
     database = Path(database) if database else root / "evidence/evidence.sqlite"
+    if not database.is_file():
+        raise FileNotFoundError("NATIVE_BACKUP_SOURCE_MISSING")
+    deadline = time.monotonic() + timeout
+    # WAL may hold the newest pages; size alone is only a conservative
+    # resource guard, never a freshness or integrity assertion.
+    with closing(sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True)) as src:
+        size = src.execute("PRAGMA page_count").fetchone()[0] * src.execute("PRAGMA page_size").fetchone()[0]
+    if size > MAX_DATABASE or shutil.disk_usage(root).free < 2 * size + 64 * 1024**2:
+        raise RuntimeError("NATIVE_BACKUP_SPACE_REQUIRED")
+    generation = uuid.uuid4().hex
+    # An atomic bundle contains both manifest and DB, preventing torn pairs.
+    with tempfile.TemporaryDirectory(prefix=".native-backup-", dir=root) as work:
+        work = Path(work)
+        snapshot = work / "evidence.sqlite"
+        checked_copy(database, snapshot, deadline)
+        manifest = {"format": "sqlite-online-v1", "generation": generation,
+                    "software_version": VERSION,
+                    "snapshot_completed_at": datetime.now(timezone.utc).isoformat(),
+                    "sha256": sha256(snapshot), "bytes": snapshot.stat().st_size,
+                    "scope": "committed SQLite evidence; not volatile controller RAM"}
+        pending = work / BUNDLE
+        with zipfile.ZipFile(pending, "w", compression=zipfile.ZIP_STORED) as archive:
+            archive.write(snapshot, "evidence.sqlite")
+            archive.writestr("manifest.json", json.dumps(manifest, sort_keys=True))
+        with pending.open("rb") as stream:
+            os.fsync(stream.fileno())
+        # Sentinel is deliberately excluded from the native archive.
+        marker = work / SENTINEL
+        marker.write_text(generation)
+        with marker.open("rb") as stream:
+            os.fsync(stream.fileno())
+        os.replace(marker, root / SENTINEL)
+        os.replace(pending, root / BUNDLE)
+        sync_dir(root)
+    return manifest
+
+def prepare(root=Path('/data'),database=None,timeout=90):
+    from . import native_backup_holder as holder
+    root=Path(root);database=Path(database)if database else root/'evidence/evidence.sqlite'
     with lock(root):
-        if not database.is_file():
-            raise FileNotFoundError("NATIVE_BACKUP_SOURCE_MISSING")
-        deadline = time.monotonic() + timeout
-        # WAL may hold the newest pages; size alone is only a conservative
-        # resource guard, never a freshness or integrity assertion.
-        with closing(sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True)) as src:
-            size = src.execute("PRAGMA page_count").fetchone()[0] * src.execute("PRAGMA page_size").fetchone()[0]
-        if size > MAX_DATABASE or shutil.disk_usage(root).free < 2 * size + 64 * 1024**2:
-            raise RuntimeError("NATIVE_BACKUP_SPACE_REQUIRED")
-        generation = uuid.uuid4().hex
-        # An atomic bundle contains both manifest and DB, preventing torn pairs.
-        with tempfile.TemporaryDirectory(prefix=".native-backup-", dir=root) as work:
-            work = Path(work)
-            snapshot = work / "evidence.sqlite"
-            checked_copy(database, snapshot, deadline)
-            manifest = {"format": "sqlite-online-v1", "generation": generation,
-                        "software_version": VERSION,
-                        "snapshot_completed_at": datetime.now(timezone.utc).isoformat(),
-                        "sha256": sha256(snapshot), "bytes": snapshot.stat().st_size,
-                        "scope": "committed SQLite evidence; not volatile controller RAM"}
-            pending = work / BUNDLE
-            with zipfile.ZipFile(pending, "w", compression=zipfile.ZIP_STORED) as archive:
-                archive.write(snapshot, "evidence.sqlite")
-                archive.writestr("manifest.json", json.dumps(manifest, sort_keys=True))
-            with pending.open("rb") as stream:
-                os.fsync(stream.fileno())
-            # Sentinel is deliberately excluded from the native archive.
-            marker = work / SENTINEL
-            marker.write_text(generation)
-            with marker.open("rb") as stream:
-                os.fsync(stream.fileno())
-            os.replace(marker, root / SENTINEL)
-            os.replace(pending, root / BUNDLE)
-            sync_dir(root)
-        return manifest
+        if not database.is_file():raise FileNotFoundError('NATIVE_BACKUP_SOURCE_MISSING')
+        handle=holder.start(root,database)
+        try:return _prepare_snapshot(root,database,timeout)
+        except BaseException:
+            holder.stop(root)
+            raise
+
 
 def finish(root=Path("/data")):
     root = Path(root)
     with lock(root):
+        from . import native_backup_holder as holder
+        lost=(root/holder.LEASE).exists() and not holder.active(root)
+        holder.stop(root)
         # After tar completion the running installation needs no stale snapshot.
         # Remove bundle FIRST: a crash must never leave bundle without sentinel.
         (root / BUNDLE).unlink(missing_ok=True)
         sync_dir(root)
         (root / SENTINEL).unlink(missing_ok=True)
         sync_dir(root)
+        if lost:raise RuntimeError('NATIVE_BACKUP_HOLDER_LOST_BEFORE_FINISH')
 
 def restore(root=Path("/data"), database=None, timeout=90):
     root = Path(root)

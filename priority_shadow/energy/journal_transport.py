@@ -6,7 +6,7 @@ POST/GET a opakuje nepotvrzené části; nedotýká se fyzických HA služeb.
 import base64,hashlib,json,threading,time,uuid,zlib
 from datetime import datetime,timedelta,timezone
 from .store import Store,pack,unpack
-from .sqlite_writes import details as storage_details
+from .sqlite_writes import details as storage_details,schema_ready
 from .monitor_payload import encoded,MAX_ATTRIBUTES_BYTES
 from .core import instant
 SENSOR='sensor.nocni_stinovy_denik_prirustky'
@@ -14,6 +14,7 @@ FORMAT='journal-chunks-v1'
 PART_BYTES=7000
 
 def schema(db):
+    if schema_ready(db,('journal_transport_meta','journal_transport_outbox','journal_transport_receipts')):return
     db.executescript('''CREATE TABLE IF NOT EXISTS journal_transport_meta(key TEXT PRIMARY KEY,payload BLOB NOT NULL);
     CREATE TABLE IF NOT EXISTS journal_transport_outbox(seq INTEGER PRIMARY KEY,day TEXT NOT NULL,at TEXT NOT NULL,payload BLOB NOT NULL);
     CREATE TABLE IF NOT EXISTS journal_transport_receipts(seq INTEGER PRIMARY KEY,recorded_at TEXT NOT NULL,sha256 TEXT NOT NULL);''')
