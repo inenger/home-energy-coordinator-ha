@@ -91,7 +91,7 @@ class CadenceTests(unittest.TestCase):
   with patch('energy.priority_publication.time.monotonic',return_value=100):p.submit(monitor(0));self.drain(p)
   sent.clear()
   with patch('energy.priority_publication.time.monotonic',return_value=105):p.submit(monitor(5));self.drain(p)
-  ids=[e for e,_ in sent];self.assertNotIn('sensor.nocni_stinovy_plan',ids);self.assertIn('sensor.nocni_stinovy_baterie_vykon',ids)
+  ids=[e for e,_ in sent];self.assertNotIn('sensor.nocni_stinovy_plan',ids);self.assertIn('sensor.nocni_stinovy_baterie_vykon',ids);self.assertIn('sensor.nocni_stinove_vstupy',ids)
   sent.clear();bad=monitor(10);bad['collection_health']={'status':'failed'}
   with patch('energy.priority_publication.time.monotonic',return_value=106):p.submit(bad,True);self.drain(p)
   self.assertIn('sensor.nocni_stinovy_plan',[e for e,_ in sent]);sent.clear()

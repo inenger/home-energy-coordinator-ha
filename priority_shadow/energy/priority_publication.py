@@ -26,7 +26,7 @@ class MonitorPublisher:
             transition=failure!=self.failed or has_overflow!=self.previous_overflow
             urgent=failure and not self.failed;self.failed=failure;self.previous_overflow=has_overflow
             from .monitor_payload import unpacked
-            large={'sensor.nocni_stinovy_plan','sensor.nocni_stinovy_ridici_denik','sensor.nocni_stinovy_soc_optimalizace','sensor.nocni_stinovy_souhrn','sensor.nocni_stinove_vstupy','sensor.nocni_stinove_povely','sensor.nocni_stinove_fve_soc_vyhodnoceni'}
+            large={'sensor.nocni_stinovy_plan','sensor.nocni_stinovy_ridici_denik','sensor.nocni_stinovy_soc_optimalizace','sensor.nocni_stinovy_souhrn','sensor.nocni_stinove_povely','sensor.nocni_stinove_fve_soc_vyhodnoceni'}
             now=time.monotonic()
             for eid,payload in packets:
                 attrs=unpacked(payload['attributes'])
