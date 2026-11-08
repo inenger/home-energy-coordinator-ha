@@ -61,3 +61,8 @@ Počet scénářů runneru se může měnit; opakování není počet různých 
 - Celá nová noc: skutečný čas/pokrytí/verze, nikoli urychlená smyčka.
 - Fyzické řízení: samostatně potvrzené zařízení, watchdog, fáze a souběhy;
   žádná zde uvedená sada sama nepovoluje fyzický adaptér.
+
+
+## 0.6.27 · standalone and storage boundaries
+
+Source contract, regressions, rejected fixtures and limits: STANDALONE_0627.md. No native acceptance is implied by this source record. DB-01 historical cause and N06-02 remain open. No physical control.

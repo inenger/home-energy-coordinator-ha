@@ -7,7 +7,7 @@ from .collector import ReadOnlyHA
 
 class Maintenance:
     def __init__(self,path,options,backup,period_s=60,work=None):
-        self.path=path;self.options=options;self.backup=backup;self.period=period_s;self.work=work
+        self.path=path;self.options=options;self.backup=backup;self.backup_period=max(21600,float(options.get("portable_backup_interval_s",21600)));self.period=period_s;self.work=work
         self.lock=threading.Lock();self.wake=threading.Event();self.stop=threading.Event()
         self.pending=None;self.output={};self.next_backup=0;self.next_audit=0;self.audit_error=None
         self.thread=threading.Thread(target=self.run,name='priority-maintenance',daemon=True)
@@ -52,8 +52,8 @@ class Maintenance:
             except Exception as error:
                 with self.lock:self.output={**self.output,'maintenance_error':type(error).__name__,'maintenance_error_at':at,'maintenance_storage_error':storage_details(error)}
             next_run=time.monotonic()+self.period
-            if not self.work and time.monotonic()>=self.next_backup:
-                try:self.backup();self.next_backup=time.monotonic()+3600
+            if not self.work and time.monotonic()>=self.next_backup and not night.window(__import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()):
+                try:self.backup();self.next_backup=time.monotonic()+self.backup_period
                 except Exception:self.next_backup=time.monotonic()+600
     def close(self):
         self.stop.set();self.wake.set();self.thread.join(timeout=25)

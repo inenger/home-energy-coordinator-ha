@@ -155,7 +155,7 @@ class RecoveryTests(unittest.TestCase):
     nonlocal seed
     seed=bridge.seed();return seed is not None
    try:
-    wait_for(self,ready)
+    wait_for(self,ready,seconds=30)
     class Adapter:
      loss=bridge.loss
      def seed(self):return seed
@@ -179,6 +179,9 @@ class RecoveryTests(unittest.TestCase):
   with tempfile.TemporaryDirectory()as folder:
    bridge=ProbeMonitor({'crash_marker':str(Path(folder)/'crash')}).start()
    try:
+    # Start-up and recovery are separate bounded stages. First prove the
+    # spawned worker is ready; the next wait still bounds crash recovery.
+    wait_for(self,lambda:bridge.snapshot().get('status')=='ok',seconds=30)
     bridge.submit({'synthetic_revision':1})
     wait_for(self,lambda:bridge.snapshot().get('received')=={'synthetic_revision':1})
     self.assertEqual(bridge.guard.restarts,1)
@@ -208,7 +211,7 @@ class RecoveryTests(unittest.TestCase):
     nonlocal seed
     seed=bridge.seed();return seed is not None
    try:
-    wait_for(self,ready)
+    wait_for(self,ready,seconds=30)
     class Adapter:
      loss=bridge.loss
      def seed(self):return seed

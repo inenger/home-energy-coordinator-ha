@@ -1,6 +1,6 @@
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.26 -->
+<!-- shadow-version: 0.6.27 -->
 
 Stav veřejného zdroje k 7. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
@@ -63,3 +63,8 @@ staré vady**. Pro novou verzi je rozhodující odpovídající regresní test.
 [Stabilní nativní archiv a nečinné DB čtení](../priority_shadow/docs/BACKUP_IDLE_0626.md). BACKUP-02 má opravu v kódu; uzavření vyžaduje skutečný Supervisor archiv a oddělenou obnovu. DB-03 opravuje no-op DDL, nikoli všechny příčiny DB-01.
 
 [Historie vývoje 0.6.26](history/BACKUP_IDLE_0626.md) obsahuje i odmítnuté varianty a první neúspěšný kandidát.
+
+
+## Připravený zdroj0.6.27
+
+[Samostatný kontext a omezená disková práce](../priority_shadow/docs/STANDALONE_0627.md). DEP-01 vyžaduje ověřenou migraci; DB-04 odstraňuje další konkrétní writer mechanismy. Historická příčina všech DB-01 a N06-02 není uzavřená. Pouze observe_only.

@@ -1,3 +1,11 @@
+# 0.6.27
+
+- Local EV/weather calibration context; no legacy runtime DB.
+- Bounded preview cadence; full recorder journal retained.
+- Six-hour portable copies outside the night window.
+- WAL lifetime and passive checkpoint worker, FULL unchanged; writer phase diagnostics.
+- Recorder receipt validation outside writer scope.
+
 # 0.6.26 · stabilní hot archiv a čtení bez writer zámku
 
 [Kontrakt, regrese, neúspěšné pokusy a meze](docs/BACKUP_IDLE_0626.md). Pouze observe_only.
