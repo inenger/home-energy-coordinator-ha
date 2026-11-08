@@ -16,7 +16,6 @@ from .soc_evidence import seal,verify
 from .phase_budget import from_db as phase_budget_from_db
 
 SHARE=Path('/share/home-energy-priority-shadow')
-MAIN=Path('/share/home-energy-coordinator/evidence.sqlite')
 HISTORY=SHARE/'soc-history.json.gz'
 IDS={
  'house_w':'sensor.solax_house_load','ev_w':'sensor.solax_api_charge_power_total',
@@ -123,20 +122,9 @@ def _versions(store,at):
     return result
 
 
-def _external_context(now):
-    """Read portable main evidence only; never open it through the mutable Store."""
-    if not MAIN.exists():return [],{'status':'main_evidence_unavailable'}
-    db=sqlite3.connect('file:'+str(MAIN)+'?mode=ro',uri=True)
-    try:
-        row=db.execute("SELECT v.available_at,o.payload FROM versions v JOIN objects o ON o.hash=v.hash WHERE v.entity LIKE 'weather_forecast:%:hourly' AND v.available_at<=? ORDER BY v.id DESC LIMIT 1",(now.isoformat(),)).fetchone()
-        forecasts=[]
-        if row and 0<=(now-instant(row[0])).total_seconds()<8*3600:
-            payload=unpack(row[1])
-            if payload.get('units',{}).get('temperature_unit')=='°C':forecasts=payload.get('forecast',[])
-        cutoff=(now-timedelta(days=60)).isoformat()
-        rows=[dict(zip(('at','power_w','energy_total_kwh','soc'),r)) for r in db.execute('SELECT at,power_w,energy_total_kwh,soc FROM ev_obs WHERE at>=? AND at<=? ORDER BY at',(cutoff,now.isoformat()))]
-        return forecasts,fit_ev(rows)
-    finally:db.close()
+def _local_context(store,now):
+    from .standalone_context import ev_rows
+    return [],fit_ev(ev_rows(store,now))
 
 
 def weather_versions(db,now,days=16):
@@ -147,10 +135,6 @@ def weather_versions(db,now,days=16):
 
 def calibration_weather(store,now):
     result=weather_versions(store.db,now)
-    if MAIN.exists():
-        db=sqlite3.connect('file:'+str(MAIN)+'?mode=ro',uri=True)
-        try:result+=weather_versions(db,now)
-        finally:db.close()
     return list({(r['available_at'],r['hash']):r for r in result}.values())
 
 
@@ -169,6 +153,8 @@ class PlannerService:
 
     def refresh(self,store,now):
         schema(store.db)
+        from .standalone_context import import_context
+        self.context_import=import_context(store)
         if self.history is None:
             if not HISTORY.exists():raise ValueError('SOC_HISTORY_NOT_IMPORTED')
             self.history=read_gzip(HISTORY)
@@ -199,8 +185,8 @@ class PlannerService:
         self.weather_archive=calibration_weather(store,now)
         self.house_validation=validate_household(self.history['house_hours'],now,self.weather_archive)
         self.household=Household(self.history['house_hours'],now)
-        try:self.weather,self.ev_model=_external_context(now)
-        except (OSError,ValueError,sqlite3.Error):self.weather=[];self.ev_model={'status':'main_context_read_failed'}
+        try:self.weather,self.ev_model=_local_context(store,now)
+        except (OSError,ValueError,sqlite3.Error):self.weather=[];self.ev_model={'status':'local_context_read_failed'}
         manifest={'at':now.isoformat(),'policy':SOC_POLICY,'version':VERSION,
                   'history_source':self.history['source'],'house_hours':len(self.history['house_hours']),
                   'pv_pairs':len(self.history['pv_pairs']),'pv_models':self.pv_models,
@@ -225,7 +211,7 @@ class PlannerService:
             if client and time.monotonic()>=self.next_weather:
                 weather.poll(store,client,states,{'weather_types':['hourly'],'weather_interval_seconds':3600},now)
                 self.next_weather=time.monotonic()+3600
-            r=store.db.execute("SELECT v.available_at,v.hash,o.payload FROM versions v JOIN objects o ON o.hash=v.hash WHERE v.entity LIKE 'weather_forecast:%:hourly' AND v.available_at<=? ORDER BY v.id DESC LIMIT 1",(at,)).fetchone()
+            r=store.db.execute("SELECT v.available_at,v.hash,o.payload FROM versions v JOIN objects o ON o.hash=v.hash WHERE v.entity LIKE 'weather_forecast:%:hourly' AND v.available_at<=? ORDER BY v.available_at DESC,v.id DESC LIMIT 1",(at,)).fetchone()
             candidates=self.weather_archive+([{'available_at':r[0],'hash':r[1],'payload':unpack(r[2])}] if r else [])
             current=archived_weather(candidates,now)
             self.weather=current['payload'].get('forecast',[]) if current else []

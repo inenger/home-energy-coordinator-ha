@@ -1,3 +1,7 @@
+# 0.6.27 · samostatné podklady a omezená disková práce
+
+[Kontrakt a regrese](docs/STANDALONE_0627.md). Původní doplněk lze zastavit až po ověřené migraci. Pouze observe_only.
+
 # 0.6.26 · stabilní hot archiv a čtení bez writer zámku
 
 [Kontrakt, regrese, neúspěšné pokusy a meze](docs/BACKUP_IDLE_0626.md). Pouze observe_only.

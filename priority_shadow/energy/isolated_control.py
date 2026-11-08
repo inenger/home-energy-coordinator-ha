@@ -180,9 +180,12 @@ def evidence_worker(path,options,inbox,output,bootstrap,stopping):
     os.nice(10)
     path=__import__('pathlib').Path(path);maintenance=None;publisher=None;analytics=None
     pending=None;ack=0;ack_generation=None;analysis={};transport={};booted=False
-    last_response={'ack':0,'storage_health':{'status':'starting'}}
+    last_response={'ack':0,'storage_health':{'status':'starting'}};checkpointer=None
     def emit(value):
         nonlocal last_response
+        value=dict(value)
+        from .sqlite_writes import gate_for
+        value['storage_health']={**value.get('storage_health',{}),'writer':gate_for(path).diagnostic(),'checkpoint':checkpointer.snapshot()if checkpointer else {'status':'starting'}}
         last_response=value
         latest(output,value)
     try:
@@ -192,6 +195,8 @@ def evidence_worker(path,options,inbox,output,bootstrap,stopping):
                     store=Store(path)
                     try:seed=seed_from(store)
                     finally:store.close()
+                    from .sqlite_checkpoint import Checkpointer
+                    checkpointer=Checkpointer(path).start()
                     bootstrap.put(seed)
                     maintenance=Maintenance(path,options,observer.backup)
                     publisher=journal_transport.Publisher(path).start()
@@ -233,6 +238,7 @@ def evidence_worker(path,options,inbox,output,bootstrap,stopping):
         if analytics:analytics.close()
         if publisher:publisher.close()
         if maintenance:maintenance.close()
+        if checkpointer:checkpointer.close()
 
 def monitor_worker(cfg,inbox,output,stopping):
     """Příprava/komprese i HTTP monitorů jsou mimo řídicí proces."""

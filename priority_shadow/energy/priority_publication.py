@@ -16,16 +16,29 @@ class MonitorPublisher:
         self.cfg=cfg;self.send=send;self.condition=threading.Condition()
         self.pending=OrderedDict();self.stopping=False;self.thread=None
         self.health={'status':'starting','pending_entities':0,'published_packets':0,'completed_attempts':0}
-        self.failed=False;self.errors={}
+        self.failed=False;self.errors={};self.last_queued={};self.last_signature={};self.previous_overflow=False
 
     def submit(self,result,failure=False):
         # Příprava je čistá a kontroluje byte budget ještě v cestě fail-closed.
         packets=publish_status.prepare_priority(result,failure,overflow=self.overflow)
         with self.condition:
-            urgent=failure and not self.failed;self.failed=failure
-            for eid,payload in packets:self.pending[eid]=payload
+            has_overflow=any(payload['state']=='payload_overflow'for _,payload in packets)
+            transition=failure!=self.failed or has_overflow!=self.previous_overflow
+            urgent=failure and not self.failed;self.failed=failure;self.previous_overflow=has_overflow
+            from .monitor_payload import unpacked
+            large={'sensor.nocni_stinovy_plan','sensor.nocni_stinovy_ridici_denik','sensor.nocni_stinovy_soc_optimalizace','sensor.nocni_stinovy_souhrn','sensor.nocni_stinove_vstupy','sensor.nocni_stinove_povely','sensor.nocni_stinove_fve_soc_vyhodnoceni'}
+            now=time.monotonic()
+            for eid,payload in packets:
+                attrs=unpacked(payload['attributes'])
+                signature=(payload['state'],failure,attrs.get('error_code'),(attrs.get('collection_health')or{}).get('status'),attrs.get('status'))
+                period=30 if eid in {'sensor.nocni_stinovy_plan','sensor.nocni_stinovy_ridici_denik'} else 60
+                changed=signature!=self.last_signature.get(eid)
+                if eid in large and not changed and not transition and not failure and eid not in self.errors and eid not in self.pending and now-self.last_queued.get(eid,0)<period:
+                    self.health['coalesced_packets']=self.health.get('coalesced_packets',0)+1
+                    continue
+                self.pending[eid]=payload;self.last_queued[eid]=now;self.last_signature[eid]=signature
             if urgent:
-                order=[eid for eid,_ in packets]
+                order=[eid for eid,_ in packets if eid in self.pending]
                 self.pending=OrderedDict([(eid,self.pending[eid])for eid in order]+[(e,p)for e,p in self.pending.items()if e not in order])
             self.health['pending_entities']=len(self.pending);self.condition.notify()
         return self.snapshot()

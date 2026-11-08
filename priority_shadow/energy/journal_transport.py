@@ -127,14 +127,19 @@ class Publisher:
                 # Omezené cyklické dohledávání se vrací i ke starým časům.
                 # Resend nemění první možný čas přijetí a neposune jej mimo dosah.
                 with db:put(db,'receipt_cursor',(lower if end>=upper else end-timedelta(seconds=2)).isoformat())
+                # Validate potentially large recorder payloads without holding
+                # the writer. Only the small receipt rows and contiguous ACK
+                # advance are committed under the gate.
+                receipts=[]
+                for series in history:
+                    for state in series:
+                        attrs=state.get('attributes',{});seq=attrs.get('seq');expected=valid.get(seq)
+                        if expected and attrs==expected and attrs.get('stream_id')==stream:
+                            stamp=state.get('last_updated')or state.get('last_changed')or sent.get(str(seq),{}).get('first_at')or at
+                            receipts.append((seq,instant(stamp).astimezone(timezone.utc).isoformat(),attrs['batch_id']))
                 with db:
-                    for series in history:
-                        for state in series:
-                            attrs=state.get('attributes',{});seq=attrs.get('seq');expected=valid.get(seq)
-                            if expected and attrs==expected and attrs.get('stream_id')==stream:
-                                stamp=state.get('last_updated')or state.get('last_changed')or sent.get(str(seq),{}).get('first_at')or at
-                                recorded_at=instant(stamp).astimezone(timezone.utc).isoformat()
-                                db.execute('INSERT OR IGNORE INTO journal_transport_receipts VALUES(?,?,?)',(seq,recorded_at,attrs['batch_id']))
+                    for receipt_row in receipts:
+                        db.execute('INSERT OR IGNORE INTO journal_transport_receipts VALUES(?,?,?)',receipt_row)
                     while db.execute('SELECT 1 FROM journal_transport_receipts WHERE seq=?',(ack+1,)).fetchone():ack+=1
                     put(db,'ack',ack)
                 sent={k:v for k,v in sent.items()if int(k)>ack and not db.execute('SELECT 1 FROM journal_transport_receipts WHERE seq=?',(int(k),)).fetchone()}
