@@ -276,7 +276,7 @@ class EvidenceBridge:
         self.process=self.new_process()
         self.runtime=uuid.uuid4().hex;self.seq=0;self.ack=0;self.last={};self.last_accepted=0;self.inflight={}
         self.reader_stop=threading.Event();self.reader_lock=threading.Lock();self.seed_value=None;self.reader=None
-        self.seed_consumed=False;self.epoch=0;self.last_reply=time.monotonic()
+        self.seed_consumed=False;self.worker_started_at=None;self.worker_ready=False;self.epoch=0;self.last_reply=time.monotonic()
         self.replay={};self.sent=set();self.retired_readers=[];self.retired_feeders=[];self.guard=WorkerGuard(self)
         self.loss={'batches':0,'events':0,'samples':0,'first_at':None,'last_at':None,'days':{}}
     def new_process(self):
@@ -285,7 +285,7 @@ class EvidenceBridge:
         self.reader=threading.Thread(target=self.read_responses,args=(self.bootstrap,self.output,self.epoch),name='evidence-ipc-reader',daemon=True)
         self.reader.start()
     def start(self):
-        self.process.start();self.last_reply=time.monotonic();self.start_reader();self.guard.start();return self
+        self.worker_started_at=time.monotonic();self.worker_ready=False;self.process.start();self.last_reply=time.monotonic();self.start_reader();self.guard.start();return self
     def read_responses(self,bootstrap,output,epoch):
         seeded=False
         while not self.reader_stop.is_set() and epoch==self.epoch:
@@ -296,14 +296,14 @@ class EvidenceBridge:
                         with self.reader_lock:
                             if epoch!=self.epoch:return
                             if not self.seed_consumed:self.seed_value=seed
-                            self.last_reply=time.monotonic()
+                            self.last_reply=time.monotonic();self.worker_ready=True
                         seeded=True
                     except queue.Empty:pass
                 try:value=output.get(timeout=.05)
                 except queue.Empty:continue
                 with self.reader_lock:
                     if epoch!=self.epoch:return
-                    self.last_reply=time.monotonic();self.last=value
+                    self.last_reply=time.monotonic();self.worker_ready=True;self.last=value
                     self.ack=max(self.ack,value.get('ack',0))
                     self.replay={s:b for s,b in self.replay.items()if s>self.ack}
                     self.sent.intersection_update(self.replay)
@@ -315,6 +315,8 @@ class EvidenceBridge:
             return value
     def worker_problem(self,now,timeout,check_process=True):
         if check_process and self.process.pid is not None and not self.process.is_alive():return 'EVIDENCE_PROCESS_EXITED'
+        if self.worker_started_at is not None and not self.worker_ready:
+            return 'EVIDENCE_PROCESS_STARTUP_TIMEOUT'if now-self.worker_started_at>30 else None
         if now-self.last_reply>timeout:return 'EVIDENCE_PROCESS_UNRESPONSIVE'
     def flush_pending(self):
         # Celé IPC předání běží v pomocném vlákně, včetně feeder serializace.
@@ -338,7 +340,7 @@ class EvidenceBridge:
             self.inbox=inbox;self.output=output;self.bootstrap=bootstrap;self.stop=stop
             self.sent.clear();self.last_reply=time.monotonic()
             self.last={**self.last,'storage_health':{'status':'starting','error_code':'EVIDENCE_PROCESS_RECOVERING'}}
-        self.process=self.new_process();self.process.start();self.start_reader()
+        self.worker_started_at=time.monotonic();self.worker_ready=False;self.process=self.new_process();self.process.start();self.start_reader()
     def snapshot(self):
         with self.reader_lock:
             last=self.last;self.ack=max(self.ack,last.get('ack',0))
@@ -401,7 +403,7 @@ class MonitorBridge:
         self.process=self.new_process()
         self.condition=threading.Condition();self.pending=None;self.latest_result=None
         self.stopping=False;self.sender=None;self.reader=None
-        self.epoch=0;self.last_reply=time.monotonic();self.last_progress=self.last_reply;self.published=0;self.attempts=0
+        self.worker_started_at=None;self.worker_ready=False;self.epoch=0;self.last_reply=time.monotonic();self.last_progress=self.last_reply;self.published=0;self.attempts=0
         self.retired_readers=[];self.retired_feeders=[];self.guard=WorkerGuard(self)
     def new_process(self):
         return self.ctx.Process(target=monitor_worker,args=(self.cfg,self.inbox,self.output,self.stop),daemon=True)
@@ -409,7 +411,7 @@ class MonitorBridge:
         self.reader=threading.Thread(target=self.read_responses,args=(self.output,self.epoch),name='monitor-ipc-reader',daemon=True)
         self.reader.start()
     def start(self):
-        self.process.start();self.last_reply=time.monotonic();self.last_progress=self.last_reply
+        self.worker_started_at=time.monotonic();self.worker_ready=False;self.process.start();self.last_reply=time.monotonic();self.last_progress=self.last_reply
         self.sender=threading.Thread(target=self.send_pending,name='monitor-ipc-sender',daemon=True)
         self.sender.start();self.start_reader();self.guard.start();return self
     def submit(self,result):
@@ -436,13 +438,15 @@ class MonitorBridge:
             except (EOFError,OSError,ValueError):return
             with self.condition:
                 if epoch!=self.epoch:return
-                self.last_reply=time.monotonic();count=value.get('published_packets',0)
+                self.last_reply=time.monotonic();self.worker_ready=True;count=value.get('published_packets',0)
                 attempts=value.get('completed_attempts',0)
                 if count!=self.published or attempts!=self.attempts or not value.get('pending_entities'):
                     self.last_progress=self.last_reply;self.published=count;self.attempts=attempts
                 self.last=value
     def worker_problem(self,now,timeout,check_process=True):
         if check_process and self.process.pid is not None and not self.process.is_alive():return 'MONITOR_PROCESS_EXITED'
+        if self.worker_started_at is not None and not self.worker_ready:
+            return 'MONITOR_PROCESS_STARTUP_TIMEOUT'if now-self.worker_started_at>30 else None
         if now-self.last_reply>timeout:return 'MONITOR_PROCESS_UNRESPONSIVE'
         with self.condition:
             if self.last.get('pending_entities') and now-self.last_progress>timeout:return 'MONITOR_PUBLICATION_STALLED'
@@ -460,7 +464,7 @@ class MonitorBridge:
             self.last={'status':'starting','error_code':'MONITOR_PROCESS_RECOVERING'}
             self.last_reply=time.monotonic();self.last_progress=self.last_reply;self.published=0;self.attempts=0
             self.pending=self.latest_result;self.condition.notify_all()
-        self.process=self.new_process();self.process.start();self.start_reader()
+        self.worker_started_at=time.monotonic();self.worker_ready=False;self.process=self.new_process();self.process.start();self.start_reader()
     def snapshot(self):
         with self.condition:last=dict(self.last)
         problem=self.worker_problem(time.monotonic(),self.guard.timeout,check_process=False) or self.guard.problem

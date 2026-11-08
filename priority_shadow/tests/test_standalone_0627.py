@@ -119,3 +119,24 @@ class ReceiptScopeTests(unittest.TestCase):
     def history(self,begin,end):return [[{'attributes':Attrs(attrs),'last_updated':stamp(10)}for attrs in sent]]
    publisher=t.Publisher(path,Client());now=datetime.fromisoformat(stamp(10));publisher.tick(now);publisher.tick(now+timedelta(seconds=5))
    self.assertTrue(held);self.assertFalse(any(held));self.assertEqual(t.status(s)['pending_chunks'],0);s.close()
+
+class StartupSupervisionTests(unittest.TestCase):
+ def check_startup(self,bridge,prefix):
+  from types import SimpleNamespace
+  bridge.process=SimpleNamespace(pid=123,is_alive=lambda:True)
+  bridge.worker_started_at=100.;bridge.worker_ready=False;bridge.last_reply=100.
+  self.assertIsNone(bridge.worker_problem(105.,.1))
+  self.assertEqual(bridge.worker_problem(131.,.1),prefix+'_PROCESS_STARTUP_TIMEOUT')
+  bridge.worker_ready=True
+  self.assertEqual(bridge.worker_problem(105.,.1),prefix+'_PROCESS_UNRESPONSIVE')
+  bridge.worker_ready=False;bridge.process.is_alive=lambda:False
+  self.assertEqual(bridge.worker_problem(100.1,.1),prefix+'_PROCESS_EXITED')
+  for name in ['inbox','output','bootstrap']:
+   q=getattr(bridge,name,None)
+   if q is not None:q.cancel_join_thread();q.close()
+ def test_monitor_startup_grace_does_not_mask_dead_or_stalled_ready_child(self):
+  from energy.isolated_control import MonitorBridge
+  self.check_startup(MonitorBridge({}),'MONITOR')
+ def test_evidence_startup_grace_does_not_mask_dead_or_stalled_ready_child(self):
+  from energy.isolated_control import EvidenceBridge
+  self.check_startup(EvidenceBridge('/synthetic/not-opened.sqlite',{}),'EVIDENCE')
