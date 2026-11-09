@@ -5,7 +5,7 @@ from .core import instant, digest
 from .pricing import valid
 from .store import unpack
 
-POLICY = 'phase-budget-v1-observed-night-envelope'
+POLICY = 'phase-budget-v2-wallbox-settled-steps'
 
 
 def fallback():
@@ -42,7 +42,7 @@ def estimate(samples, at):
     PF = minimum consistent P/(U*I) at >=5 A. Neither bounds unseen transients.
     """
     now=instant(at); cutoff=now-timedelta(days=7)
-    ratios=[[],[],[]]; steps=[[],[],[]]; energy=[0.,0.,0.]; evidence=[]; previous=None
+    ratios=[[],[],[]]; steps=[[],[],[]]; energy=[0.,0.,0.]; evidence=[]; frames=[]; previous=None;segment=0
     for row in sorted(samples,key=lambda r:r['at']):
         t=instant(row['at'])
         if not cutoff<=t<=now:continue
@@ -50,7 +50,7 @@ def estimate(samples, at):
         def num(k):
             x=p.get(k,{})
             return x.get('value') if x.get('quality')=='valid' and valid(x.get('value')) and valid(x.get('age_seconds')) and 0<=x['age_seconds']<90 else None
-        values=[]
+        values=[];ev_values=[]
         for i in (1,2,3):
             u,g,inv,ev,a=[num(k) for k in (f'grid_voltage_l{i}_v',f'grid_l{i}_w',f'inverter_l{i}_w',f'ev_l{i}_w',f'grid_l{i}_a')]
             if any(v is None for v in (u,g,inv,ev,a)) or not 180<u<260 or ev<0 or not 0<=abs(a)<=100:
@@ -59,8 +59,8 @@ def estimate(samples, at):
             if base < -100:break
             ratio=abs(g)/(u*abs(a)) if abs(a)>=5 else None
             if ratio is not None and (abs(inv)>200 or not .5<=ratio<=1.05):ratio=None
-            values.append((max(0.,base),u,ratio))
-        if len(values)!=3:previous=None;continue
+            values.append((max(0.,base),u,ratio));ev_values.append(ev)
+        if len(values)!=3:previous=None;segment+=1;continue
         for i,(base,u,pf) in enumerate(values):
             if pf is not None:ratios[i].append(min(1.,pf))
         if previous and 0<(t-previous[0]).total_seconds()<=30:
@@ -69,21 +69,24 @@ def estimate(samples, at):
                 energy[i]+=previous[1][i][0]*dt
                 steps[i].append(max(0.,base/u-previous[1][i][0]/previous[1][i][1]))
         evidence.append({'at':row['at'],'values':values})
+        frames.append({'at':row['at'],'values':values,'ev':ev_values,'segment':segment})
         previous=(t,values)
+    from .phase_settlement import steps as settled_steps
+    steps,settlement=settled_steps(frames)
     if min(map(len,ratios))<30 or min(map(len,steps))<60 or sum(energy)<=0:
         return {**fallback(),'available_at':at,'loaded_samples':[len(x) for x in ratios],
-                'step_samples':[len(x) for x in steps],'source_hash':digest(evidence)}
+                'step_samples':[len(x) for x in steps],'source_hash':digest({'policy':POLICY,'frames':frames}),'settlement':settlement}
     pf=[min(x) for x in ratios]
     reserve=[math.ceil((max(s)/f+.1)*10)/10 for s,f in zip(steps,pf)]
     if any(r>=25 for r in reserve):
-        return {**fallback(),'status':'observed_steps_exceed_budget','reserve_a':reserve,'available_at':at,'source_hash':digest(evidence),'blocking':True}
+        return {**fallback(),'status':'observed_steps_exceed_budget','reserve_a':reserve,'available_at':at,'source_hash':digest({'policy':POLICY,'frames':frames}),'settlement':settlement,'blocking':True}
     return checked({'policy':POLICY,'status':'empirical_shadow_candidate','breaker_a':25.,
         'reserve_a':reserve,'power_factor':pf,'house_phase_shares':[v/sum(energy) for v in energy],
         'available_at':at,'source_start':evidence[0]['at'],'source_end':evidence[-1]['at'],
-        'source_hash':digest(evidence),'loaded_samples':[len(x) for x in ratios],
+        'source_hash':digest({'policy':POLICY,'frames':frames}),'settlement':settlement,'loaded_samples':[len(x) for x in ratios],
         'step_samples':[len(x) for x in steps], 'control_verified':False,
         'source':'prior_night_measured_envelope',
-        'limitations':['sampling_can_miss_peaks','actuator_latency_unverified','future_phase_distribution_uncertain']})
+        'limitations':['short_house_pulses_during_EV_transitions_unresolved','sampling_can_miss_peaks','actuator_latency_unverified','future_phase_distribution_uncertain']})
 
 
 def from_db(db, at):

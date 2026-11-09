@@ -37,9 +37,11 @@ def enqueue(store,journal):
     """
     db=store.db;schema(db)
     if not db.execute("SELECT 1 FROM sqlite_master WHERE name='ram_control_sessions'").fetchone():return status(store)
-    with db:
-        stream=get(db,'stream')
-        if not stream:stream=uuid.uuid4().hex;put(db,'stream',stream)
+    stream=get(db,'stream')
+    if not stream:
+        with db:
+            stream=get(db,'stream')
+            if not stream:stream=uuid.uuid4().hex;put(db,'stream',stream)
     runs=[unpack(p)for p, in db.execute('SELECT payload FROM ram_control_sessions ORDER BY day')]
     prepared=[]
     for run in runs:
@@ -57,19 +59,24 @@ def enqueue(store,journal):
         data=[base64.b64encode(part).decode()for part in parts]
         following={'event':events[-1]['id']if events else cursor['event'],'sample':samples[-1][0]if samples else cursor['sample'],'session_hash':session_hash}
         prepared.append((key,cursor,common,data,following))
+    original_head=db.execute('SELECT coalesce(max(seq),0)FROM journal_transport_outbox').fetchone()[0]
+    seq=original_head;chunks=[];cursors=[]
+    for key,cursor,common,data,following in prepared:
+        first=seq+1
+        for i,part in enumerate(data):
+            seq+=1;attrs={**common,'seq':seq,'part_index':i,'first_seq':first,'last_seq':first+len(data)-1,'data':part}
+            assert len(encoded(attrs))<MAX_ATTRIBUTES_BYTES
+            chunks.append((seq,common['day'],common['at'],pack(attrs)))
+        cursors.append((key,pack(following)))
+    if not prepared:return status(store)
     with db:
-        # Validate every cursor before inserting anything; no partial advance.
+        if db.execute('SELECT coalesce(max(seq),0)FROM journal_transport_outbox').fetchone()[0]!=original_head:
+            raise JournalQueueChanged('JOURNAL_HEAD_CHANGED_RETRY')
         for key,cursor,common,data,following in prepared:
             if get(db,key,{'event':0,'sample':0,'session_hash':None})!=cursor:
                 raise JournalQueueChanged('JOURNAL_QUEUE_CURSOR_CHANGED_RETRY')
-        seq=db.execute('SELECT coalesce(max(seq),0)FROM journal_transport_outbox').fetchone()[0]
-        for key,cursor,common,data,following in prepared:
-            first=seq+1
-            for i,part in enumerate(data):
-                seq+=1;attrs={**common,'seq':seq,'part_index':i,'first_seq':first,'last_seq':first+len(data)-1,'data':part}
-                assert len(encoded(attrs))<MAX_ATTRIBUTES_BYTES
-                db.execute('INSERT INTO journal_transport_outbox VALUES(?,?,?,?)',(seq,common['day'],common['at'],pack(attrs)))
-            put(db,key,following)
+        db.executemany('INSERT INTO journal_transport_outbox VALUES(?,?,?,?)',chunks)
+        db.executemany('INSERT OR REPLACE INTO journal_transport_meta VALUES(?,?)',cursors)
     return status(store)
 
 
@@ -126,7 +133,7 @@ class Publisher:
                 history=self.client.history(begin.isoformat(),end.isoformat());valid={seq:a for seq,a in rows}
                 # Omezené cyklické dohledávání se vrací i ke starým časům.
                 # Resend nemění první možný čas přijetí a neposune jej mimo dosah.
-                with db:put(db,'receipt_cursor',(lower if end>=upper else end-timedelta(seconds=2)).isoformat())
+                receipt_cursor=(lower if end>=upper else end-timedelta(seconds=2)).isoformat()
                 # Validate potentially large recorder payloads without holding
                 # the writer. Only the small receipt rows and contiguous ACK
                 # advance are committed under the gate.
@@ -137,20 +144,30 @@ class Publisher:
                         if expected and attrs==expected and attrs.get('stream_id')==stream:
                             stamp=state.get('last_updated')or state.get('last_changed')or sent.get(str(seq),{}).get('first_at')or at
                             receipts.append((seq,instant(stamp).astimezone(timezone.utc).isoformat(),attrs['batch_id']))
+                cursor_payload=pack(receipt_cursor)
                 with db:
-                    for receipt_row in receipts:
-                        db.execute('INSERT OR IGNORE INTO journal_transport_receipts VALUES(?,?,?)',receipt_row)
+                    db.execute('INSERT OR REPLACE INTO journal_transport_meta VALUES(?,?)',('receipt_cursor',cursor_payload))
+                    db.executemany('INSERT OR IGNORE INTO journal_transport_receipts VALUES(?,?,?)',receipts)
                     while db.execute('SELECT 1 FROM journal_transport_receipts WHERE seq=?',(ack+1,)).fetchone():ack+=1
                     put(db,'ack',ack)
                 sent={k:v for k,v in sent.items()if int(k)>ack and not db.execute('SELECT 1 FROM journal_transport_receipts WHERE seq=?',(int(k),)).fetchone()}
+            publish=[]
             for seq,attrs in rows:
                 if seq<=ack or db.execute('SELECT 1 FROM journal_transport_receipts WHERE seq=?',(seq,)).fetchone():continue
                 receipt=sent.get(str(seq))
                 if receipt and 0<=(now-instant(receipt['last_at'])).total_seconds()<20:continue
-                self.client.publish(attrs);sent[str(seq)]={'first_at':min(instant(receipt['first_at']),now).isoformat()if receipt else at,'last_at':at}
-                with db:put(db,'sent',sent)
+                # Persist the earliest possible send time for the entire bounded
+                # group before HTTP. Crash/retry cannot move the history cursor
+                # past a possibly recorded original publication.
+                sent[str(seq)]={'first_at':min(instant(receipt['first_at']),now).isoformat()if receipt else at,'last_at':at}
+                publish.append(attrs)
+            if publish:
+                sent_payload=pack(sent)
+                with db:db.execute('INSERT OR REPLACE INTO journal_transport_meta VALUES(?,?)',('sent',sent_payload))
+                for attrs in publish:self.client.publish(attrs)
             waiting=max([(now-instant(v['first_at'])).total_seconds()for v in sent.values()]or[0])
-            with db:put(db,'sent',sent);put(db,'health',{'status':'degraded'if waiting>30 else 'ok','checked_at':at,'error_code':'RECORDER_CONFIRMATION_TIMEOUT'if waiting>30 else None,'recording_wait_s':waiting})
+            metadata=[('sent',pack(sent)),('health',pack({'status':'degraded'if waiting>30 else 'ok','checked_at':at,'error_code':'RECORDER_CONFIRMATION_TIMEOUT'if waiting>30 else None,'recording_wait_s':waiting}))]
+            with db:db.executemany('INSERT OR REPLACE INTO journal_transport_meta VALUES(?,?)',metadata)
         except Exception as error:
             with db:put(db,'health',{'status':'degraded','checked_at':at,'error_code':type(error).__name__,'storage_error':storage_details(error)})
         finally:store.close()

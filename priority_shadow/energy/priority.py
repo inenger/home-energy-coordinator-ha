@@ -70,6 +70,9 @@ def checked_points(states,at):
                     or (key.startswith('forecast_') and not 0<=v<100)
                     or (wanted=='V' and not (100<v<500 if key=='battery_v' else 180<v<260))):p['quality']='out_of_range'
         out[key]=p
+    from .wallbox import connection_point
+    out['ev_connected_supplementary']=out.get('ev_connected',{})
+    out['ev_connected']=connection_point(out)
     return out
 
 
@@ -80,12 +83,12 @@ def same_local_day(point,at):
 
 def input_quality(points,at=None):
     rows=[]
-    labels={'ev_w':'Wallbox · příkon','ev_soc':'Auto · SOC','ev_connected':'Auto · kabel','ev_limit_a':'Wallbox · limit','battery_soc':'Baterie · SOC','battery_dc_w':'Baterie · výkon DC','battery_v':'Baterie · napětí DC','battery_limit_a':'Baterie · limit DC','forecast_today':'FVE · dnes','forecast_tomorrow':'FVE · zítra'}
+    labels={'ev_w':'Wallbox · příkon','ev_soc':'Auto · SOC','ev_connected':'Wallbox · připojení','ev_limit_a':'Wallbox · limit','battery_soc':'Baterie · SOC','battery_dc_w':'Baterie · výkon DC','battery_v':'Baterie · napětí DC','battery_limit_a':'Baterie · limit DC','forecast_today':'FVE · dnes','forecast_tomorrow':'FVE · zítra'}
     for i in (1,2,3):labels.update({f'grid_l{i}_a':f'Proud L{i}',f'grid_voltage_l{i}_v':f'Napětí sítě L{i}',f'voltage_l{i}_v':f'Napětí měniče L{i} · náhradní',
                                   f'grid_l{i}_w':f'Výkon sítě L{i}',f'inverter_l{i}_w':f'Výkon měniče L{i}',f'ev_l{i}_w':f'Výkon auta L{i}'})
     for key,label in labels.items():
         p=points.get(key,{})
-        ttl=10800 if key in ('battery_soc','ev_soc') else 7200 if key=='battery_v' else 7*86400 if key in ('ev_limit_a','battery_limit_a') else 26*3600 if key.startswith('forecast_') else 90
+        ttl=10800 if key in ('battery_soc','ev_soc') else 7200 if key=='battery_v' else 7*86400 if key in ('ev_limit_a','battery_limit_a') else 26*3600 if key.startswith('forecast_') else 15 if key=='ev_connected' else 90
         usable=night.valid(points,key,ttl) if key!='ev_connected' else p.get('quality')=='text' and p.get('age_seconds') is not None and 0<=p['age_seconds']<ttl
         q=p.get('quality','missing')
         if at and key.startswith('forecast_') and usable and not same_local_day(p,at):usable=False;q='wrong_day'

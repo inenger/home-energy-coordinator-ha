@@ -1,6 +1,6 @@
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.27 -->
+<!-- shadow-version: 0.6.28 -->
 
 Stav veřejného zdroje k 7. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
@@ -8,7 +8,7 @@ rozcestník a [registr nálezů](KNOWN_ISSUES.md).
 
 | Oblast | Autoritativní zdroj |
 |---|---|
-| Stínový doplněk 0.6.26, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
+| Stínový doplněk 0.6.28, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
 | Původní koordinátor, samostatný balíček | [config](../energy_coordinator/config.yaml) |
 | Známé chyby, nejistoty a podmínky uzavření | [KNOWN_ISSUES](KNOWN_ISSUES.md) |
 | Chyba → regresní test → rozsah důkazu | [TEST_MATRIX](TEST_MATRIX.md) |
@@ -68,3 +68,8 @@ staré vady**. Pro novou verzi je rozhodující odpovídající regresní test.
 ## Připravený zdroj0.6.27
 
 [Samostatný kontext a omezená disková práce](../priority_shadow/docs/STANDALONE_0627.md). DEP-01 vyžaduje ověřenou migraci; DB-04 odstraňuje další konkrétní writer mechanismy. Historická příčina všech DB-01 a N06-02 není uzavřená. Pouze observe_only.
+
+
+## Zdroj0.6.28
+
+[Wallbox a omezené zápisy](../priority_shadow/docs/WALLBOX_WRITES_0628.md). EV-01/PLN-01/DB-05 mají zdroj a syntetické regrese. Provozní nasazení a nová noc se dokládají odděleně. Staré důkazy ani otevřené blokátory fyzického řízení se nepřepisují.

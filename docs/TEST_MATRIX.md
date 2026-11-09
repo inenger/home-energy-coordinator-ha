@@ -66,3 +66,8 @@ Počet scénářů runneru se může měnit; opakování není počet různých 
 ## 0.6.27 · standalone and storage boundaries
 
 Source contract, regressions, rejected fixtures and limits: STANDALONE_0627.md. No native acceptance is implied by this source record. DB-01 historical cause and N06-02 remain open. No physical control.
+
+
+##0.6.28 · EV-01/PLN-01/DB-05
+
+[test_wallbox_0628.py](../priority_shadow/tests/test_wallbox_0628.py): contradictory Tessie and actual wallbox in checked_points, RAM loop, lifecycle and SOC input boundary; settled EV lag plus real house steps and no future leak; from_db→full planner→immutable sealed decisions; packing outside gate, durable pre-send earliest time, bounded metadata commits, FIFO fairness and timeout cleanup. [Contract](../priority_shadow/docs/WALLBOX_WRITES_0628.md). Native operation and a new complete night remain separate validation.

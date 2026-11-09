@@ -91,10 +91,13 @@ def inputs(states,at,ev_model,options,weather_rows,use_temperature):
     evsoc=priority.value(pp,'ev_soc') if priority.numeric(pp,'ev_soc',10800) else None
     evtarget=priority.value(pp,'ev_target_soc') if priority.numeric(pp,'ev_target_soc',7*86400) else None
     cable_point=pp.get('ev_connected',{})
-    cable=priority.value(pp,'ev_connected') if cable_point.get('age_seconds') is not None and 0<=cable_point['age_seconds']<10800 else None
+    cable=priority.value(pp,'ev_connected') if cable_point.get('age_seconds') is not None and 0<=cable_point['age_seconds']<15 else None
     amps=priority.value(pp,'ev_limit_a') if priority.numeric(pp,'ev_limit_a',7*86400) else None
     carlimit=_number(by,IDS['tesla_limit_a'],at,'A',7*86400)
-    if valid(carlimit):amps=min(amps,carlimit) if valid(amps) else carlimit
+    # Cloud current setting is supplementary; the wallbox defines its AC limit.
+    result['tesla_current_limit_supplementary_a']=carlimit
+    from .wallbox import observation as wallbox_observation
+    result['ev_activity']=wallbox_observation(pp)
     volts=result['phase_voltages']
     result['ev_max_ac_kw']=amps*sum(volts)/1000 if valid(amps) and all(valid(x) for x in volts) else None
     if cable=='off' or valid(evsoc) and valid(evtarget) and evsoc>=evtarget:
@@ -226,6 +229,9 @@ class PlannerService:
                 snapshot['weather_provenance']=self.weather_meta
                 snapshot['power_budget']=phase_budget_from_db(store.db,at)
                 result=plan(now,snapshot,self.history,self.pv_models,self.household,_versions(store,at))
+                result['ev_observation']=snapshot.get('ev_activity')
+                result['ev_requirement_source']=snapshot.get('ev_requirement_source')
+                result['ev_telemetry_roles']={'activity':'wallbox_only','current_limit':'wallbox_only','SOC_and_target':'supplementary_vehicle_planning_data'}
                 result['pre_window_capture']=freeze;result['model_version_hash']=self.model_key
                 result['house_validation']=self.house_validation
                 result['calibration_summary']={'house_hours':len(self.history['house_hours']),
@@ -249,7 +255,7 @@ class PlannerService:
 
 def view(result):
     if not result:return {'status':'waiting_for_calculation','device_actions':0}
-    keys=('power_budget','attainable_soc_05','target_shortfall_soc_pct','target_reached_all_scenarios','target_semantics','schema_version','policy','issued_at','day','status','target_soc_pct','decision_reason','warnings',
+    keys=('ev_observation','ev_requirement_source','ev_telemetry_roles','power_budget','attainable_soc_05','target_shortfall_soc_pct','target_reached_all_scenarios','target_semantics','schema_version','policy','issued_at','day','status','target_soc_pct','decision_reason','warnings',
           'window_start','window_end','horizon_end','horizon_complete','current_soc','soc_at_03_estimate','soc_at_05_estimate',
           'night_charge_ac_kwh','first_sustained_pv_cover_at','sunrise','objective','selection_method','season',
           'priority_alternatives','ev_requirement','ev_deficit_ac_kwh','demand_fully_met','allocation_policy','economic_comparison','model_hash','model_version_hash','decision_hash','decision_hash_schema','night_plan_eligible','assumptions','missing_inputs','corrections','pre_window_capture')
