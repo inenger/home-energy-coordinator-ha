@@ -91,3 +91,11 @@ patched execute, while the batched outbox path now uses executemany. The injecto
 now covers both and fails after a real first batch insertion; the original
 OperationalError, rollback/no cursor/no partial rows and successful retry checks
 remain. This is an adapted fault boundary, not a suppressed storage failure.
+
+## Card labels
+
+Final source review added Czech labels for wallbox-observed start/stop and the
+power-transition reason in both existing timeline renderers. No scroll, DOM
+layout, history loading or physical control behavior changes. The installed
+card source and its cache-version reference require their own exact update
+and verification; other dashboard resources and configuration are preserved.
