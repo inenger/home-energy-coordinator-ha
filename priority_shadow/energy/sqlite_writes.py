@@ -1,5 +1,6 @@
 """Cooperative SQLite writers. No network or physical device access."""
 import sqlite3,threading,time,weakref
+from collections import deque
 from pathlib import Path
 
 class WriterTimeout(RuntimeError):
@@ -7,12 +8,12 @@ class WriterTimeout(RuntimeError):
 
 class Gate:
     def __init__(self):
-        self.condition=threading.Condition();self.owner=None;self.depth=0;self.fast_waiters=0;self.owner_thread=None;self.acquired_at=None;self.operation=None;self.operation_at=None;self.last_scope=None;self.managed=False
+        self.condition=threading.Condition();self.owner=None;self.depth=0;self.fast_waiters=0;self.owner_thread=None;self.acquired_at=None;self.operation=None;self.operation_at=None;self.last_scope=None;self.managed=False;self.waiters=deque();self.fast_burst=0
     def diagnostic(self):
         with self.condition:
             return {'owner_thread':self.owner_thread,
                     'held_seconds':max(0.,time.monotonic()-self.acquired_at)if self.acquired_at is not None else None,
-                    'fast_waiters':self.fast_waiters,'operation':self.operation,'operation_seconds':max(0.,time.monotonic()-self.operation_at)if self.operation_at is not None else None,'last_scope':self.last_scope}
+                    'fast_waiters':self.fast_waiters,'operation':self.operation,'operation_seconds':max(0.,time.monotonic()-self.operation_at)if self.operation_at is not None else None,'last_scope':self.last_scope,'queued_writers':len(self.waiters),'fast_burst':self.fast_burst}
     def phase(self,name):
         with self.condition:
             if self.owner==threading.get_ident():self.operation=name;self.operation_at=time.monotonic()
@@ -20,14 +21,24 @@ class Gate:
         ident=threading.get_ident()
         with self.condition:
             if self.owner==ident:self.depth+=1;return
-            if fast:self.fast_waiters+=1;self.condition.notify_all()
+            ticket=object();self.waiters.append((ticket,fast))
+            if fast:self.fast_waiters+=1
+            def chosen():
+                if self.owner is not None:return False
+                slow=next((t for t,f in self.waiters if not f),None)
+                quick=next((t for t,f in self.waiters if f),None)
+                preferred=slow if slow is not None and (quick is None or self.fast_burst>=8)else quick
+                return ticket is preferred
+            self.condition.notify_all()
             try:
-                if not self.condition.wait_for(lambda:self.owner is None and (fast or self.fast_waiters==0),timeout):
+                if not self.condition.wait_for(chosen,timeout):
                     error=WriterTimeout('Local SQLite writer wait exceeded')
                     error.writer_diagnostic={**self.diagnostic(),'wait_timeout_s':timeout}
                     raise error
-                self.owner=ident;self.depth=1;self.owner_thread=threading.current_thread().name;self.acquired_at=time.monotonic();self.operation="python_scope";self.operation_at=self.acquired_at
+                self.owner=ident;self.depth=1;self.owner_thread=threading.current_thread().name;self.acquired_at=time.monotonic();self.operation='python_scope';self.operation_at=self.acquired_at
+                self.fast_burst=self.fast_burst+1 if fast else 0
             finally:
+                self.waiters.remove((ticket,fast))
                 if fast:self.fast_waiters-=1
                 self.condition.notify_all()
     def release(self):

@@ -272,6 +272,12 @@ def observe(store,states,result):
             if run.get('last_processed_at')==at:return view(store,at,states)
             if run.get('closed_at'):return view(store,at,states)
             dt=(now-instant(run.get('last_processed_at',at))).total_seconds()
+            from .wallbox import observation as wallbox_observation
+            wallbox=wallbox_observation(points);before_wallbox=run.get('wallbox',{})
+            if 0<dt<=7.5 and isinstance(wallbox['charging'],bool) and isinstance(before_wallbox.get('charging'),bool) and wallbox['charging']!=before_wallbox['charging']:
+                event(db,run,at,'wallbox_charge_started'if wallbox['charging']else'wallbox_charge_stopped',
+                      reason='observed_wallbox_power_transition',wallbox=wallbox,previous_wallbox=before_wallbox)
+            run['wallbox']=wallbox
             if dt>7.5:
                 event(db,run,at,'sampling_gap',reason='fast_loop_gap',gap_seconds=dt);stop(db,run,at,'fast_loop_gap')
             # Poslední platný úsek se účtuje dříve, než stop smaže previous.
@@ -373,7 +379,7 @@ def observe(store,states,result):
             sample={'at':at,'day':day,'policy':POLICY,'proposed_dc_a':amps,'virtual_limit_dc_a':amps,'ram_target_ac_w':run['target_ac_w'],
                 'actual_limit_dc_a':values.get(legacy.CURRENT,{}).get('value'),'actual_charge_dc_a':actual.get('battery_a'),
                 'reason':reason,'binding_phase':allocation.get('binding_phase'),'phase':phase,'device_actions':0,'persistent_writes':0,
-                'report_skew_s':diagnostic['report_skew_s'],'frame_signature':diagnostic['signature'],'new_frame':new_frame,
+                'wallbox':wallbox,'report_skew_s':diagnostic['report_skew_s'],'frame_signature':diagnostic['signature'],'new_frame':new_frame,
                 'hardware_response_verified':False,'input_errors':errors,
                 'intent_renewal':renewal,'intent_expires_at':run.get('last_intent',{}).get('expires_at'),
                 'input_valid_until':valid_until.isoformat() if valid_until else None,

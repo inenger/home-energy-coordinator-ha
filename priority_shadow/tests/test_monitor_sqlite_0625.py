@@ -141,12 +141,18 @@ class JournalWriterTests(unittest.TestCase):
   from energy.sqlite_writes import Connection
   import sqlite3
   with tempfile.TemporaryDirectory()as folder:
-   path=Path(folder)/'e.sqlite';result=self.seed(path);store=Store(path);original=Connection.execute
+   path=Path(folder)/'e.sqlite';result=self.seed(path);store=Store(path);original=Connection.execute;original_many=Connection.executemany
    def fail(connection,sql,parameters=()):
     if sql.startswith('INSERT INTO journal_transport_outbox'):raise sqlite3.OperationalError('synthetic I/O failure')
     return original(connection,sql,parameters)
+   def fail_many(connection,sql,parameters):
+    if sql.startswith('INSERT INTO journal_transport_outbox'):
+     rows=list(parameters)
+     if rows:original(connection,sql,rows[0])
+     raise sqlite3.OperationalError('synthetic I/O failure after partial batch')
+    return original_many(connection,sql,parameters)
    try:
-    with patch.object(Connection,'execute',fail),self.assertRaises(sqlite3.OperationalError):transport.enqueue(store,result['control_journal'])
+    with patch.object(Connection,'execute',fail),patch.object(Connection,'executemany',fail_many),self.assertRaises(sqlite3.OperationalError):transport.enqueue(store,result['control_journal'])
     self.assertEqual(store.db.execute('SELECT count(*)FROM journal_transport_outbox').fetchone()[0],0)
     self.assertIsNone(transport.get(store.db,'queued:'+result['control_journal']['session']['day']))
     transport.enqueue(store,result['control_journal'])

@@ -155,21 +155,31 @@ def persist_batch(store,batch):
     if db.execute('SELECT 1 FROM control_evidence_batches WHERE runtime=? AND seq=?',key).fetchone():return
     from .store import pack
     analytic_payload=pack({k:batch[k]for k in ('at','states','result')}) if 'states'in batch and 'result'in batch else None
+    loss_payload=pack(batch['loss'])
+    prepared=[]
+    for name,rows in batch['rows'].items():
+        if name not in TABLES:raise ValueError('Unexpected evidence table')
+        for row in rows:
+            if name.endswith('sessions'):
+                previous=db.execute('SELECT payload FROM '+name+' WHERE day=?',(row[0],)).fetchone()
+                if previous and unpack(previous[0]).get('closed_at') and previous[0]!=row[-1]:
+                    raise ValueError('CLOSED_CONTROL_SESSION_CONFLICT')
+            else:
+                previous=db.execute('SELECT * FROM '+name+' WHERE '+TABLES[name][0]+'=?',(row[0],)).fetchone()
+                if previous is not None and tuple(previous)!=tuple(row):
+                    raise ValueError('IMMUTABLE_CONTROL_EVIDENCE_CONFLICT')
+            prepared.append((name,row,previous))
     with db:
-        for name,rows in batch['rows'].items():
-            if name not in TABLES:raise ValueError('Unexpected evidence table')
-            for row in rows:
-                if name.endswith('sessions'):
-                    previous=db.execute('SELECT payload FROM '+name+' WHERE day=?',(row[0],)).fetchone()
-                    if previous and unpack(previous[0]).get('closed_at') and previous[0]!=row[-1]:
-                        raise ValueError('CLOSED_CONTROL_SESSION_CONFLICT')
-                    db.execute('INSERT OR REPLACE INTO '+name+' VALUES(?,?)',row)
-                else:
-                    previous=db.execute('SELECT * FROM '+name+' WHERE '+TABLES[name][0]+'=?',(row[0],)).fetchone()
-                    if previous is not None:
-                        if tuple(previous)!=tuple(row):raise ValueError('IMMUTABLE_CONTROL_EVIDENCE_CONFLICT')
-                    else:db.execute('INSERT INTO '+name+' VALUES('+','.join('?'for _ in row)+')',row)
-        db.execute('INSERT INTO control_evidence_batches VALUES(?,?,?,?)',(*key,batch['at'],pack(batch['loss'])))
+        # Recheck every read before any write. A racing preparation is retried.
+        for name,row,previous in prepared:
+            sql=('SELECT payload FROM '+name+' WHERE day=?')if name.endswith('sessions')else('SELECT * FROM '+name+' WHERE '+TABLES[name][0]+'=?')
+            if db.execute(sql,(row[0],)).fetchone()!=previous:
+                from .sqlite_writes import WriterTimeout
+                raise WriterTimeout('Evidence preparation changed; retry original batch')
+        for name,row,previous in prepared:
+            if name.endswith('sessions'):db.execute('INSERT OR REPLACE INTO '+name+' VALUES(?,?)',row)
+            elif previous is None:db.execute('INSERT INTO '+name+' VALUES('+','.join('?'for _ in row)+')',row)
+        db.execute('INSERT INTO control_evidence_batches VALUES(?,?,?,?)',(*key,batch['at'],loss_payload))
         if analytic_payload is not None:
             db.execute('INSERT INTO control_analytics_pending(runtime,seq,at,payload) VALUES(?,?,?,?)',(*key,batch['at'],analytic_payload))
 

@@ -1,3 +1,10 @@
+# 0.6.28
+
+- Wallbox určuje připojení a pozorované nabíjení; Tessie je doplňkový zdroj SOC/cíle.
+- PLN-01: oddělení nesoučasného EV přechodu od skutečného skoku domu v kalibraci.
+- DB-05: příprava mimo writer gate, omezené dávky metadata a férové přidělení zápisů.
+- Historie, FULL a observe_only zachované. [Meze a ověření](docs/WALLBOX_WRITES_0628.md).
+
 # 0.6.27
 
 - Local EV/weather calibration context; no legacy runtime DB.
