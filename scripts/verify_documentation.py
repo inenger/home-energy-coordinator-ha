@@ -31,6 +31,10 @@ for issue in ("N06-01", "N06-02", "DB-01", "DATA-01", "BACKUP-01", "MON-01", "LI
     assert len(re.findall(r"^\| " + re.escape(issue) + r" \|", issues, re.M)) == 1, issue
 if version == "0.6.24":
     assert re.search(r"^\| N06-02 \| OTEVŘENO \|", issues, re.M), "Unproven root cause must remain open for 0.6.24"
+assert "Platí pro veřejný zdroj " + version + "." in issues, "Known-issue version drift"
+issue_lines=issues.splitlines()
+positions=[i for i,line in enumerate(issue_lines) if re.match(r"^\| [A-Z][A-Z0-9]*-\d+ \|",line)]
+assert positions and all(issue_lines[i].startswith("|") for i in range(min(positions),max(positions)+1)), "Finding rows must form one Markdown table"
 ids = re.findall(r"^\| ([A-Z][A-Z0-9]*-\d+) \|", issues, re.M)
 assert len(ids) == len(set(ids)), "Duplicate finding ID"
 workflow = (ROOT / ".github/workflows/validate.yml").read_text()

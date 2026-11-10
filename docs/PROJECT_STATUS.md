@@ -78,3 +78,8 @@ staré vady**. Pro novou verzi je rozhodující odpovídající regresní test.
 ## Zdroj 0.6.29
 
 [Čekání analytiky a zbývající no-op DDL](../priority_shadow/docs/ANALYTICS_ADMISSION_0629.md). DB-06: pomocná analytika má přerušitelnou normální FIFO frontu, rychlá evidence zachovává krátkou mez; skutečné SQLite chyby zůstávají chybami. DB-01/N06-02/LIVE zůstávají otevřené. Nová celá noc se ověřuje odděleně.
+
+
+## Audit připravenosti současného zdroje
+
+[Úplný audit 0.6.29](READINESS_AUDIT_0629.md): NO-GO pro fyzické řízení, chybějící adaptér a ověřený hardwarový timeout. Nové protipříklady sběru, ACK dohledu, integrity a UI jsou otevřené nálezy; zelený counterexample test není oprava. Tato dokumentační/testovací změna nemění runtime ani instalaci.

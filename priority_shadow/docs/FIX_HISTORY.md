@@ -21,3 +21,8 @@ Aktuální zdroj0.6.27, pouze observe_only.
 ##0.6.28 · EV-01/PLN-01/DB-05
 
 [Contract](WALLBOX_WRITES_0628.md) and test_wallbox_0628.py. Original counterexample demonstrated the defect in0.6.27; corrected tests preserve real house steps, old records, FULL and fail-closed live inputs. Public CI, native installation and whole-night validation are separate.
+
+
+## Audit připravenosti 0.6.29 — runtime beze změny
+
+[Audit a reprodukce](../../docs/READINESS_AUDIT_0629.md): N06-03/N06-04/REC-02/DATA-03/DATA-04/MON-03/UI-01 jsou nově otevřené, LIVE-03 výslovné omezení monitorů. Counterexample PASS znamená potvrzenou mezeru. DOC-01 opravuje pouze dokumentaci a její kontrolu. Žádný fyzický adaptér ani aktivace LIVE. První dvě neúspěšné auditní fixture a vyvrácená hypotéza počasí jsou zachované v historii auditu.

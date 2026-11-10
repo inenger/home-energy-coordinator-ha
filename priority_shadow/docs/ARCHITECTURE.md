@@ -1,3 +1,33 @@
+# Aktuální architektura 0.6.29
+
+Aktuální autoritativní runtime je samostatný priority_shadow, pouze observe_only.
+[Audit připravenosti a blokátory LIVE](../../docs/READINESS_AUDIT_0629.md).
+
+Docker CMD spouští energy.priority_observer. Ten vytvoří SnapshotCollector,
+EvidenceBridge, MonitorBridge a izolovanou RAM smyčku. Řídicí smyčka ověřuje
+vstupy a logickou lease; evidence a monitoring mají oddělené procesy.
+Uvnitř evidence běží durable analytika, pomalá údržba, transport a checkpoint.
+Akční adaptér chybí, podporovaný režim fyzického řízení neexistuje.
+
+Rychlý sběr má noční interval1s a běžný2.5s; regulační krok míří na5s v03–05,
+mimo okno60s. Komplexní HA kontext je cachovaný60s, ale jeho synchronní
+obnovení ve stejném sběrném vlákně je otevřený N06-03. Procesový dohled
+zatím není náhradou dohledu mrtvého sběrného vlákna ani durable ACK postupu.
+
+Realtime aktivita/připojení/limit EV jsou z wallboxu. Tessie SOC/cíl jsou
+plánovací doplněk. Místní standalone kontext odstraňuje běhovou závislost
+na databázi druhého doplňku. Historické moduly v balíčku nejsou jeho entrypoint.
+
+Ideální alokace, rampovaný RAM požadavek, skutečně naměřený výkon a
+poradní SOC plán jsou odlišné veličiny. Monitorovací senzory nejsou příkazy.
+Původní fyzické automatizace se v tomto režimu nepozastavují ani neobnovují;
+denik zapisuje pouze would události. FULL/WAL a úplný journal transport zůstávají.
+
+Následuje původní historický popis. Jeho tehdejší verze/intervaly/závislosti
+nepřebírat jako současný stav; původní text zůstává dohledatelný.
+
+---
+
 # Architektura 0.6.3
 
 Stav popisu: 23. 10. 2026. Hlavní cíl je účelné levné nabití mezi 03:00
