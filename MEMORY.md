@@ -1,6 +1,6 @@
 # Projektová paměť
 
-Aktuální zdroj0.6.28, pouze observe_only.
+Aktuální zdroj0.6.29, pouze observe_only.
 
 [Kontrakt, regrese a odmítnuté varianty0.6.27](priority_shadow/docs/STANDALONE_0627.md).
 

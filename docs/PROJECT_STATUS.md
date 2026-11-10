@@ -2,13 +2,13 @@
 
 <!-- shadow-version: 0.6.29 -->
 
-Stav veřejného zdroje k 7. 11. 2026. Historické poznámky v MEMORY a starších
+Stav veřejného zdroje k 10. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
 rozcestník a [registr nálezů](KNOWN_ISSUES.md).
 
 | Oblast | Autoritativní zdroj |
 |---|---|
-| Stínový doplněk 0.6.28, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
+| Stínový doplněk 0.6.29, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
 | Původní koordinátor, samostatný balíček | [config](../energy_coordinator/config.yaml) |
 | Známé chyby, nejistoty a podmínky uzavření | [KNOWN_ISSUES](KNOWN_ISSUES.md) |
 | Chyba → regresní test → rozsah důkazu | [TEST_MATRIX](TEST_MATRIX.md) |
