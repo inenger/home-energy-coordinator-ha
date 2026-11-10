@@ -34,6 +34,8 @@ POWER_STEP_W=100
 
 
 def schema(db):
+    from .sqlite_writes import schema_ready
+    if schema_ready(db,('ram_control_sessions', 'ram_control_events', 'ram_events_day', 'ram_control_samples', 'ram_samples_day')):return
     db.executescript('''CREATE TABLE IF NOT EXISTS ram_control_sessions(day TEXT PRIMARY KEY,payload BLOB NOT NULL);
     CREATE TABLE IF NOT EXISTS ram_control_events(id INTEGER PRIMARY KEY,day TEXT NOT NULL,at TEXT NOT NULL,payload BLOB NOT NULL);
     CREATE INDEX IF NOT EXISTS ram_events_day ON ram_control_events(day,id);

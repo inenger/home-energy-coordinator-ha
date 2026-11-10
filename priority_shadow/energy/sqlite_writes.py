@@ -6,6 +6,9 @@ from pathlib import Path
 class WriterTimeout(RuntimeError):
     """A local writer did not yield within the connection's bounded wait."""
 
+class WriterCancelled(RuntimeError):
+    """Cooperative background admission cancelled before acquiring ownership."""
+
 class Gate:
     def __init__(self):
         self.condition=threading.Condition();self.owner=None;self.depth=0;self.fast_waiters=0;self.owner_thread=None;self.acquired_at=None;self.operation=None;self.operation_at=None;self.last_scope=None;self.managed=False;self.waiters=deque();self.fast_burst=0
@@ -17,7 +20,7 @@ class Gate:
     def phase(self,name):
         with self.condition:
             if self.owner==threading.get_ident():self.operation=name;self.operation_at=time.monotonic()
-    def acquire(self,fast,timeout):
+    def acquire(self,fast,timeout,cancel=None,waiting=None):
         ident=threading.get_ident()
         with self.condition:
             if self.owner==ident:self.depth+=1;return
@@ -31,10 +34,24 @@ class Gate:
                 return ticket is preferred
             self.condition.notify_all()
             try:
-                if not self.condition.wait_for(chosen,timeout):
-                    error=WriterTimeout('Local SQLite writer wait exceeded')
-                    error.writer_diagnostic={**self.diagnostic(),'wait_timeout_s':timeout}
-                    raise error
+                if cancel is None:
+                    if not self.condition.wait_for(chosen,timeout):
+                        error=WriterTimeout('Local SQLite writer wait exceeded')
+                        error.writer_diagnostic={**self.diagnostic(),'wait_timeout_s':timeout}
+                        raise error
+                else:
+                    # A durable background job queues once, without rerunning partial
+                    # SQL work on local admission contention. SQLite's own timeout
+                    # is unchanged; cancellation is checked at most every 50 ms.
+                    started=time.monotonic();reported=False
+                    while True:
+                        if cancel.is_set():raise WriterCancelled('Background writer admission cancelled')
+                        if chosen():break
+                        elapsed=time.monotonic()-started
+                        if not reported and elapsed>=timeout:
+                            if waiting:waiting({**self.diagnostic(),'waited_seconds':elapsed})
+                            reported=True
+                        self.condition.wait(.05)
                 self.owner=ident;self.depth=1;self.owner_thread=threading.current_thread().name;self.acquired_at=time.monotonic();self.operation='python_scope';self.operation_at=self.acquired_at
                 self.fast_burst=self.fast_burst+1 if fast else 0
             finally:
@@ -62,15 +79,21 @@ class Connection(sqlite3.Connection):
     """Serialize write scopes/schema; ordinary SELECTs remain concurrent."""
     def configure(self,path,timeout):
         self._gate=gate_for(path);self._wait=timeout;self._fast=timeout<=.25
-        self._owned=False;self._contexts=0
+        self._owned=False;self._contexts=0;self._cancel=None;self._waiting=None
         # These affect/query this newly opened connection, without a DB write.
         try:
             super().execute('PRAGMA synchronous=FULL')
             self.journal_mode=super().execute('PRAGMA journal_mode').fetchone()[0]
             if self._gate.managed:super().execute('PRAGMA wal_autocheckpoint=0')
         except sqlite3.Error as error:self._annotate(error,'configure');raise
+    def background_wait(self,cancel,waiting):
+        """Only independent durable analytics may opt into cancellable admission."""
+        if self._owned:raise RuntimeError('Cannot change admission while owned')
+        self._fast=False;self._cancel=cancel;self._waiting=waiting
     def _acquire(self):
-        if not self._owned:self._gate.acquire(self._fast,self._wait);self._owned=True
+        if not self._owned:
+            self._gate.acquire(self._fast,self._wait,cancel=self._cancel,waiting=self._waiting)
+            self._owned=True
     def _annotate(self,error,operation):
         if isinstance(error,sqlite3.Error):
             error.writer_diagnostic={**self._gate.diagnostic(),'operation':operation,

@@ -5,7 +5,7 @@ with current data. Completed immutable evidence is not rewritten.
 """
 import copy,threading,time
 from .store import Store,unpack
-from .sqlite_writes import details,WriterTimeout,schema_ready
+from .sqlite_writes import details,WriterTimeout,WriterCancelled,schema_ready
 
 def schema(db):
     if schema_ready(db,('control_analytics_pending',)):return
@@ -23,7 +23,7 @@ class Analytics:
         self.path=path;self.maintenance=maintenance;self.work=work
         self.stop=threading.Event();self.wake=threading.Event();self.lock=threading.Lock()
         self.output={'analysis':{},'health':{'status':'starting'}};self.thread=None
-        self.failures=0;self.retries=0;self.last_failure=None
+        self.failures=0;self.retries=0;self.last_failure=None;self.writer_waits=0;self.last_writer_wait=None
     def start(self):
         self.thread=threading.Thread(target=self.run,name='durable-analytics',daemon=True)
         self.thread.start();return self
@@ -44,19 +44,26 @@ class Analytics:
         analysis['command_audit']=priority_audit.command_summary(store,at)
         atomic_json(self.path.parent/'priority-live.json',item['result'])
         return analysis
+    def waiting_writer(self,diagnostic):
+        self.writer_waits+=1;self.last_writer_wait=diagnostic
+        with self.lock:self.output['health']={**self.output['health'],
+            'status':'waiting_writer','writer_wait_count':self.writer_waits,
+            'last_writer_wait':diagnostic,'retry_count':self.retries,
+            'last_failure':self.last_failure}
     def tick(self):
-        """One original FIFO item; short writer waits yield to committed evidence."""
+        """One original FIFO item; cancellable normal-priority writer admission."""
         store=None;item=None
         try:
-            store=Store(self.path,timeout=.25);schema(store.db)
+            store=Store(self.path,timeout=.25);store.db.background_wait(self.stop,self.waiting_writer);schema(store.db)
             row=store.db.execute('SELECT id,payload FROM control_analytics_pending ORDER BY id LIMIT 1').fetchone()
             count=store.db.execute('SELECT count(*) FROM control_analytics_pending').fetchone()[0]
             if not row:
                 with self.lock:self.output['health']={**self.output['health'],'status':'ok','pending_items':0}
                 return False
-            # A nonempty job writes: yield before computation if a writer is already busy.
-            with store.db:pass
             key,payload=row;item=unpack(payload)
+            with self.lock:self.output['health']['pending_items']=count
+            # No expensive computation while awaiting the original writer ticket.
+            with store.db:pass
             analysis=self.work(store,item)if self.work else self.compute(store,item)
             with store.db:store.db.execute('DELETE FROM control_analytics_pending WHERE id=?',(key,))
             remaining=store.db.execute('SELECT count(*) FROM control_analytics_pending').fetchone()[0]
@@ -64,8 +71,12 @@ class Analytics:
             if not remaining:self.maintenance.submit(item['states'],item['at'])
             self.failures=0
             with self.lock:self.output={'analysis':analysis,'health':{'status':'ok','pending_items':remaining,
-                'last_processed_at':item['at'],'retry_count':self.retries,'last_failure':self.last_failure}}
+                'last_processed_at':item['at'],'retry_count':self.retries,'last_failure':self.last_failure,
+                'writer_wait_count':self.writer_waits,'last_writer_wait':self.last_writer_wait}}
             return True
+        except WriterCancelled:
+            with self.lock:self.output['health']={**self.output['health'],'status':'stopped'}
+            return False
         except Exception as error:
             self.failures+=1;self.retries+=1
             self.last_failure={'error_code':type(error).__name__,'storage_error':details(error),

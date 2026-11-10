@@ -1,3 +1,7 @@
+# 0.6.29 · přerušitelné čekání analytiky a méně writer scope
+
+[Kontrakt a regrese](docs/ANALYTICS_ADMISSION_0629.md). Pouze observe_only.
+
 # 0.6.28 · wallbox, koherentní kalibrace a kratší zápisy
 
 [Kontrakt, regrese a meze](docs/WALLBOX_WRITES_0628.md). Pouze observe_only.

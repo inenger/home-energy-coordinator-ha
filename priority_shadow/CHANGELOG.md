@@ -1,3 +1,9 @@
+## 0.6.29
+
+- Cancellable normal-priority admission for durable analytics; local queue wait is explicit and does not replay a partially completed job. Actual SQLite faults retain retry/degraded evidence.
+- Remaining RAM/control/priority/audit/SOC/evidence schema checks use read-only existence probes; missing tables/indexes are repaired. FULL/WAL and fast evidence deadlines unchanged.
+- No physical control or historical rewrites.
+
 # 0.6.28
 
 - Wallbox určuje připojení a pozorované nabíjení; Tessie je doplňkový zdroj SOC/cíle.

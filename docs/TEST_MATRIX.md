@@ -71,3 +71,8 @@ Source contract, regressions, rejected fixtures and limits: STANDALONE_0627.md. 
 ##0.6.28 · EV-01/PLN-01/DB-05
 
 [test_wallbox_0628.py](../priority_shadow/tests/test_wallbox_0628.py): contradictory Tessie and actual wallbox in checked_points, RAM loop, lifecycle and SOC input boundary; settled EV lag plus real house steps and no future leak; from_db→full planner→immutable sealed decisions; packing outside gate, durable pre-send earliest time, bounded metadata commits, FIFO fairness and timeout cleanup. [Contract](../priority_shadow/docs/WALLBOX_WRITES_0628.md). Native operation and a new complete night remain separate validation.
+
+
+## DB-06 · 0.6.29
+
+test_analytics_admission_0629.py: real long local writer, normal FIFO/fast priority, cancellation and preserved durable queue, partial-commit continuation without replay, genuine SQLite errors, schema no-op reads and missing index/table repair. Existing recovery/FIFO/partial rollback gates remain. [Contract](../priority_shadow/docs/ANALYTICS_ADMISSION_0629.md). Private night replay is separate from synthetic CI and future native validation.

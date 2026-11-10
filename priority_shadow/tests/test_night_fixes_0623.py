@@ -130,23 +130,20 @@ class AnalyticsTests(unittest.TestCase):
   for seq,(rows,states,value,generation)in enumerate(evidence.rows,1):
    iso.persist_batch(store,{'runtime':'analytics','seq':seq,'at':value['at'],'rows':rows,'loss':{},'states':states,'result':value})
   store.close();return evidence
- def test_local_writer_timeout_retries_fifo_after_restart_without_losing_samples(self):
+ def test_cancelled_local_writer_wait_retains_fifo_for_restart(self):
+  # 0.6.29 queues background admission; real SQL/partial-failure tests below
+  # still require durable retry. Cancellation must not discard the FIFO.
   from energy.ancillary_analytics import Analytics
-  from energy.sqlite_writes import WriterTimeout,gate_for
+  from energy.sqlite_writes import gate_for
   with tempfile.TemporaryDirectory()as folder:
-   path=Path(folder)/'e.sqlite';evidence=self.seed(path);seen=[];maintenance=MagicMock()
-   analytics=Analytics(path,maintenance,work=lambda store,item:seen.append(item['at'])or {'at':item['at']})
-   entered=threading.Event();release=threading.Event();gate=gate_for(path)
-   def locked():
-    gate.acquire(False,1);entered.set();release.wait(3);gate.release()
-   thread=threading.Thread(target=locked);thread.start();self.assertTrue(entered.wait(1))
+   path=Path(folder)/'e.sqlite';evidence=self.seed(path);seen=[];maintenance=MagicMock();gate=gate_for(path)
+   analytics=Analytics(path,maintenance,work=lambda store,item:seen.append(item['at'])or{})
+   gate.acquire(False,1);t=threading.Thread(target=analytics.tick);t.start()
    try:
-    self.assertFalse(analytics.tick());h=analytics.snapshot()['health']
-    self.assertEqual(h['status'],'retrying');self.assertEqual(h['last_failure']['error_code'],'WriterTimeout')
-    self.assertEqual(h['last_failure']['storage_error']['source'],'local_writer')
-   finally:release.set();thread.join(2)
-   # A new worker instance discovers the durable queue without an in-memory retry.
-   recovered=Analytics(path,maintenance,work=lambda store,item:seen.append(item['at'])or {'at':item['at']})
+    wait_for(self,lambda:len(gate.waiters)==1,1);analytics.stop.set();t.join(1)
+    self.assertFalse(t.is_alive());self.assertEqual(analytics.retries,0)
+   finally:gate.release()
+   recovered=Analytics(path,maintenance,work=lambda store,item:seen.append(item['at'])or{})
    while recovered.tick():pass
    self.assertEqual(seen,[x[2]['at']for x in evidence.rows]);self.assertEqual(recovered.snapshot()['health']['pending_items'],0)
    maintenance.submit.assert_called_once()

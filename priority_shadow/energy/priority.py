@@ -29,6 +29,8 @@ for i in (1,2,3):
 
 
 def schema(db):
+    from .sqlite_writes import schema_ready
+    if schema_ready(db,('priority_sessions', 'priority_runs', 'priority_samples', 'priority_samples_day', 'priority_summaries', 'priority_events', 'priority_summary_revisions')):return
     db.executescript('''CREATE TABLE IF NOT EXISTS priority_sessions(day TEXT PRIMARY KEY,payload BLOB NOT NULL);
     CREATE TABLE IF NOT EXISTS priority_runs(day TEXT PRIMARY KEY,payload BLOB NOT NULL);
     CREATE TABLE IF NOT EXISTS priority_samples(at TEXT PRIMARY KEY,day TEXT NOT NULL,payload BLOB NOT NULL);
