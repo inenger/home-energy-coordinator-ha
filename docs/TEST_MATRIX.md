@@ -76,3 +76,8 @@ Source contract, regressions, rejected fixtures and limits: STANDALONE_0627.md. 
 ## DB-06 · 0.6.29
 
 test_analytics_admission_0629.py: real long local writer, normal FIFO/fast priority, cancellation and preserved durable queue, partial-commit continuation without replay, genuine SQLite errors, schema no-op reads and missing index/table repair. Existing recovery/FIFO/partial rollback gates remain. [Contract](../priority_shadow/docs/ANALYTICS_ADMISSION_0629.md). Private night replay is separate from synthetic CI and future native validation.
+
+
+## Audit 0.6.29 · protipříklady připravenosti
+
+[Audit a přesná kritéria](READINESS_AUDIT_0629.md). test_readiness_audit_0629.py: N06-03 přes reálný SnapshotCollector a produkční run_loop; N06-04 smrt sběrného vlákna; REC-02 skutečný evidence_worker s lokální contention plus WorkerGuard bez ACK-progress podmínky; DATA-03 kolizní batch přes persist_batch/SQLite; DATA-04 record_decision→SQL→session_plan; LIVE-03 run_loop→publisher a neúspěšné HTTP; MON-03 rozdílné chyby ztracené v failure_result. scripts/test_readiness_audit_0629.mjs: UI-01 skutečný card.render s unknown časem a zachovaným starým DOM. Mode live je testem výslovně odmítnut. PASS těchto protipříkladů znamená potvrzenou současnou mezeru. DOC-01: verify_documentation kontroluje verzi registru a souvislou Markdown tabulku.
