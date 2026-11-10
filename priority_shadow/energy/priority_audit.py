@@ -23,6 +23,8 @@ RULES=[{'min_kwh':0,'max_kwh':5,'target_soc_pct':90},
 
 
 def schema(db):
+    from .sqlite_writes import schema_ready
+    if schema_ready(db,('priority_commands', 'priority_day_audits', 'priority_day_audit_revisions')):return
     db.executescript('''CREATE TABLE IF NOT EXISTS priority_commands(
     id INTEGER PRIMARY KEY,at TEXT NOT NULL,day TEXT NOT NULL,kind TEXT NOT NULL,payload BLOB NOT NULL,UNIQUE(at,kind));
     CREATE TABLE IF NOT EXISTS priority_day_audits(day TEXT PRIMARY KEY,payload BLOB NOT NULL);

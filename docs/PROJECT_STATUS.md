@@ -1,6 +1,6 @@
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.28 -->
+<!-- shadow-version: 0.6.29 -->
 
 Stav veřejného zdroje k 7. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
@@ -73,3 +73,8 @@ staré vady**. Pro novou verzi je rozhodující odpovídající regresní test.
 ## Zdroj0.6.28
 
 [Wallbox a omezené zápisy](../priority_shadow/docs/WALLBOX_WRITES_0628.md). EV-01/PLN-01/DB-05 mají zdroj a syntetické regrese. Provozní nasazení a nová noc se dokládají odděleně. Staré důkazy ani otevřené blokátory fyzického řízení se nepřepisují.
+
+
+## Zdroj 0.6.29
+
+[Čekání analytiky a zbývající no-op DDL](../priority_shadow/docs/ANALYTICS_ADMISSION_0629.md). DB-06: pomocná analytika má přerušitelnou normální FIFO frontu, rychlá evidence zachovává krátkou mez; skutečné SQLite chyby zůstávají chybami. DB-01/N06-02/LIVE zůstávají otevřené. Nová celá noc se ověřuje odděleně.

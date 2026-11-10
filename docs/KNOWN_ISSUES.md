@@ -47,3 +47,6 @@ neprokázanou příčinu opakovaného čekání DB-01.
    staré vstupy, cizího vlastníka, přepsání historie nebo fyzické zásahy.
 5. Výsledek CI a provozní ověření mají vlastní rozsah a zbývající nejistoty.
 6. Stav registru je změněný s důvodem a odkazem; původní záznam se nemaže.
+
+
+| DB-06 | OPRAVENO V KÓDU — NUTNÉ PROVOZNÍ OVĚŘENÍ | Background analytics used fast bounded admission; remaining schema calls acquired no-op writer scopes. | [0.6.29 contract](../priority_shadow/docs/ANALYTICS_ADMISSION_0629.md), test_analytics_admission_0629.py; cancellable FIFO, continuation, real SQL errors and schema repair. Does not close historical DB-01. |

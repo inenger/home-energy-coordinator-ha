@@ -148,7 +148,9 @@ class MemoryControl:
 def persist_batch(store,batch):
     """Idempotentní FIFO flush. Potvrzení až po commit, bez přepisů immutable řádků."""
     db=store.db;control.schema(db);legacy.schema(db)
-    db.executescript('CREATE TABLE IF NOT EXISTS control_evidence_batches(runtime TEXT,seq INTEGER,at TEXT,payload BLOB,PRIMARY KEY(runtime,seq));')
+    from .sqlite_writes import schema_ready
+    if not schema_ready(db,('control_evidence_batches',)):
+        db.executescript('CREATE TABLE IF NOT EXISTS control_evidence_batches(runtime TEXT,seq INTEGER,at TEXT,payload BLOB,PRIMARY KEY(runtime,seq));')
     from .ancillary_analytics import schema as analytics_schema
     analytics_schema(db)
     key=(batch['runtime'],batch['seq'])

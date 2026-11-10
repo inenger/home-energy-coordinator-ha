@@ -33,6 +33,8 @@ IDS={
 
 
 def schema(db):
+    from .sqlite_writes import schema_ready
+    if schema_ready(db,('soc_observations', 'soc_observation_day', 'soc_decisions', 'soc_decision_day', 'soc_model_versions', 'soc_reviews')):return
     db.executescript('''CREATE TABLE IF NOT EXISTS soc_observations(at TEXT PRIMARY KEY,day TEXT NOT NULL,payload BLOB NOT NULL);
     CREATE INDEX IF NOT EXISTS soc_observation_day ON soc_observations(day,at);
     CREATE TABLE IF NOT EXISTS soc_decisions(at TEXT PRIMARY KEY,day TEXT NOT NULL,hash TEXT NOT NULL,payload BLOB NOT NULL);

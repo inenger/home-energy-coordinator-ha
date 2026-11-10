@@ -21,3 +21,8 @@ Aktuální zdroj0.6.27, pouze observe_only.
 ##0.6.28 · wallbox and bounded write follow-up
 
 Baseline0.6.27, synthetic PLN-01 counterexample in [issue36](https://github.com/inenger/home-energy-coordinator-ha/issues/36) confirmed the old defect. [Final source contract](../../priority_shadow/docs/WALLBOX_WRITES_0628.md) records source authority, transition uncertainty, bounded writer changes and acceptance boundaries. Private historical traces remain on RPi. New failures/adjustments must be appended, not silently removed.
+
+
+## 0.6.29 · background admission
+
+Baseline source79d3f6d/treecde4d286. [Contract and retained failed candidate](../../priority_shadow/docs/ANALYTICS_ADMISSION_0629.md). First new schema regression failed on remaining RAM DDL; production RAM/control/priority/audit/SOC/batch entrypoints fixed, regression unchanged. Reject increasing fast evidence TTL/SQLite timeout, resetting counters or claiming background waiting eliminated physical I/O. Older analytics timeout test adapted to cancellation/FIFO; actual SQL/partial failure tests retained. RPi lacks rg, source inventory used Python. Source, CI, native deployment and whole-night evidence are distinct.
