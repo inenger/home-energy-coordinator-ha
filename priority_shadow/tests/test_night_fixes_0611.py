@@ -30,11 +30,55 @@ class FixTests(unittest.TestCase):
   self.assertEqual(priority.checked_points([row],stamp(0))['grid_l1_w']['quality'],'unavailable')
   row['state']='100';row['attributes']['unit_of_measurement']='A';self.assertEqual(priority.checked_points([row],stamp(0))['grid_l1_w']['quality'],'unit_mismatch')
  def test_complex_forecast_race_retries_without_losing_scalars(self):
-  eid=night.IDS['forecast_today'];rest={'entity_id':eid,'state':'10','attributes':{'unit_of_measurement':'kWh','detailedForecast':[{'pv_estimate':1}]},'last_updated':stamp(0),'last_reported':stamp(0)}
-  live={**rest,'state':'11','last_updated':stamp(5),'last_reported':stamp(5),'context':{},'report_source':'ha_live_state_template'}
-  client=ReadOnlyHA();correct={**rest,'state':'11','last_updated':stamp(5)}
-  with patch.object(client,'get',side_effect=[[rest],[correct]])as get,patch.object(client,'_query',return_value=json.dumps([live])):out=client.priority_states()
-  self.assertEqual(get.call_count,2);self.assertNotIn('snapshot_error',out[0]);self.assertEqual(out[0]['attributes']['detailedForecast'],rest['attributes']['detailedForecast'])
+  """A slow REST refresh cannot block template scalars or publish mismatched forecasts."""
+  import threading,time
+  eid=night.IDS['forecast_today'];scalar_id=night.IDS['grid_l1_w']
+  old={'entity_id':eid,'state':'10','attributes':{'unit_of_measurement':'kWh','detailedForecast':[{'pv_estimate':1}]},
+       'last_updated':stamp(0),'last_reported':stamp(0)}
+  live={**old,'state':'11','last_updated':stamp(5),'last_reported':stamp(5),
+        'context':{},'report_source':'ha_live_state_template'}
+  current={**old,'state':'11','last_updated':stamp(5),
+           'attributes':{'unit_of_measurement':'kWh','detailedForecast':[{'pv_estimate':2}]}}
+  scalar={'entity_id':scalar_id,'state':'123','last_updated':stamp(5),'last_reported':stamp(5),
+          'context':{},'report_source':'ha_live_state_template','attributes':{'unit_of_measurement':'W'}}
+  started=threading.Event();release=threading.Event();client=ReadOnlyHA()
+  calls=[0]
+  def rest(path):
+   calls[0]+=1
+   if calls[0]==1:return [old]
+   started.set()
+   if not release.wait(4):raise TimeoutError('synthetic slow REST')
+   return [current]
+  def background_ready():
+   until=time.monotonic()+2
+   while time.monotonic()<until:
+    with client._context_lock:
+     if not client._context_refreshing:return
+    time.sleep(.01)
+   self.fail('REST context worker did not complete')
+  with patch.object(client,'get',side_effect=rest),patch.object(client,'_query',return_value=json.dumps([live,scalar])):
+   try:
+    client.priority_context();background_ready()
+    before=time.monotonic();out=client.priority_states()
+    self.assertLess(time.monotonic()-before,1.0)
+    self.assertTrue(started.wait(1))
+    self.assertEqual(calls[0],2)
+    forecast=next(s for s in out if s['entity_id']==eid)
+    self.assertEqual(forecast['snapshot_error'],'snapshot_race')
+    self.assertEqual(list(forecast_payloads(out)),[])
+    self.assertEqual(next(s for s in out if s['entity_id']==scalar_id)['state'],'123')
+    # A concurrent, still-blocked REST refresh never delays another fast template snapshot.
+    before=time.monotonic();while_blocked=client.priority_states()
+    self.assertLess(time.monotonic()-before,1.0)
+    self.assertEqual(next(s for s in while_blocked if s['entity_id']==scalar_id)['state'],'123')
+    self.assertEqual(next(s for s in while_blocked if s['entity_id']==eid)['snapshot_error'],'snapshot_race')
+   finally:release.set()
+   background_ready()
+   recovered=client.priority_states()
+  forecast=next(s for s in recovered if s['entity_id']==eid)
+  self.assertNotIn('snapshot_error',forecast)
+  self.assertEqual(forecast['attributes']['detailedForecast'],current['attributes']['detailedForecast'])
+  self.assertEqual(next(s for s in recovered if s['entity_id']==scalar_id)['state'],'123')
  def test_unresolved_forecast_race_is_explicit_and_never_archived(self):
   eid=night.IDS['forecast_today'];rest={'entity_id':eid,'state':'10','attributes':{'unit_of_measurement':'kWh'},'last_updated':stamp(0),'last_reported':stamp(0)};live={**rest,'state':'11','last_updated':stamp(5),'context':{},'report_source':'ha_live_state_template'}
   client=ReadOnlyHA()
