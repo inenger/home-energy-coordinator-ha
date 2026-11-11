@@ -1,3 +1,7 @@
+## 0.6.30 · readiness opravy, 11. 11. 2026
+
+Vstupní commit `dee01fc`. Sedm softwarových counterexample reprodukcí převedeno na akceptaci; originály uchovány jako readiness_counterexamples_0629.py/mjs. SOC první kandidát neuložil revokaci kvůli rollback při výjimce v SQLite transakci, poté opraven commit a pozdější raise. Asynchronní REST první varianta vyžadovala upravit staré testy závislé na synchronní odpovědi. Další kandidát pickle fingerprint selhal na determinismu po multiprocessing a watchdog chybně zahrnoval již potvrzené seq; obojí napraveno, skutečné spawn replay regrese po opravě PASS. Komplexní RPi testovací průchod přerušen kvůli ochraně HA hostitele, nenárokovat PASS. [Podrobný report](../../priority_shadow/docs/READINESS_FIXES_0630.md).
+
 # Dohledatelná historie vývoje
 
 Aktuální zdroj0.6.27, pouze observe_only.

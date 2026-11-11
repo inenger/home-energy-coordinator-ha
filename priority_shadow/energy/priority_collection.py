@@ -18,6 +18,9 @@ class SnapshotCollector:
         self.persistence_lock=threading.Lock();self.ack_wake=threading.Event();self.ack_requested=None;self.ack_thread=None
         self.condition=threading.Condition();self.stop=threading.Event()
         self.states=None;self.received=None;self.error=None;self.duration=None;self.thread=None
+        self.request_started=None;self.thread_failed=False;self.watcher=None
+        self.restart_attempts=[];self.restart_count=0;self.restart_limit=3;self.restart_window=300.
+        self.thread_problem=None
         self.failure_path=Path(failure_path) if failure_path else None
         self.pending_failure=None;self.generation=0;self.persistence_error=None
         self.consumed_generation=0
@@ -112,6 +115,7 @@ class SnapshotCollector:
     def run(self):
         while not self.stop.is_set():
             start=time.monotonic();started_at=datetime.now(timezone.utc).isoformat();period=self.effective_period(started_at)
+            with self.condition:self.request_started=start
             try:
                 states=self.client.priority_states()
                 with self.condition:
@@ -124,13 +128,44 @@ class SnapshotCollector:
             except Exception as error:
                 self.failed(error)
                 with self.condition:self.duration=time.monotonic()-start
+            with self.condition:self.request_started=None
             self.stop.wait(max(.1,period-(time.monotonic()-start)))
+
+    def watch(self):
+        while not self.stop.wait(.25):
+            now=time.monotonic()
+            with self.condition:
+                dead=self.thread is not None and not self.thread.is_alive()
+                blocked=(self.request_started is not None and now-self.request_started>max(2*self.max_age,15.))
+                if blocked:
+                    self.thread_problem='COLLECTION_THREAD_STALLED'
+                elif dead:
+                    self.thread_problem='COLLECTION_THREAD_EXITED'
+                else:
+                    self.thread_problem=None
+                    self.thread_failed=False
+                problem=self.thread_problem
+                first=problem is not None and not self.thread_failed
+                if first:self.thread_failed=True
+            if first:self.failed(RuntimeError(problem))
+            if dead and not self.stop.is_set():
+                self.restart_attempts=[t for t in self.restart_attempts if now-t<self.restart_window]
+                if len(self.restart_attempts)<self.restart_limit:
+                    self.restart_attempts.append(now);self.restart_count+=1
+                    with self.condition:
+                        self.thread_failed=False
+                        self.request_started=None
+                    self.thread=threading.Thread(target=self.run,name='priority-inputs',daemon=True)
+                    self.thread.start()
+                # If exhausted, keep the failure latched. Never reanimate stale data.
 
     def start(self):
         self.ack_thread=threading.Thread(target=self.run_acknowledgements,name='collection-failure-ack',daemon=True)
         self.ack_thread.start()
         self.thread=threading.Thread(target=self.run,name='priority-inputs',daemon=True)
-        self.thread.start();return self
+        self.thread.start()
+        self.watcher=threading.Thread(target=self.watch,name='priority-inputs-watchdog',daemon=True)
+        self.watcher.start();return self
 
     def priority_states(self):
         with self.condition:
@@ -138,6 +173,7 @@ class SnapshotCollector:
                 self.condition.wait_for(lambda:self.received is not None or self.error is not None or self.pending_failure is not None,timeout=1)
             if self.pending_failure and self.pending_failure['generation']>self.consumed_generation:
                 raise CollectionFailure(dict(self.pending_failure))
+            if self.thread_problem:raise RuntimeError(self.thread_problem)
             if self.error:raise RuntimeError('COLLECTION_WORKER_FAILED:'+self.error)
             if self.received is None or time.monotonic()-self.received>self.max_age:raise RuntimeError('COLLECTION_SNAPSHOT_EXPIRED')
             states=copy.deepcopy(self.states)
@@ -152,9 +188,14 @@ class SnapshotCollector:
             return {'snapshot_age_s':time.monotonic()-self.received if self.received is not None else None,
                 'request_duration_s':self.duration,'error_code':self.error,'max_snapshot_age_s':self.max_age,
                 'poll_interval_s':self.effective_period(),'base_poll_interval_s':self.period,'night_poll_interval_s':self.night_period,'pending_failure':copy.deepcopy(self.pending_failure),
-                'failure_generation':self.generation,'control_consumed_generation':self.consumed_generation,'failure_persistence_error':self.persistence_error}
+                'failure_generation':self.generation,'control_consumed_generation':self.consumed_generation,'failure_persistence_error':self.persistence_error,
+                 'thread_alive':bool(self.thread and self.thread.is_alive()),'thread_problem':self.thread_problem,
+                 'thread_restart_count':self.restart_count,'thread_restart_limit':self.restart_limit,
+                 'thread_restart_budget_exhausted':len(self.restart_attempts)>=self.restart_limit,
+                 'request_in_progress_s':time.monotonic()-self.request_started if self.request_started is not None else None}
 
     def close(self):
         self.stop.set();self.ack_wake.set()
         if self.thread:self.thread.join(timeout=1)
+        if self.watcher:self.watcher.join(timeout=1)
         if self.ack_thread:self.ack_thread.join(timeout=1)

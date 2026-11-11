@@ -1,14 +1,14 @@
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.29 -->
+<!-- shadow-version: 0.6.30 -->
 
-Stav veřejného zdroje k 10. 11. 2026. Historické poznámky v MEMORY a starších
+Stav veřejného zdroje k 11. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
 rozcestník a [registr nálezů](KNOWN_ISSUES.md).
 
 | Oblast | Autoritativní zdroj |
 |---|---|
-| Stínový doplněk 0.6.29, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
+| Stínový doplněk 0.6.30, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
 | Původní koordinátor, samostatný balíček | [config](../energy_coordinator/config.yaml) |
 | Známé chyby, nejistoty a podmínky uzavření | [KNOWN_ISSUES](KNOWN_ISSUES.md) |
 | Chyba → regresní test → rozsah důkazu | [TEST_MATRIX](TEST_MATRIX.md) |
@@ -83,3 +83,7 @@ staré vady**. Pro novou verzi je rozhodující odpovídající regresní test.
 ## Audit připravenosti současného zdroje
 
 [Úplný audit 0.6.29](READINESS_AUDIT_0629.md): NO-GO pro fyzické řízení, chybějící adaptér a ověřený hardwarový timeout. Nové protipříklady sběru, ACK dohledu, integrity a UI jsou otevřené nálezy; zelený counterexample test není oprava. Tato dokumentační/testovací změna nemění runtime ani instalaci.
+
+## Opravy v 0.6.30
+
+[Kontrakt oprav sedmi softwarových nálezů](../priority_shadow/docs/READINESS_FIXES_0630.md). Opraveno v izolovaném zdroji, bez hardwarové certifikace, provozního nasazení či změny observe_only. Historický audit 0.6.29 a N06-02, DB-01 a LIVE blokátory zůstávají zachované.

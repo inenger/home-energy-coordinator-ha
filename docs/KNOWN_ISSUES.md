@@ -1,6 +1,6 @@
 # Registr známých problémů a neověřených podmínek
 
-Platí pro veřejný zdroj 0.6.29. Každý další nález dostane stabilní ID.
+Platí pro veřejný zdroj 0.6.30. Každý další nález dostane stabilní ID.
 OPRAVENO označuje opravený mechanismus s regresí; není zárukou všech
 budoucích běhů. OTEVŘENO znamená nevyřešenou příčinu nebo chybějící důkaz.
 OMEZENÍ je výslovná hranice návrhu. Podrobné provozní podklady nejsou veřejné.
@@ -28,14 +28,14 @@ OMEZENÍ je výslovná hranice návrhu. Podrobné provozní podklady nejsou veř
 | PLN-01 | OPRAVENO V KÓDU — NUTNÉ PROVOZNÍ OVĚŘENÍ | Asynchronous EV startup can be learned as a house-load step. | [Issue36](https://github.com/inenger/home-energy-coordinator-ha/issues/36), [settlement contract](../priority_shadow/docs/WALLBOX_WRITES_0628.md); from_db/full planner and real house-step regressions. Unknown transition pulses remain explicit, no physical safety claim. |
 | DB-05 | OPRAVENO V KÓDU | Payload preparation and per-publication commits hold/contend for writer admission. | [0.6.28](../priority_shadow/docs/WALLBOX_WRITES_0628.md), chunk-preparation, bounded commit group, durable pre-send intent and fairness regressions. Does not close all historical DB-01. |
 | DB-06 | OPRAVENO V KÓDU — NUTNÉ PROVOZNÍ OVĚŘENÍ | Background analytics used fast bounded admission; remaining schema calls acquired no-op writer scopes. | [0.6.29 contract](../priority_shadow/docs/ANALYTICS_ADMISSION_0629.md), test_analytics_admission_0629.py; cancellable FIFO, continuation, real SQL errors and schema repair. Does not close historical DB-01. |
-| N06-03 | OTEVŘENO | Synchronous complex-context refresh can starve fast collection. | [Audit, reprodukce a podmínka uzavření](READINESS_AUDIT_0629.md). |
-| N06-04 | OTEVŘENO | Dead/stuck collector thread has no bounded automatic recovery. | [Audit, reprodukce a podmínka uzavření](READINESS_AUDIT_0629.md). |
-| REC-02 | OTEVŘENO | Fresh evidence heartbeat can mask stalled durable ACK. | [Audit, reprodukce a podmínka uzavření](READINESS_AUDIT_0629.md). |
-| DATA-03 | OTEVŘENO | Existing batch ID bypasses validation of conflicting input content. | [Audit, reprodukce a podmínka uzavření](READINESS_AUDIT_0629.md). |
-| DATA-04 | OTEVŘENO | Same-time SOC collision can return an unpersisted hash and retain old valid SQL plan. | [Audit, reprodukce a podmínka uzavření](READINESS_AUDIT_0629.md). |
+| N06-03 | OPRAVENO V KÓDU — NUTNÉ PROVOZNÍ OVĚŘENÍ | Pomalé REST obnovení přesunuto do asynchronního single-flight workeru; živý template snímek nečeká. Cache race se nefalšuje. | [0.6.30](../priority_shadow/docs/READINESS_FIXES_0630.md), [akceptační testy](../priority_shadow/tests/test_readiness_audit_0629.py); stará reprodukce zůstává v [auditu](READINESS_AUDIT_0629.md). |
+| N06-04 | OPRAVENO V KÓDU — NUTNÉ PROVOZNÍ OVĚŘENÍ | Sledování thread liveness/progress, bounded 3 obnovy mrtvého vlákna/300 s; zaseknuté živé vlákno pouze fail-closed, bez neomezeného spawn. | [0.6.30](../priority_shadow/docs/READINESS_FIXES_0630.md), [akceptační testy](../priority_shadow/tests/test_readiness_audit_0629.py); stará reprodukce zůstává v [auditu](READINESS_AUDIT_0629.md). |
+| REC-02 | OPRAVENO V KÓDU — NUTNÉ PROVOZNÍ OVĚŘENÍ | Stáří durable ACK odděleno od heartbeat, omezené zotavení při WriterTimeout a trvalá diagnostika. Plný disk vyžaduje zásah. | [0.6.30](../priority_shadow/docs/READINESS_FIXES_0630.md), [akceptační testy](../priority_shadow/tests/test_readiness_audit_0629.py); stará reprodukce zůstává v [auditu](READINESS_AUDIT_0629.md). |
+| DATA-03 | OPRAVENO V KÓDU — NUTNÉ PROVOZNÍ OVĚŘENÍ | Durable SHA-256 receipt původního obsahu celé dávky; konfliktní a neověřitelné historické opakování se odmítne. | [0.6.30](../priority_shadow/docs/READINESS_FIXES_0630.md), [akceptační testy](../priority_shadow/tests/test_readiness_audit_0629.py); stará reprodukce zůstává v [auditu](READINESS_AUDIT_0629.md). |
+| DATA-04 | OPRAVENO V KÓDU — NUTNÉ PROVOZNÍ OVĚŘENÍ | Konfliktní SOC hash/timestamp explicitně odmítnut, neplatná kolize revokuje dřívější platný návrh bez přepsání SQL. | [0.6.30](../priority_shadow/docs/READINESS_FIXES_0630.md), [akceptační testy](../priority_shadow/tests/test_readiness_audit_0629.py); stará reprodukce zůstává v [auditu](READINESS_AUDIT_0629.md). |
 | LIVE-03 | OMEZENÍ — BLOKUJE PŘÍMÉ POUŽITÍ MONITORŮ | Ideal monitor power and retained HA state are not an expiring actuation intent. | [Audit, reprodukce a podmínka uzavření](READINESS_AUDIT_0629.md). |
-| MON-03 | OTEVŘENO | Known semantic collection failure reasons collapse to RuntimeError. | [Audit, reprodukce a podmínka uzavření](READINESS_AUDIT_0629.md). |
-| UI-01 | OTEVŘENO | Unknown/malformed sunrise can abort the whole card render. | [Audit, reprodukce a podmínka uzavření](READINESS_AUDIT_0629.md). |
+| MON-03 | OPRAVENO V KÓDU — NUTNÉ PROVOZNÍ OVĚŘENÍ | Rozlišeny allowlisted reason_code pro známé poruchy sběru bez zveřejnění libovolné chybové zprávy. | [0.6.30](../priority_shadow/docs/READINESS_FIXES_0630.md), [akceptační testy](../priority_shadow/tests/test_readiness_audit_0629.py); stará reprodukce zůstává v [auditu](READINESS_AUDIT_0629.md). |
+| UI-01 | OPRAVENO V KÓDU — NUTNÉ PROVOZNÍ OVĚŘENÍ | Neplatný sunrise se zobrazí pomlčkou a neukončí celou kartu; ověřeno card.render v Node VM. | [0.6.30](../priority_shadow/docs/READINESS_FIXES_0630.md), [akceptační testy](../priority_shadow/tests/test_readiness_audit_0629.py); stará reprodukce zůstává v [auditu](READINESS_AUDIT_0629.md). |
 | DOC-01 | OPRAVENO V DOKUMENTACI | Stale current-source pointers and disconnected finding-table rows. | [Audit, reprodukce a podmínka uzavření](READINESS_AUDIT_0629.md). |
 
 
