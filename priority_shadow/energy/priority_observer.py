@@ -52,12 +52,21 @@ def observe_priority(store,states,at,finish_closed=True):
     return result
 
 
+def collection_reason(error):
+    import re
+    message=str(error)
+    if isinstance(error,RuntimeError):
+        match=re.match(r'^(COLLECTION_SNAPSHOT_EXPIRED|COLLECTION_WORKER_FAILED|COLLECTION_THREAD_STALLED|COLLECTION_THREAD_EXITED)(?::([A-Za-z_][A-Za-z_0-9]{0,63}))?$',message)
+        if match:return match.group(1)+((':'+match.group(2))if match.group(2)else '')
+    return None
+
+
 def failure_result(at,error,last_success):
     """Nové hlášení chyby nesmí vydávat staré výkony za čerstvé měření."""
     result={'at':last_success,'version':VERSION,'mode':'observe_only','device_actions':0,
         'selected':{'reason':'collection_failed','ev_ac_w':None,'battery_ac_w':None,'grid_model_w':None},
         'collection_health':{'status':'failed','checked_at':at,'last_successful_collection_at':last_success,
-                             'error_code':type(error).__name__,'summary_errors':[],
+                             'error_code':type(error).__name__,'reason_code':collection_reason(error),'summary_errors':[],
                               'error_location':[{'file':Path(f.filename).name,'line':f.lineno,'function':f.name}for f in traceback.extract_tb(error.__traceback__)[-6:]],
                               'error_file':Path(error.filename).name if isinstance(error,OSError)and error.filename else None}}
     detail=storage_details(error)

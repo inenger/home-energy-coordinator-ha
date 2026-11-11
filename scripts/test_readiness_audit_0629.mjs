@@ -17,12 +17,15 @@ card._hass={states:{'sensor.nocni_stinovy_soc_optimalizace':{attributes:{
 card.lastEntity={attributes:{at:new Date().toISOString(),actual:{inverter_run_mode:'Normal Mode',inverter_mode:'Back Up Mode'},
   comparison_status:'no_coverage',comparison_context:'invalid_soc_plan',active:true}};
 
-// Counterexample: passing proves the current UI flaw, not a correction.
+// Acceptance: malformed optional date never aborts real card.render.
 card.render();const previous=card.shadowRoot.innerHTML;assert(previous.length>0);
 const optimizer=card._hass.states['sensor.nocni_stinovy_soc_optimalizace'].attributes;
 for(const value of ['unknown','unavailable','invalid-date']){
  optimizer.sunrise=value;
- assert.throws(()=>card.render(),{name:'RangeError'});
- assert.equal(card.shadowRoot.innerHTML,previous);
+ assert.doesNotThrow(()=>card.render());
+ assert.match(card.shadowRoot.innerHTML,/Východ slunce/);
 }
-console.log('CONFIRMED UI-01: non-date sunrise aborts full card render and leaves previous DOM');
+optimizer.sunrise='2026-11-11T07:00:00+01:00';
+assert.doesNotThrow(()=>card.render());
+assert.match(card.shadowRoot.innerHTML,/07:00/);
+console.log('PASS UI-01: unknown/malformed and Prague offset render');

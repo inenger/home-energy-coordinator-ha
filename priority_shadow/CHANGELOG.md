@@ -1,3 +1,8 @@
+## 0.6.30
+
+- Opravy N06-03/04, REC-02, DATA-03/04, MON-03 a UI-01; podrobnosti v [kontraktu](docs/READINESS_FIXES_0630.md).
+- Žádný live adaptér ani změna automatizací, pouze observe_only.
+
 ## 0.6.29
 
 - Cancellable normal-priority admission for durable analytics; local queue wait is explicit and does not replay a partially completed job. Actual SQLite faults retain retry/degraded evidence.

@@ -1,3 +1,7 @@
+## 0.6.30 · sedm oprav auditu
+
+[Kontrakt a historické FAIL](READINESS_FIXES_0630.md). Jen observe_only, nedotčené fyzické řízení a originální provozní data.
+
 # Historie oprav
 
 Aktuální zdroj0.6.27, pouze observe_only.

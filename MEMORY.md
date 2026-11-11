@@ -1,3 +1,7 @@
+# Stav 0.6.30
+
+[Sedm oprav readiness auditu](priority_shadow/docs/READINESS_FIXES_0630.md), bez LIVE a nasazení. N06-02, DB-01 a LIVE stále otevřené. Historické auditní protipříklady zachované.
+
 # Projektová paměť
 
 Aktuální zdroj0.6.29, pouze observe_only.

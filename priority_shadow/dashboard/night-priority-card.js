@@ -8,7 +8,7 @@ const ES=v=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':
 const NIGHT_DATE=new Intl.DateTimeFormat('cs-CZ',{timeZone:'Europe/Prague',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 const NIGHT_CLOCK=new Intl.DateTimeFormat('cs-CZ',{timeZone:'Europe/Prague',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 const NIGHT_DAY=new Intl.DateTimeFormat('cs-CZ',{timeZone:'Europe/Prague',day:'numeric',month:'numeric'});
-const TM=v=>v?NIGHT_DATE.format(new Date(v)):'—';
+const TM=v=>{if(v==null||v===''||v==='unknown'||v==='unavailable')return '—';const date=new Date(v);return Number.isFinite(date.getTime())?NIGHT_DATE.format(date):'—';};
 const STATE_NUMBER=(e,unit='A')=>e&&e.attributes?.unit_of_measurement===unit&&String(e.state).trim()!==''&&Number.isFinite(Number(e.state))?Number(e.state):null;
 const AGE=v=>v==null?'neznámé':v>=3600?NF(v/3600,1)+' h':v>=60?NF(v/60,0)+' min':NF(v,0)+' s';
 const FORECAST_DAY=(at,active)=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Prague',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date(at||Date.now())).map(p=>[p.type,p.value]));return new Date(Date.UTC(Number(parts.year),Number(parts.month)-1,Number(parts.day)+(!active&&Number(parts.hour)>=5?1:0))).toLocaleDateString('cs-CZ',{timeZone:'UTC',day:'numeric',month:'numeric'});};

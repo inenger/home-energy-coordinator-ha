@@ -145,9 +145,23 @@ def calibration_weather(store,now):
 
 def record_decision(store,result):
     result=seal(result);payload=pack(result)
-    with store.db:store.db.execute('INSERT OR IGNORE INTO soc_decisions VALUES(?,?,?,?)',
-       (result['issued_at'],result['day'],result['decision_hash'],payload))
-    return result
+    conflict=False;stored=None
+    with store.db:
+        old=store.db.execute('SELECT hash,payload FROM soc_decisions WHERE at=?',(result['issued_at'],)).fetchone()
+        if old:
+            if old[0]!=result['decision_hash'] or old[1]!=payload:
+                conflict=True
+                if result.get('status') not in PLAN_STATUSES or result.get('target_soc_pct') is None:
+                    # Durable revocation must COMMIT before raising. Never rewrite the original proposal.
+                    store.db.execute('CREATE TABLE IF NOT EXISTS soc_decision_revocations(at TEXT PRIMARY KEY,day TEXT NOT NULL,reason TEXT NOT NULL)')
+                    store.db.execute('INSERT OR IGNORE INTO soc_decision_revocations VALUES(?,?,?)',
+                        (result['issued_at'],result['day'],'SOC_DECISION_TIMESTAMP_CONFLICT'))
+            else:stored=unpack(old[1])
+        else:
+            store.db.execute('INSERT INTO soc_decisions VALUES(?,?,?,?)',
+                (result['issued_at'],result['day'],result['decision_hash'],payload))
+    if conflict:raise ValueError('SOC_DECISION_TIMESTAMP_CONFLICT')
+    return stored or result
 
 
 class PlannerService:
@@ -251,7 +265,11 @@ class PlannerService:
                     'input_snapshot':locals().get('snapshot'),
                     'model_version_hash':getattr(self,'model_key',None),
                     'fallback':'legacy_table_reference_only_no_control_change'}
-            self.latest=record_decision(store,error)
+            try:self.latest=record_decision(store,error)
+            except ValueError as conflict:
+                if str(conflict)!='SOC_DECISION_TIMESTAMP_CONFLICT':raise
+                # Do not serve the older valid plan as a newly issued proposal.
+                self.latest=seal(error)
             return view(self.latest)
 
 
@@ -294,6 +312,13 @@ def session_plan(store,day,at):
     try:
         rows=store.db.execute('SELECT at,hash,payload FROM soc_decisions WHERE day=? AND at<=? ORDER BY at DESC LIMIT 1',(day,at))
         for stored_at,key,blob in rows:
+            # Invalid competing proposal at the same timestamp revokes the original,
+            # while its immutable SQL row stays intact for audit/replay.
+            from .sqlite_writes import schema_ready
+            if schema_ready(store.db,('soc_decision_revocations',)):
+                revoked=store.db.execute('SELECT at FROM soc_decision_revocations WHERE day=? AND at>=? AND at<=? LIMIT 1',
+                    (day,stored_at,at)).fetchone()
+                if revoked:return None
             r=unpack(blob)
             if (r.get('status') in PLAN_STATUSES and r.get('target_soc_pct') is not None
                     and r.get('horizon_complete') is True and r.get('day')==day and r.get('issued_at')==stored_at):

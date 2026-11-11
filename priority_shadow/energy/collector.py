@@ -4,7 +4,7 @@ import argparse
 import copy
 import fcntl
 import gzip
-import json
+import json,threading
 import os
 import time
 from pathlib import Path
@@ -37,6 +37,11 @@ class ReadOnlyHA:
             raise ValueError('Invalid Home Assistant origin')
         self.base, self.token_file = base.rstrip('/'), Path(token_file) if token_file else None
         self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+        self._context_lock=threading.Lock()
+        self._context_refreshing=False
+        self._priority_context=[]
+        self._priority_context_at=float('-inf')
+        self._context_error=None
 
     def get(self, path):
         if path != '/api/states':
@@ -63,16 +68,30 @@ class ReadOnlyHA:
         if not isinstance(rows,list) or any(not isinstance(s,list) for s in rows):raise ValueError('Invalid history response')
         return rows
 
-    def priority_context(self,refresh=False):
-        """Cache jen komplexních atributů. Živé hodnoty/reporty vždy z template."""
-        now=time.monotonic()
-        if refresh or not hasattr(self,'_priority_context') or now-self._priority_context_at>=60:
+    def _refresh_priority_context(self):
+        try:
             rows=self.get('/api/states')
             from . import night,priority,soc_runtime
             complex_ids={night.IDS['forecast_today'],priority.EXTRA['forecast_tomorrow'],soc_runtime.IDS['forecast_day3'],soc_runtime.IDS['tariff']}
-            self._priority_context=[x for x in rows if x['entity_id']in complex_ids or x['entity_id'].startswith('weather.')]
-            self._priority_context_at=time.monotonic()
-        return self._priority_context
+            selected=[x for x in rows if x['entity_id'] in complex_ids or x['entity_id'].startswith('weather.')]
+            with self._context_lock:
+                self._priority_context=selected
+                self._priority_context_at=time.monotonic()
+                self._context_error=None
+        except Exception as error:
+            with self._context_lock:self._context_error=type(error).__name__
+        finally:
+            with self._context_lock:self._context_refreshing=False
+
+    def priority_context(self,refresh=False):
+        """Asynchronous REST cache; template fetch is never blocked by slow /api/states.
+        An absent or changed complex payload is marked as a race, not refreshed.
+        """
+        with self._context_lock:
+            if (refresh or time.monotonic()-self._priority_context_at>=60) and not self._context_refreshing:
+                self._context_refreshing=True
+                threading.Thread(target=self._refresh_priority_context,name='priority-rest-context',daemon=True).start()
+            return copy.deepcopy(self._priority_context)
 
     def priority_states(self):
         """Rychlé hodnoty a jejich metadata z jediného živého HA snímku.

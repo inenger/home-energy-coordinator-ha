@@ -16,21 +16,33 @@ class CollectionContextTests(unittest.TestCase):
   self.assertEqual(get.call_count,1);self.assertEqual(query.call_count,2)
   self.assertEqual(first[0]['last_reported'],stamp(0));self.assertEqual(second[0]['last_reported'],stamp(5));self.assertEqual(second[0]['state'],'1000')
 
- def test_complex_change_forces_immediate_refresh_and_copies_attributes(self):
+ def test_complex_change_requests_async_refresh_and_copies_attributes(self):
   eid=night.IDS['forecast_today']
   def row(value,at):return {'entity_id':eid,'state':str(value),'attributes':{'detailedForecast':[{'pv_estimate':value}]},'context':{},'last_updated':at,'last_reported':at,'report_source':'ha_live_state_template'}
   a=row(10,stamp(0));b=row(11,stamp(5));client=ReadOnlyHA()
-  with patch.object(client,'get',side_effect=[[a],[b]])as get,patch.object(client,'_query',side_effect=[json.dumps([a]),json.dumps([b]),json.dumps([b]),json.dumps([b])]):
+  def ready():
+   deadline=time.monotonic()+2
+   while client._context_refreshing and time.monotonic()<deadline:time.sleep(.01)
+   self.assertFalse(client._context_refreshing)
+  with patch.object(client,'get',side_effect=[[a],[b]])as get,patch.object(client,'_query',side_effect=lambda *args,**kwargs:json.dumps([a]if client._query.call_count==1 else [b])):
+   client.priority_context();ready()
    first=client.priority_states();first[0]['attributes']['detailedForecast'][0]['pv_estimate']=999
-   second=client.priority_states();third=client.priority_states()
-  self.assertEqual(get.call_count,2);self.assertEqual(second[0]['attributes']['detailedForecast'][0]['pv_estimate'],11)
-  self.assertNotIn('snapshot_error',second[0]);self.assertEqual(third,second)
+   second=client.priority_states();self.assertEqual(second[0]['snapshot_error'],'snapshot_race')
+   ready();third=client.priority_states()
+  self.assertEqual(get.call_count,2)
+  self.assertEqual(third[0]['attributes']['detailedForecast'][0]['pv_estimate'],11)
+  self.assertNotIn('snapshot_error',third[0])
 
- def test_context_refreshes_after_sixty_seconds(self):
+ def test_context_refreshes_after_sixty_seconds_without_waiting_for_rest(self):
   clock=[0];client=ReadOnlyHA();rows=test_live_reports.LiveReportsTests().snapshot(stamp(0))
+  def ready():
+   deadline=time.monotonic()+2
+   while client._context_refreshing and time.monotonic()<deadline:time.sleep(.01)
+   self.assertFalse(client._context_refreshing)
   with patch('energy.collector.time.monotonic',side_effect=lambda:clock[0]),patch.object(client,'get',return_value=rows)as get,patch.object(client,'_query',return_value=json.dumps(rows)):
-   client.priority_states();clock[0]=59;client.priority_states();self.assertEqual(get.call_count,1)
-   clock[0]=60;client.priority_states();self.assertEqual(get.call_count,2)
+   client.priority_states();ready()
+   clock[0]=59;client.priority_states();self.assertEqual(get.call_count,1)
+   clock[0]=60;client.priority_states();ready();self.assertEqual(get.call_count,2)
 
  def test_collection_receipt_belongs_to_same_snapshot_and_is_not_heartbeat(self):
   entered=threading.Event();release=threading.Event()

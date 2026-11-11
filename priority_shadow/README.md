@@ -1,3 +1,7 @@
+# 0.6.30 · opravy provozního auditu
+
+[Regrese, omezení a historie](docs/READINESS_FIXES_0630.md). Pouze observe_only.
+
 # 0.6.29 · přerušitelné čekání analytiky a méně writer scope
 
 [Kontrakt a regrese](docs/ANALYTICS_ADMISSION_0629.md). Pouze observe_only.

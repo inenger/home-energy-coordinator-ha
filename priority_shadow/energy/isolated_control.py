@@ -3,7 +3,7 @@
 Nejde o hard real-time záruku Linuxu ani o fyzický akční adaptér.
 Paměťové SQLite zachovává otestovanou stavovou logiku; neotevírá diskový soubor.
 """
-import copy,multiprocessing as mp,pickle,queue,sqlite3,time,uuid,threading,os
+import copy,multiprocessing as mp,pickle,queue,sqlite3,time,uuid,threading,os,hashlib
 from datetime import datetime,timezone
 from . import ram_control as control,control_journal as legacy,priority,night
 from .core import TZ,VERSION,instant
@@ -153,9 +153,26 @@ def persist_batch(store,batch):
         db.executescript('CREATE TABLE IF NOT EXISTS control_evidence_batches(runtime TEXT,seq INTEGER,at TEXT,payload BLOB,PRIMARY KEY(runtime,seq));')
     from .ancillary_analytics import schema as analytics_schema
     analytics_schema(db)
+    if not schema_ready(db,('control_batch_receipts',)):
+        db.execute('CREATE TABLE IF NOT EXISTS control_batch_receipts(runtime TEXT,seq INTEGER,sha256 TEXT NOT NULL,PRIMARY KEY(runtime,seq))')
     key=(batch['runtime'],batch['seq'])
-    if db.execute('SELECT 1 FROM control_evidence_batches WHERE runtime=? AND seq=?',key).fetchone():return
     from .store import pack
+    # Exact bytes of the immutable source batch; never recompute from a mutable session.
+    # Canonical JSON is intentionally not used: evidence rows include opaque SQL blobs.
+    from .core import canonical
+    def stable(value):
+        if isinstance(value,(bytes,bytearray,memoryview)):
+            return {'__sql_blob_hex__':bytes(value).hex()}
+        if isinstance(value,(tuple,list)):return [stable(v) for v in value]
+        if isinstance(value,dict):return {str(k):stable(v) for k,v in value.items()}
+        return value
+    fingerprint=hashlib.sha256(canonical(stable((batch['at'],batch['rows'],batch['loss'],
+        batch.get('states'),batch.get('result'),batch.get('failure_generation')))).encode()).hexdigest()
+    receipt=db.execute('SELECT payload FROM control_evidence_batches WHERE runtime=? AND seq=?',key).fetchone()
+    if receipt:
+        old=db.execute('SELECT sha256 FROM control_batch_receipts WHERE runtime=? AND seq=?',key).fetchone()
+        if old and old[0]==fingerprint:return
+        raise ValueError('EVIDENCE_BATCH_RECEIPT_CONFLICT_OR_UNVERIFIABLE')
     analytic_payload=pack({k:batch[k]for k in ('at','states','result')}) if 'states'in batch and 'result'in batch else None
     loss_payload=pack(batch['loss'])
     prepared=[]
@@ -182,6 +199,7 @@ def persist_batch(store,batch):
             if name.endswith('sessions'):db.execute('INSERT OR REPLACE INTO '+name+' VALUES(?,?)',row)
             elif previous is None:db.execute('INSERT INTO '+name+' VALUES('+','.join('?'for _ in row)+')',row)
         db.execute('INSERT INTO control_evidence_batches VALUES(?,?,?,?)',(*key,batch['at'],loss_payload))
+        db.execute('INSERT INTO control_batch_receipts VALUES(?,?,?)',(*key,fingerprint))
         if analytic_payload is not None:
             db.execute('INSERT INTO control_analytics_pending(runtime,seq,at,payload) VALUES(?,?,?,?)',(*key,batch['at'],analytic_payload))
 
@@ -290,6 +308,7 @@ class EvidenceBridge:
         self.reader_stop=threading.Event();self.reader_lock=threading.Lock();self.seed_value=None;self.reader=None
         self.seed_consumed=False;self.worker_started_at=None;self.worker_ready=False;self.epoch=0;self.last_reply=time.monotonic()
         self.replay={};self.sent=set();self.retired_readers=[];self.retired_feeders=[];self.guard=WorkerGuard(self)
+        self.last_ack_progress=time.monotonic();self.inflight_started={}
         self.loss={'batches':0,'events':0,'samples':0,'first_at':None,'last_at':None,'days':{}}
     def new_process(self):
         return self.ctx.Process(target=evidence_worker,args=(self.path,self.options,self.inbox,self.output,self.bootstrap,self.stop),daemon=True)
@@ -316,7 +335,10 @@ class EvidenceBridge:
                 with self.reader_lock:
                     if epoch!=self.epoch:return
                     self.last_reply=time.monotonic();self.worker_ready=True;self.last=value
+                    previous_ack=self.ack
                     self.ack=max(self.ack,value.get('ack',0))
+                    if self.ack>previous_ack:self.last_ack_progress=time.monotonic()
+                    self.inflight_started={s:t for s,t in self.inflight_started.items()if s>self.ack}
                     self.replay={s:b for s,b in self.replay.items()if s>self.ack}
                     self.sent.intersection_update(self.replay)
             except (EOFError,OSError,ValueError):return
@@ -330,6 +352,22 @@ class EvidenceBridge:
         if self.worker_started_at is not None and not self.worker_ready:
             return 'EVIDENCE_PROCESS_STARTUP_TIMEOUT'if now-self.worker_started_at>30 else None
         if now-self.last_reply>timeout:return 'EVIDENCE_PROCESS_UNRESPONSIVE'
+        with self.reader_lock:
+            pending={s:v for s,v in self.inflight.items() if s>self.ack}
+            if pending:
+                timestamps=[self.inflight_started.get(s) for s in pending]
+                if any(t is None for t in timestamps):
+                    # Older bridge fixtures / restored pending frames carry wall time.
+                    ages=[(instant(utcnow())-instant(v)).total_seconds() for v in pending.values()]
+                    stalled=bool(ages and max(ages)>timeout)
+                else:
+                    stalled=now-min(timestamps)>timeout
+                if stalled:
+                    code=(self.last.get('storage_health') or {}).get('error_code')
+                    # A permanent disk failure needs operator intervention, not a restart storm.
+                    if code in ('SQLITE_FULL','SQLITE_IOERR','STORAGE_BUDGET_EXCEEDED_NO_DELETE'):
+                        return None
+                    return 'EVIDENCE_ACK_STALLED'
     def flush_pending(self):
         # Celé IPC předání běží v pomocném vlákně, včetně feeder serializace.
         with self.reader_lock:
@@ -350,7 +388,8 @@ class EvidenceBridge:
         inbox=self.ctx.Queue(self.capacity);output=self.ctx.Queue(2);bootstrap=self.ctx.Queue(1);stop=self.ctx.Event()
         with self.reader_lock:
             self.inbox=inbox;self.output=output;self.bootstrap=bootstrap;self.stop=stop
-            self.sent.clear();self.last_reply=time.monotonic()
+            self.sent.clear();self.last_reply=time.monotonic();self.last_ack_progress=self.last_reply
+            self.inflight_started={s:self.last_reply for s in self.replay}
             self.last={**self.last,'storage_health':{'status':'starting','error_code':'EVIDENCE_PROCESS_RECOVERING'}}
         self.worker_started_at=time.monotonic();self.worker_ready=False;self.process=self.new_process();self.process.start();self.start_reader()
     def snapshot(self):
@@ -383,6 +422,7 @@ class EvidenceBridge:
                 if len(self.replay)<self.capacity:
                     self.replay[self.seq]=batch;accepted=True
                     self.last_accepted=self.seq;self.inflight[self.seq]=at
+                    self.inflight_started[self.seq]=time.monotonic()
         if not accepted:
             self.loss['batches']+=1
             day=instant(at).astimezone(TZ).date().isoformat()
