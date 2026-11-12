@@ -1,3 +1,20 @@
+## 0.6.32 — bezztrátová deduplikace SOC podkladů (12. 11. 2026)
+
+- Velká SOC rozhodnutí sdílejí identické verze předpovědi,
+  kalibrace, modelu a předpokladů přes SHA-256. Nová tabulka
+  `soc_decision_parts`, plný obsah a původní `decision_hash` jsou
+  při čtení rekonstruovány bitově shodně. Staré BLOB zůstávají.
+- RPi replay 783/783 skutečných historických SOC rozhodnutí 8. a 11.11.
+  plný původní payload i hash PASS. 8.11. **15,954→4,479 MB (-71,93 %)**,
+  11.11. **5,440→2,377 MB (-56,31 %)**, včetně unikátních objektů.
+- Připraven bezpečný `scripts/materialize_soc_decisions_0632.py`:
+  při downgrade na 0.6.31 nutno nové payloady v izolované SQLite kopii
+  rekonstruovat *před* použitím starého readeru.
+- **Žádný pevný datový limit ani retence.** Beze změn čtecí horizonty,
+  zdrojová měření, priority, tarif, fyzický systém, FIFO či backup kadence.
+  `observe_only` se nemění.
+- [Regresní/testovací a bezpečnostní kontrakt](docs/STORAGE_DEDUP_0632.md).
+
 ## 0.6.31
 
 - START-01: read-only validace modelu/fází v poslední minutě před 03:00; před startem nevznikne nový virtuální vlastník, lease nebo příkaz.

@@ -13,6 +13,7 @@ from .soc_calibration import Household, fit_pv, validate_household, pre_window,a
 from .soc_history import read_gzip, atomic_gzip, minute_hours, fit_ev, covered_forecast
 from .soc_planner import plan, window, solar_periods, POLICY as SOC_POLICY, PLAN_STATUSES
 from .soc_evidence import seal,verify
+from .soc_storage import prepare as prepare_decision, store_objects as store_decision_parts, read as read_decision
 from .phase_budget import from_db as phase_budget_from_db
 
 SHARE=Path('/share/home-energy-priority-shadow')
@@ -34,11 +35,12 @@ IDS={
 
 def schema(db):
     from .sqlite_writes import schema_ready
-    if schema_ready(db,('soc_observations', 'soc_observation_day', 'soc_decisions', 'soc_decision_day', 'soc_model_versions', 'soc_reviews')):return
+    if schema_ready(db,('soc_observations', 'soc_observation_day', 'soc_decisions', 'soc_decision_day', 'soc_decision_parts', 'soc_model_versions', 'soc_reviews')):return
     db.executescript('''CREATE TABLE IF NOT EXISTS soc_observations(at TEXT PRIMARY KEY,day TEXT NOT NULL,payload BLOB NOT NULL);
     CREATE INDEX IF NOT EXISTS soc_observation_day ON soc_observations(day,at);
     CREATE TABLE IF NOT EXISTS soc_decisions(at TEXT PRIMARY KEY,day TEXT NOT NULL,hash TEXT NOT NULL,payload BLOB NOT NULL);
     CREATE INDEX IF NOT EXISTS soc_decision_day ON soc_decisions(day,at);
+    CREATE TABLE IF NOT EXISTS soc_decision_parts(hash TEXT PRIMARY KEY,field TEXT NOT NULL,payload BLOB NOT NULL);
     CREATE TABLE IF NOT EXISTS soc_model_versions(hash TEXT PRIMARY KEY,at TEXT NOT NULL,payload BLOB NOT NULL);
     CREATE TABLE IF NOT EXISTS soc_reviews(day TEXT PRIMARY KEY,payload BLOB NOT NULL);''')
 
@@ -144,20 +146,27 @@ def calibration_weather(store,now):
 
 
 def record_decision(store,result):
-    result=seal(result);payload=pack(result)
+    result=seal(result)
+    original=pack(result)
+    payload,objects=prepare_decision(result,original)
     conflict=False;stored=None
     with store.db:
         old=store.db.execute('SELECT hash,payload FROM soc_decisions WHERE at=?',(result['issued_at'],)).fetchone()
         if old:
-            if old[0]!=result['decision_hash'] or old[1]!=payload:
+            # Logical equality, not packed-row equality; a former full row
+            # and a new deduplicated row must be idempotent with each other.
+            old_decision=read_decision(store.db,old[1])
+            if old[0]!=result['decision_hash'] or pack(old_decision)!=original:
                 conflict=True
                 if result.get('status') not in PLAN_STATUSES or result.get('target_soc_pct') is None:
-                    # Durable revocation must COMMIT before raising. Never rewrite the original proposal.
+                    # Durable revocation must COMMIT before raising.
                     store.db.execute('CREATE TABLE IF NOT EXISTS soc_decision_revocations(at TEXT PRIMARY KEY,day TEXT NOT NULL,reason TEXT NOT NULL)')
                     store.db.execute('INSERT OR IGNORE INTO soc_decision_revocations VALUES(?,?,?)',
                         (result['issued_at'],result['day'],'SOC_DECISION_TIMESTAMP_CONFLICT'))
-            else:stored=unpack(old[1])
+            else:stored=old_decision
         else:
+            # Shared objects and their decision are committed atomically.
+            store_decision_parts(store.db,objects)
             store.db.execute('INSERT INTO soc_decisions VALUES(?,?,?,?)',
                 (result['issued_at'],result['day'],result['decision_hash'],payload))
     if conflict:raise ValueError('SOC_DECISION_TIMESTAMP_CONFLICT')
@@ -319,12 +328,12 @@ def session_plan(store,day,at):
                 revoked=store.db.execute('SELECT at FROM soc_decision_revocations WHERE day=? AND at>=? AND at<=? LIMIT 1',
                     (day,stored_at,at)).fetchone()
                 if revoked:return None
-            r=unpack(blob)
+            r=read_decision(store.db,blob)
             if (r.get('status') in PLAN_STATUSES and r.get('target_soc_pct') is not None
                     and r.get('horizon_complete') is True and r.get('day')==day and r.get('issued_at')==stored_at):
                 if (0<=(instant(at)-instant(r['issued_at'])).total_seconds()<=1800
                         and verify(r)['verified'] and key==r.get('decision_hash')):return r
-    except sqlite3.OperationalError:pass
+    except (sqlite3.OperationalError, ValueError):pass
     return None
 
 

@@ -1,6 +1,6 @@
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.31 -->
+<!-- shadow-version: 0.6.32 -->
 
 Stav zdrojového kandidáta k 12. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
@@ -145,3 +145,14 @@ keys identical at all matched 1,440 pairs and ~1MB/day potential;
 naive manual/owner SHA refs rejected (+25–27%).
 5–8 MB/day is a target requiring full replay, not a confirmed result.
 No source runtime or live HA change.
+
+
+## Zdroj 0.6.32 – úzká SOC optimalizace bez retenčního limitu
+
+[Implementace a read-only benchmark](../priority_shadow/docs/STORAGE_DEDUP_0632.md).
+Velká SOC rozhodnutí používají immutable SHA-256 shared objects;
+read path rekonstruuje přesný originální JSON/hash. 783/783 historických
+rozhodnutí 8. a 11.11. má stejný packed payload i původní hash.
+Plošná 7d retence už není požadována; 7/14/45/366d horizonty a
+ostatní analytické čtečky zůstávají beze změny. Žádné úpravy
+raw sampling, journal ACK, 6h backupu ani fyzického řízení.

@@ -23,6 +23,7 @@ def main():
     sys.path.insert(0, args.source)
     from energy.core import instant, digest
     from energy.store import unpack
+    from energy.soc_storage import read as read_soc_decision
     from energy.soc_history import read_gzip
     from energy.soc_calibration import Household, archived_weather
     from energy.soc_planner import plan, PLAN_STATUSES
@@ -37,11 +38,11 @@ def main():
         raise ValueError('Keep private replay on RPi recovery storage')
     output.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect('file:/share/home-energy-priority-shadow/evidence.sqlite?mode=ro', uri=True)
-    legacy = unpack(db.execute('SELECT payload FROM soc_decisions WHERE at<=? ORDER BY at DESC LIMIT 1', (args.at,)).fetchone()[0])
+    legacy = read_soc_decision(db,db.execute('SELECT payload FROM soc_decisions WHERE at<=? ORDER BY at DESC LIMIT 1', (args.at,)).fetchone()[0])
     manifest = unpack(db.execute('SELECT payload FROM soc_model_versions WHERE hash=?', (legacy['model_version_hash'],)).fetchone()[0])
     prior = None
     for at, blob in db.execute('SELECT at,payload FROM soc_decisions WHERE at<=? ORDER BY at DESC', (args.at,)):
-        candidate = unpack(blob)
+        candidate = read_soc_decision(db,blob)
         if candidate.get('input_snapshot'):
             prior = candidate
             break

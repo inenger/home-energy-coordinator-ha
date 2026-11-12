@@ -92,3 +92,16 @@ Rejected: SHA object per manual_control + owner_reports increased volume
 requested 7d raw and is superseded only at the *design* level.
 Before any purge adapt 14/21/45/60/90/366d readers, selected
 SOC lease, permanent reviews and pending FIFO. No DB DELETE or code update.
+
+
+## 0.6.32 – bezztrátová SOC optimalizace
+
+[Replay, syntetické regrese a offline downgrade](STORAGE_DEDUP_0632.md).
+783/783 historických SOC rozhodnutí bitově a SHA identicky po hydrataci.
+Vadný ref musí být fail-closed. Původní FAIL: test vnější vnořené SQLite
+transakce očekával rollback přes vnořený context manager (1 commit);
+starší API toto negarantovalo. Nová fault injection **uvnitř** vlastní
+transakce mezi object/decision zápisem prokazuje rollback obou částí.
+Původní F07 test přímo rozbaloval nový BLOB jako starý JSON a končil
+KeyError; nově prochází produkční hydratační funkci a vyžaduje stejný
+decision hash. Žádná změna data retence, ACK, tarifu či aktuace.

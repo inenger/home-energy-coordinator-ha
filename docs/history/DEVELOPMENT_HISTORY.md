@@ -185,3 +185,30 @@ lookbacks and permanent important summaries, not permanent full raw.
 New field-policy CSV is proposal only; no SQL deletion, database compact,
 new HA version, physical action, tariff or automation modification.
 [Full documented findings](../FIELD_RETENTION_DEEP_DIVE_20261112.md).
+
+
+## 12.11.2026 – kandidát 0.6.32, SHA immutable SOC dedup
+
+Base `7c2ee620c46e97f7c9e1f5c7c33e79f6d3413f39`,
+RPi HA 0.6.31 started/observe_only. Uživatel odvolal pevný 7d RAW
+interval a 5–8 MB/den jako limit; dle účelu ponechat 14/45/366d
+i déle bez omezování. Implementace: `soc_decision_parts`
+obsahově adresované verze a obal v `soc_decisions`,
+plná původní evidence rekonstruována přes SHA.
+Reálný read-only snapshot 8.11. 644/644 originální pack SHA,
+15,9543→4,4791 MB; 11.11. 139/139, 5,4401→2,3770 MB.
+Nejde o měření celé SQLite, WAL ani fyzického 24h I/O.
+
+Negativní pokusy a výsledky: první test očekával rollback vnější
+SQLite context přes vnořené `record_decision` a FAIL (1 row persisted),
+původní API to také negarantovalo. Test upraven na reálný fault mezi
+objekty a rozhodnutím uvnitř vlastní transakce, rollback PASS.
+Legacy `test_F07_full_runtime_metadata` přímo rozbaloval raw BLOB
+jako původní JSON a FAIL `KeyError: decision_hash`.
+Nový test ověřuje plnou hydrataci a stejný SHA, PASS.
+Přístup naivních SHA objektů pro RAM owner/manual byl v předchozím
+auditu odmítnut, jelikož zvýšil data o 25–27 %.
+Nevypínat 6h backup ani nemazat ACKed journal záznamy.
+Přidán pouze offline materializer pro downgrade 0.6.31,
+který nemodifikuje vstupní databázi.
+Bez změny nočního algoritmu a reálného nabíjení.

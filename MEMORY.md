@@ -1,3 +1,21 @@
+# Runtime 0.6.32 — optimalizace podle hodnoty dat, nikoli kvóty
+
+- Poslední zadání **ruší plošné 7denní pravidlo**. Uchovat data 7/14/45/366
+  dní podle skutečného využití. Bez umělého limitu MB/den, bez mazání.
+- [Bezztrátová SOC deduplikace 0.6.32](priority_shadow/docs/STORAGE_DEDUP_0632.md)
+  používá immutable `soc_decision_parts` + SHA-256 reference; původní
+  `decision_hash` a payload jsou identicky rekonstruovány.
+  RPi read-only data 8.11. 644/644, 11.11. 139/139: PASS.
+- SOC BLOB + nové sdílené objekty: 8.11. 15,954→4,479 MB,
+  11.11. 5,440→2,377 MB. To není celá databáze nebo reálné 24h I/O.
+- RAM/priority duplication, outbox a šestihodinové zálohy se **nemění**
+  bez nezávislého end-to-end důkazu. Otevřené RET/HIST/LIVE zůstávají.
+- Downgrade na 0.6.31 *po novém kompaktovaném zápisu* vyžaduje
+  izolovaný offline materializer; nikdy nevracet starý reader nad
+  kompaktní rozhodnutí. 0.6.32 `observe_only`, žádné fyzické řízení.
+
+---
+
 # Field-level data-minimization study and new 7-day policy, 12. 11. 2026
 
 - [New deep field-by-field report](docs/FIELD_RETENTION_DEEP_DIVE_20261112.md), [public 407-row table/field matrix](docs/FIELD_RETENTION_POLICY_MATRIX_20261112.csv). Private RPi inventory: **2,935 JSON/schema field paths**, with code-reference hints and proposed action. 43 physical tables, 384 observed top-level JSON fields. No raw state values exported to GitHub.
