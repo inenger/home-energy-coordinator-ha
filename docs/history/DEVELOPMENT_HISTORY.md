@@ -115,3 +115,33 @@ SUP-01 watchdog=false, START-02 scheduling mezera, UI-03
 bez preflight labelu. Plná ZIP→SQLite izolovaná záloha
 SHA, quick/integrity_check, FK PASS; ne celý Supervisor restore.
 Rizika N06-02/DB-01/LIVE ponechána otevřená. Privátní podklady RPi.
+
+## 12.11.2026 – precise daily SQL evidence and storage churn
+
+Source: main c9f9a1f3fbda94f2b2a4cbe0496e8a6fe17ed8d4,
+HA priority_shadow 0.6.31, read-only portable SQLite copy made 07:24.
+43 tables counted through SQLite dbstat/length aggregates; 11.11
+24.423 MB logical row bytes (23.636MB compressed blobs), 12,743 rows.
+7 full days mean 29.896MB, rolling 24h 26.908MB; DB btree
+502.485MB, sum logical all rows 452.472MB, index pages 15.385MB.
+Planning extrapolation roughly 33.2MB of B-tree capacity growth/day is
+NOT measured 24h physical disk I/O: no equivalent prior-day snapshot,
+because previous Supervisor backups were removed from /backup.
+That rejected assumption is preserved, not presented as measurement.
+
+Separate backup churn from DB net growth: actual configured
+portable_backup_interval_s=21600s, each full SQLite copy currently
+502.485MB, 4 per day would copy 2.01GB/day (model, not observed IO count).
+Forecast_versions from 139 SOC decision rows contain only 8 unique payloads,
+independent compressed-field 2.726MB repeated versus 0.156MB unique;
+calibration_summary 3 unique, session 2 unique across 1440 rows;
+cross-table collection_snapshot identical 1440/1440. 20154 outbox
+rows and 20154 ACK receipts, all 11.11 rows acknowledged.
+Explicit warnings: no blanket delete of durable outbox because
+HIST-01 established Recorder purge; don't remove historical SOC data
+before hash-equivalent replay and archive restore are proven.
+
+The archive policy remains design-only. 6h RPO and live addon untouched.
+Raw private measurements retained only on Raspberry Pi; public
+GitHub has redacted aggregate statistics and acceptance requirements.
+[Full design and distribution](../STORAGE_VOLUME_ANALYSIS_20261112.md).

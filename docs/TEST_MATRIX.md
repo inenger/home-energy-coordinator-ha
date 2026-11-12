@@ -8,6 +8,10 @@ protipříkladů; důkaz dnešního runtime musí procházet produkční entrypo
 | Oblast / vada | Spustitelná regrese | Požadovaný invariant |
 |---|---|---|
 | RET-01: dlouhodobá evidence proti 2 GiB limitu | [audit a stav SQL](DEEP_AUDIT_0631_20261112.md) | Před kvótou alarm, immutable archive/restore + SHA a úplné denní počty. |
+| RET-02: full database backup every 6h | [SQLite volume study](STORAGE_VOLUME_ANALYSIS_20261112.md) | End-to-end restore, unchanged 6h RPO, measured actual I/O on production without night-loop pause. |
+| RET-03: old acknowledged outbox | [SQL ACK counts](STORAGE_VOLUME_ANALYSIS_20261112.md) | Preserved immutable chunk, receipt and global seq after archived day is reloaded with Recorder history purged. |
+| DATA-05: identical forecast/calibration/session | [SHA grouped payload analysis](STORAGE_VOLUME_ANALYSIS_20261112.md) | Reconstructed original full decision bytes and hash, stable as-of references, replay unchanged. |
+| DATA-06: identical collection_snapshot | [1,440 paired comparisons](STORAGE_VOLUME_ANALYSIS_20261112.md) | Shared content reference without loss of per-domain replay and provenance. |
 | HIST-01: starší den bez HA Recorderu | [auditní SQL/GET reprodukce](DEEP_AUDIT_0631_20261112.md) | Prázdný Recorder, přesto úplný den ze skutečné archived source. |
 | UI-02: neplatný plan timestamp | [audit-only counterexample](../scripts/audit_ui02_invalid_plan_time_0631.mjs) | Aktuálně RangeError; po opravě doNotThrow card.render a čerstvý DOM. |
 | SUP-01: celkový výpadek PID1 | [audit](DEEP_AUDIT_0631_20261112.md) | Po testovacím pádu obnovený Supervisor started, durable ACK a žádný fyzický povel. |
