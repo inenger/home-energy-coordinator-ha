@@ -316,3 +316,9 @@ určují výhradně volby v `config.yaml` načítané z `/data/options.json`.
 
 
 Nové otevřené nálezy po nezávislém ověření0.6.13: [audit30.10.2026](docs/AUDIT_0613_20261030.md). Audit sám tyto chyby neopravuje.
+
+
+[Detailed seven-day raw + permanent summary field audit](../docs/FIELD_RETENTION_DEEP_DIVE_20261112.md)
+and [per-field retention policy matrix](../docs/FIELD_RETENTION_POLICY_MATRIX_20261112.csv).
+These are proposed changes only. Existing observe_only 0.6.31 remains running,
+no GC, compact or control changes.

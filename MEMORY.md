@@ -1,3 +1,13 @@
+# Field-level data-minimization study and new 7-day policy, 12. 11. 2026
+
+- [New deep field-by-field report](docs/FIELD_RETENTION_DEEP_DIVE_20261112.md), [public 407-row table/field matrix](docs/FIELD_RETENTION_POLICY_MATRIX_20261112.csv). Private RPi inventory: **2,935 JSON/schema field paths**, with code-reference hints and proposed action. 43 physical tables, 384 observed top-level JSON fields. No raw state values exported to GitHub.
+- **User policy: 7 days high-resolution raw, permanent *important results* (night/economic/model results, incident events, material decisions and pinned as-of versions)**. Previous 30d hot and forever raw design is superseded, not implemented.
+- Measured source: 11.11 24.423MB stored, 7d avg 29.896MB/day; 6h full portable 502.485MB copy creates model ~2.01GB daily copy-write amplification. DB live 0.6.31 observe_only unchanged.
+- Compression benchmark: SOC content-addressed version refs: 11.11 **5.440→2.374MB (56.4%)**, 8.11 **15.954→4.471MB (72.0%)**. RAM input_reports share all 24 fields with priority.inputs (1,440/1,440 and 1,443/1,443), ref reduces 2.607→1.580MB / 2.423→1.339MB. Random SHA object-ifying manual/owner reports **increased** storage 25–27%, rejected.
+- Critical: current 14/21/45/60/90/366d analytics readers require migrated hourly/session aggregates **before any 7d purge**; preserve pending ACK and 30min issued SOC freshness. NET target **5–8MB/day** aspirational only, not achieved. RET-04 and DATA-07 documented. No SQL deletion, physical control, config or runtime edit. Audit-only no version bump.
+
+---
+
 # SQL evidence volume / retention study, 12. 11. 2026
 
 - [Evidence volume and retention report](docs/STORAGE_VOLUME_ANALYSIS_20261112.md): 11 Nov 24.423 MB of stored rows, average 5–11 Nov 29.896 MB/day, trailing 24h 26.908 MB, 43 tables. Portable copy 502.485 MB at 07:24. These are logical records, not physical daily SSD writes.

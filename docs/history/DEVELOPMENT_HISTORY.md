@@ -145,3 +145,43 @@ The archive policy remains design-only. 6h RPO and live addon untouched.
 Raw private measurements retained only on Raspberry Pi; public
 GitHub has redacted aggregate statistics and acceptance requirements.
 [Full design and distribution](../STORAGE_VOLUME_ANALYSIS_20261112.md).
+
+
+## 12.11.2026 – per-field retention deep dive, decision history and rejected variants
+
+Entry commit 3e188301ab4cf37ee31746e2d8d92f6464f310e7;
+actual HA remains priority_shadow 0.6.31, started, observe_only.
+User rejected storing ~30 MB daily and proposed 7-day raw retention with
+permanent important results, replacing previous 30-day hot/forever raw
+recommendation at *design* level only.
+
+A read-only RPi SQLite scan produced 2,935 path-level metrics, 384
+top-level JSON fields across 43 SQL table schemas; public report shares
+only aggregate/schema, private nested paths stay on RPi. The first
+field-inventory attempt used a slow literal regex per field; changed to
+precomputed token occurrence counts. This source-literal count is a heuristic,
+not proof of usage/absence. Counterfactual nested test initially used
+Counter.update(dict of payload values) and raised TypeError; corrected
+to update(keys); final benchmark/replay measurements completed and original
+failed attempt was not mistaken for a runtime error.
+
+Measured: SOC full BLOBs 11.11 5.440→2.374 MB (56.4% savings)
+and 8.11 15.954→4.471MB (72.0%) by version content refs.
+RAM input_reports exactly match priority inputs for all 24 common keys
+at all 1,440/1,440 and 1,443/1,443 sampled frames; RAM BLOB
+11.11 2.607→1.580MB, 8.11 2.423→1.339MB.
+Rejected: wrapping manual_control and owner_reports each in SHA objects
+caused **25–27% increase**, not savings; their timestamps vary. Shared
+common variants saved only 0.119 MB 11.11 / 0.048MB 8.11, not worth
+prioritizing. Reduced priority input projection 5.577→3.212MB 11.11,
+but incompatible with all 24 RAM reads until canonical input layer exists:
+the savings were not double-counted. Rough SOC signatures
+8.11 644/23 and 11.11 139/28 are NOT equivalent full decisions;
+30min issued_at validity and revocations must remain.
+
+7d raw would currently break existing 14/21/45/60/90/366d readers;
+RET-04/DATA-07 marked OPEN. Proposed warm aggregates for required
+lookbacks and permanent important summaries, not permanent full raw.
+New field-policy CSV is proposal only; no SQL deletion, database compact,
+new HA version, physical action, tariff or automation modification.
+[Full documented findings](../FIELD_RETENTION_DEEP_DIVE_20261112.md).
