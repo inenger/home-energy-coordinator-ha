@@ -78,3 +78,17 @@ DATA-05 repeated forecast/calibration/session snapshots,
 DATA-06 identical collection_snapshot in 1,440 cross-domain pairs.
 Historical audit and integrity receipts retained. No physical control,
 WAL checkpoint, SQL DELETE, config edit or release version increment.
+
+
+## 12.11.2026 – Deep field audit, 7-day raw retention, no changes to runtime
+
+[Report](../../docs/FIELD_RETENTION_DEEP_DIVE_20261112.md),
+[field policy catalog](../../docs/FIELD_RETENTION_POLICY_MATRIX_20261112.csv):
+2,935 private paths, 384 public top-level JSON field classifications;
+43 schemas assessed. Actual SOC ref compression benchmark 56–72%;
+exact RAM+priority 24 field match in 1,440/1,440 11.11 frames.
+Rejected: SHA object per manual_control + owner_reports increased volume
+25–27%. The previous 30d/full raw forever design conflicts with newly
+requested 7d raw and is superseded only at the *design* level.
+Before any purge adapt 14/21/45/60/90/366d readers, selected
+SOC lease, permanent reviews and pending FIFO. No DB DELETE or code update.

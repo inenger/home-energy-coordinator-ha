@@ -8,6 +8,8 @@ protipříkladů; důkaz dnešního runtime musí procházet produkční entrypo
 | Oblast / vada | Spustitelná regrese | Požadovaný invariant |
 |---|---|---|
 | RET-01: dlouhodobá evidence proti 2 GiB limitu | [audit a stav SQL](DEEP_AUDIT_0631_20261112.md) | Před kvótou alarm, immutable archive/restore + SHA a úplné denní počty. |
+| RET-04: 7d raw retence v 366d analytice | [Audit readerů](FIELD_RETENTION_DEEP_DIVE_20261112.md) | Ve full replay s raw smazanými po 7d fungují calibration 45d, shadow 21d, EV 60d, energy 366d, phase 7d a UI summaries bez falešné interpolace. Pending nikdy nemaže časová retence. |
+| DATA-07: field-level canonical frame & projection | [Private 2,935 paths and public policy CSV](FIELD_RETENTION_POLICY_MATRIX_20261112.csv) | 24 RAM source fields byte-identical with priority (all pairs); original full canonical SOC hash verified after version reference hydration; 3 scenarios retain differences when not identical; no change of phase or stale behavior. |
 | RET-02: full database backup every 6h | [SQLite volume study](STORAGE_VOLUME_ANALYSIS_20261112.md) | End-to-end restore, unchanged 6h RPO, measured actual I/O on production without night-loop pause. |
 | RET-03: old acknowledged outbox | [SQL ACK counts](STORAGE_VOLUME_ANALYSIS_20261112.md) | Preserved immutable chunk, receipt and global seq after archived day is reloaded with Recorder history purged. |
 | DATA-05: identical forecast/calibration/session | [SHA grouped payload analysis](STORAGE_VOLUME_ANALYSIS_20261112.md) | Reconstructed original full decision bytes and hash, stable as-of references, replay unchanged. |

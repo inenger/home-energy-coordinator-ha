@@ -129,3 +129,19 @@ DATA-06 (1,440/1,440 identical collection_snapshot pairs).
 Existing RET-01 and HIST-01 still open. Hot 30d retention is
 conditional on immutable all-raw archive, hash/restore, and real
 card read-through after Recorder purge. No data deleted, no runtime change.
+
+
+## 12.11.2026 – Field-by-field audit and 7-day raw policy proposal
+
+[Detailed report](FIELD_RETENTION_DEEP_DIVE_20261112.md);
+[filterable policy matrix for 43 SQL tables and 384 observed top-level JSON fields](FIELD_RETENTION_POLICY_MATRIX_20261112.csv).
+Private RPi audit classified 2,935 nested/source paths, without publishing actual
+HA state values. New user target is 7 days high-res raw; permanent meaningful
+night/energy/financial summaries, calibrated model versions, original selected
+SOC evidence and material incidents. Source readers with 14–366d lookbacks
+must change **before** any purge. RET-04 and DATA-07 stay OPEN.
+Measured SOC reference delta 56–72% per SOC BLOB table, RAM 24 input
+keys identical at all matched 1,440 pairs and ~1MB/day potential;
+naive manual/owner SHA refs rejected (+25–27%).
+5–8 MB/day is a target requiring full replay, not a confirmed result.
+No source runtime or live HA change.

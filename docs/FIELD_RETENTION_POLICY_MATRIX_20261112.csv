@@ -1,0 +1,408 @@
+table,field,observed_rows,original_raw_json_mb,unique_values,proposed_action,proposed_retention,verification_required,scope
+analytics_versions,[table / no payload observed on 11 Nov],0,,,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",schema/table
+calibrations,[table / no payload observed on 11 Nov],0,,,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",schema/table
+control_analytics_pending,[table / no payload observed on 11 Nov],0,,,DURABLE_QUEUE_WITH_ACK_GATE,"Pending until processed, ACKed 7d max after safe cursor seal",No silent loss or non-recoverable seq gaps,schema/table
+control_batch_receipts,[table / no payload observed on 11 Nov],0,,,DURABLE_QUEUE_WITH_ACK_GATE,"Pending until processed, ACKed 7d max after safe cursor seal",No silent loss or non-recoverable seq gaps,schema/table
+control_events,[table / no payload observed on 11 Nov],0,,,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",schema/table
+control_evidence_batches,batches,2855,0.002855,1,SEVEN_DAY_RAW_THEN_AGGREGATE,7d; hourly or event-derived outputs retained longer,Verify all consumers e.g. 45/90/366d analytic windows,JSON top-level field
+control_evidence_batches,days,2855,0.00571,1,SEVEN_DAY_RAW_THEN_AGGREGATE,7d; hourly or event-derived outputs retained longer,Verify all consumers e.g. 45/90/366d analytic windows,JSON top-level field
+control_evidence_batches,events,2855,0.002855,1,SEVEN_DAY_RAW_THEN_AGGREGATE,7d; hourly or event-derived outputs retained longer,Verify all consumers e.g. 45/90/366d analytic windows,JSON top-level field
+control_evidence_batches,first_at,2855,0.01142,1,SEVEN_DAY_RAW_THEN_AGGREGATE,7d; hourly or event-derived outputs retained longer,Verify all consumers e.g. 45/90/366d analytic windows,JSON top-level field
+control_evidence_batches,last_at,2855,0.01142,1,SEVEN_DAY_RAW_THEN_AGGREGATE,7d; hourly or event-derived outputs retained longer,Verify all consumers e.g. 45/90/366d analytic windows,JSON top-level field
+control_evidence_batches,samples,2855,0.002855,1,SEVEN_DAY_RAW_THEN_AGGREGATE,7d; hourly or event-derived outputs retained longer,Verify all consumers e.g. 45/90/366d analytic windows,JSON top-level field
+control_samples,[table / no payload observed on 11 Nov],0,,,SEVEN_DAY_RAW_THEN_AGGREGATE,7d; hourly or event-derived outputs retained longer,Verify all consumers e.g. 45/90/366d analytic windows,schema/table
+control_sessions,[table / no payload observed on 11 Nov],0,,,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,schema/table
+daily_observed,[table / no payload observed on 11 Nov],0,,,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",schema/table
+decisions,[table / no payload observed on 11 Nov],0,,,REVIEW_LEGACY_AND_DEPENDENCIES,Keep until reader/compatibility inventory done,Empty in this day does not mean globally unused,schema/table
+environment_samples,[table / no payload observed on 11 Nov],0,,,SEVEN_DAY_RAW_THEN_AGGREGATE,7d; hourly or event-derived outputs retained longer,Verify all consumers e.g. 45/90/366d analytic windows,schema/table
+failures,[table / no payload observed on 11 Nov],0,,,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",schema/table
+journal_transport_meta,checked_at,1,3.4e-05,1,DURABLE_QUEUE_WITH_ACK_GATE,"Pending until processed, ACKed 7d max after safe cursor seal",No silent loss or non-recoverable seq gaps,JSON top-level field
+journal_transport_meta,error_code,1,4e-06,1,DURABLE_QUEUE_WITH_ACK_GATE,"Pending until processed, ACKed 7d max after safe cursor seal",No silent loss or non-recoverable seq gaps,JSON top-level field
+journal_transport_meta,event,14,5.5e-05,14,DURABLE_QUEUE_WITH_ACK_GATE,"Pending until processed, ACKed 7d max after safe cursor seal",No silent loss or non-recoverable seq gaps,JSON top-level field
+journal_transport_meta,recording_wait_s,1,1e-06,1,DURABLE_QUEUE_WITH_ACK_GATE,"Pending until processed, ACKed 7d max after safe cursor seal",No silent loss or non-recoverable seq gaps,JSON top-level field
+journal_transport_meta,sample,14,6.4e-05,14,DURABLE_QUEUE_WITH_ACK_GATE,"Pending until processed, ACKed 7d max after safe cursor seal",No silent loss or non-recoverable seq gaps,JSON top-level field
+journal_transport_meta,session_hash,14,0.000924,14,DURABLE_QUEUE_WITH_ACK_GATE,"Pending until processed, ACKed 7d max after safe cursor seal",No silent loss or non-recoverable seq gaps,JSON top-level field
+journal_transport_meta,status,1,4e-06,1,DURABLE_QUEUE_WITH_ACK_GATE,"Pending until processed, ACKed 7d max after safe cursor seal",No silent loss or non-recoverable seq gaps,JSON top-level field
+journal_transport_outbox,at,1441,0.048994,1441,TRANSPORT_RECEIPT_METADATA,"Pending until ACK, then compact/seal",Maintain Replay/FIFO/window cursor through restart,JSON top-level field
+journal_transport_outbox,batch_id,1441,0.095106,1441,TRANSPORT_RECEIPT_METADATA,"Pending until ACK, then compact/seal",Maintain Replay/FIFO/window cursor through restart,JSON top-level field
+journal_transport_outbox,data,1441,9.486546,1441,PENDING_UNTIL_ACK_THEN_7D,Pending forever until ACK; ACKed 7d after read-through source guaranteed,"No loss of chunk, monotonic seq, hash or historical UI",JSON top-level field
+journal_transport_outbox,day,1441,0.017292,1,TRANSPORT_RECEIPT_METADATA,"Pending until ACK, then compact/seal",Maintain Replay/FIFO/window cursor through restart,JSON top-level field
+journal_transport_outbox,device_actions,1441,0.001441,1,MOVE_TO_TRANSPORT_SCHEMA,Once per stream/version; present if required by wire protocol,Existing unchanged wire payload until compatibility tests,JSON top-level field
+journal_transport_outbox,encoding,1441,0.020174,1,MOVE_TO_TRANSPORT_SCHEMA,Once per stream/version; present if required by wire protocol,Existing unchanged wire payload until compatibility tests,JSON top-level field
+journal_transport_outbox,first_seq,1441,0.007205,1441,TRANSPORT_RECEIPT_METADATA,"Pending until ACK, then compact/seal",Maintain Replay/FIFO/window cursor through restart,JSON top-level field
+journal_transport_outbox,format,1441,0.027379,1,MOVE_TO_TRANSPORT_SCHEMA,Once per stream/version; present if required by wire protocol,Existing unchanged wire payload until compatibility tests,JSON top-level field
+journal_transport_outbox,friendly_name,1441,0.060522,1,MOVE_TO_TRANSPORT_SCHEMA,Once per stream/version; present if required by wire protocol,Existing unchanged wire payload until compatibility tests,JSON top-level field
+journal_transport_outbox,last_seq,1441,0.007205,1441,TRANSPORT_RECEIPT_METADATA,"Pending until ACK, then compact/seal",Maintain Replay/FIFO/window cursor through restart,JSON top-level field
+journal_transport_outbox,part_count,1441,0.001441,1,TRANSPORT_RECEIPT_METADATA,"Pending until ACK, then compact/seal",Maintain Replay/FIFO/window cursor through restart,JSON top-level field
+journal_transport_outbox,part_index,1441,0.001441,1,TRANSPORT_RECEIPT_METADATA,"Pending until ACK, then compact/seal",Maintain Replay/FIFO/window cursor through restart,JSON top-level field
+journal_transport_outbox,seq,1441,0.007205,1441,TRANSPORT_RECEIPT_METADATA,"Pending until ACK, then compact/seal",Maintain Replay/FIFO/window cursor through restart,JSON top-level field
+journal_transport_outbox,stream_id,1441,0.048994,1,MOVE_TO_TRANSPORT_SCHEMA,Once per stream/version; present if required by wire protocol,Existing unchanged wire payload until compatibility tests,JSON top-level field
+journal_transport_outbox,unpacked_bytes,1441,0.007205,231,TRANSPORT_RECEIPT_METADATA,"Pending until ACK, then compact/seal",Maintain Replay/FIFO/window cursor through restart,JSON top-level field
+journal_transport_receipts,[table / no payload observed on 11 Nov],0,,,DURABLE_QUEUE_WITH_ACK_GATE,"Pending until processed, ACKed 7d max after safe cursor seal",No silent loss or non-recoverable seq gaps,schema/table
+manifests,[table / no payload observed on 11 Nov],0,,,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",schema/table
+night_samples,at,1549,0.052666,1549,KEEP_7D_TIMESTAMP_OR_SCHEMA,7d; schema stored once except exception,Timezone fold and replay integrity,JSON top-level field
+night_samples,day,1549,0.018588,1,KEEP_7D_TIMESTAMP_OR_SCHEMA,7d; schema stored once except exception,Timezone fold and replay integrity,JSON top-level field
+night_samples,points,1549,11.370316,1549,SHARED_INPUTS_AND_SLIM_POINTS,7d source-quality-preserving fields; permanent hourly/day summary,Keep phase peaks and 03:00 readiness evidence,JSON top-level field
+night_samples,schema_version,1549,0.001549,1,KEEP_7D_TIMESTAMP_OR_SCHEMA,7d; schema stored once except exception,Timezone fold and replay integrity,JSON top-level field
+night_samples,shadow,1549,0.617036,1535,KEEP_7D_RESULT_DELTA,7d selected vs actual; permanent daily comparison,Do not infer physical action from shadow plan,JSON top-level field
+night_sessions,captured_at,1,3.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+night_sessions,day,1,1.2e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+night_sessions,forecast_archived_available_at,1,3.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+night_sessions,forecast_kwh,1,6e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+night_sessions,forecast_polled_state,1,2.7e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+night_sessions,forecast_state_last_reported,1,3.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+night_sessions,note,1,0.000119,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+night_sessions,policy_version,1,8e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+night_sessions,schema_version,1,1e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+night_sessions,status,1,1e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+night_sessions,target_soc_pct,1,2e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+night_summaries,[table / no payload observed on 11 Nov],0,,,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",schema/table
+objects,availability_definition,423,0.027072,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,dataCorrect,363,0.001452,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,detailedForecast,363,1.860124,314,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,detailedHourly,363,0.932899,314,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,entity_id,423,0.010152,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,estimate,363,0.002416,306,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,estimate10,363,0.00224,312,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,estimate90,363,0.002465,305,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,forecast,423,3.901841,423,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,forecast_type,423,0.003384,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,ha_last_polled,363,0.009732,102,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,provider_issue_time,363,0.001452,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,provider_issued_at,423,0.001692,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,rates,21,0.008253,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,schema_version,423,0.000423,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,source_kind,423,0.008037,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,state,363,0.003142,306,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,status,21,0.000273,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,timezone,21,0.000315,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,today,21,0.098392,21,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,today_date,21,0.000252,21,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,today_valid,21,8.4e-05,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,tomorrow,21,0.098392,21,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,tomorrow_date,21,0.000252,21,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,tomorrow_valid,21,8.4e-05,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,uncertainty_calibrated,363,0.001815,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,unit_of_measurement,363,0.001815,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,units,423,0.041877,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,workday_today,21,9.1e-05,2,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+objects,workday_tomorrow,21,9.1e-05,2,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+priority_commands,active,17,7.1e-05,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,at,17,0.000578,17,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,battery_ac_w,17,5.7e-05,13,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,battery_model_dc_a,17,6.9e-05,13,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,day,17,0.000204,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,device_actions,17,1.7e-05,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,ev_ac_w,17,5.5e-05,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,ev_allocation_mode,17,0.000328,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,ev_model_phase_a,17,5.5e-05,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,ev_setting_limit_a,17,6.8e-05,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,forbid_discharge,17,6.8e-05,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,journal_version,17,0.000187,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,kind,17,0.000175,4,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,priority,17,6.8e-05,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,reason,17,0.000199,3,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,software_version,17,0.000136,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_commands,target_soc_pct,17,5.4e-05,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_day_audit_revisions,assessment,1,2.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,battery_in_kwh,1,3e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,calculated_at,1,3.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,counter_boundaries,1,0.000819,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,day,1,1.2e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,device_actions,1,1e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,evaluation_version,1,2.9e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,evening_import_kwh,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,evening_min_soc,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,export_at_high_soc_kwh,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,export_kwh,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,export_paired_kwh,1,3e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,forecast_captured_at,1,3.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,forecast_comparison_status,1,3.3e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,forecast_error_kwh,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,forecast_frozen_kwh,1,6e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,forecast_source,1,2.3e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,has_shadow_session,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,import_kwh,1,5e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,interpretation,1,0.000147,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,linked_shadow_night,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,measurement_boundary_verified,1,5e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,missing_measurements,1,2e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,model_covered_s,1,1.7e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,model_soc_05,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,model_soc_at_covered_end,1,1.6e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,night_charge_dc_kwh,1,3e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,pv_kwh,1,3e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,quality,1,0.000153,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,raw_forecast_difference_kwh,1,5e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,soc_05,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,soc_end,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,soc_max,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,soc_min,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,soc_quality,1,9.2e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,software_version,1,8e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,source,1,2.1e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,source_available_at,1,3.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,source_hash,1,6.6e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audit_revisions,target_soc_pct,1,2e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_day_audits,[table / no payload observed on 11 Nov],0,,,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",schema/table
+priority_events,at,2,6.8e-05,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_events,device_actions,2,2e-06,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_events,priority,2,8e-06,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_events,raw_option,2,1.8e-05,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_events,source,2,7.4e-05,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+priority_runs,assumptions,1,0.00144,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,day,1,1.2e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,gap_s,1,3e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,last_processed_at,1,3.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,models,1,0.000954,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,observed_covered_s,1,1.7e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,observed_ev_kwh_ac,1,3e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,policy,1,2.1e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,previous,1,0.012288,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,sample_count,1,4e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,soc_initialized_at,1,3.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,soc_plan_required,1,4e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,started_at,1,3.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_runs,version,1,8e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+priority_samples,actual_ev_w,1440,0.00432,1,KEEP_7D_SIGNAL,"7d high-res, permanent summary only","Retain timing, quality and relevant phase peaks",JSON top-level field
+priority_samples,at,1440,0.04896,1440,KEEP_7D_SIGNAL,"7d high-res, permanent summary only","Retain timing, quality and relevant phase peaks",JSON top-level field
+priority_samples,collection_snapshot,1440,0.332404,1440,SHARED_FRAME,7d as-of frame / permanent only fault,Collection source age and provenance must survive,JSON top-level field
+priority_samples,day,1440,0.01728,1,KEEP_7D_SIGNAL,"7d high-res, permanent summary only","Retain timing, quality and relevant phase peaks",JSON top-level field
+priority_samples,gap_s,1440,0.00432,1,CHECKPOINT_OR_DAILY_FINAL,7d checkpoints; permanent finished day,Compare replay & coverage before changing,JSON top-level field
+priority_samples,inputs,1440,19.42441,1440,CANONICAL_INPUT_FRAME,7d full valid/quality/last_reported compact; hourly aggregate later,"Must preserve phase_budget 7d, selected source and source freshness",JSON top-level field
+priority_samples,models,1440,1.353327,1440,CHECKPOINT_OR_DAILY_FINAL,7d checkpoints; permanent finished day,Compare replay & coverage before changing,JSON top-level field
+priority_samples,observed_covered_s,1440,0.023901,1440,CHECKPOINT_OR_DAILY_FINAL,7d checkpoints; permanent finished day,Compare replay & coverage before changing,JSON top-level field
+priority_samples,observed_ev_kwh_ac,1440,0.00432,1,CHECKPOINT_OR_DAILY_FINAL,7d checkpoints; permanent finished day,Compare replay & coverage before changing,JSON top-level field
+priority_samples,priority,1440,0.00576,1,KEEP_7D_SIGNAL,"7d high-res, permanent summary only","Retain timing, quality and relevant phase peaks",JSON top-level field
+priority_samples,session,1440,2.1312,2,REFERENCE_SESSION,7d hot ref / nightly session forever only if included in summary,"Reference version, preserve same-day migration",JSON top-level field
+priority_samples,soc_initialized_at,1440,0.04896,1,MOVE_TO_SESSION_METADATA,Only in night session; 7d shadow event,First valid SOC time must remain verifiable,JSON top-level field
+priority_samples,variants,1440,17.548288,1440,DELTA_VARIANTS,7d full alternative controls; permanent daily comparison,Keep scenario differences; do not merge unequal phases,JSON top-level field
+priority_sessions,[table / no payload observed on 11 Nov],0,,,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,schema/table
+priority_summaries,comparison_context,1,4.3e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,comparison_status,1,2.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,day,1,1.2e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,device_actions,1,1e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,gap_s,1,3e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,limits,1,0.00144,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,models,1,0.000954,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,observed_covered_s,1,1.7e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,observed_ev_kwh_ac,1,3e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,phase_max_measured_a,1,2.8e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,phase_observation_counts,1,3.1e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,phase_statistics_scope,1,5.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,policy,1,2.1e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,priority_changes,1,1e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,reasons,1,4.1e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,sample_count,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,session,1,0.00148,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,soc_initialized_at,1,3.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,started_at,1,3.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,summary_version,1,2.8e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,uncovered_seconds,1,8.1e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summaries,version,1,8e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,comparison_context,1,4.3e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,comparison_status,1,2.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,day,1,1.2e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,device_actions,1,1e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,gap_s,1,3e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,limits,1,0.00144,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,models,1,0.000954,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,observed_covered_s,1,1.7e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,observed_ev_kwh_ac,1,3e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,phase_max_measured_a,1,2.8e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,phase_observation_counts,1,3.1e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,phase_statistics_scope,1,5.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,policy,1,2.1e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,priority_changes,1,1e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,reasons,1,4.1e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,sample_count,1,4e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,session,1,0.00148,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,soc_initialized_at,1,3.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,started_at,1,3.4e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,summary_version,1,2.8e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,uncovered_seconds,1,8.1e-05,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+priority_summary_revisions,version,1,8e-06,1,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",JSON top-level field
+ram_control_events,after,48,0.000188,30,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,allocation_missing_inputs,2,1.5e-05,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,applied_to_control,48,0.00024,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,at,48,0.001632,35,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,before,48,0.00019,30,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,day,48,0.000576,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,decision,29,0.001121,27,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,device_actions,48,4.8e-05,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,diagnostic,2,0.003557,2,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,entity_id,48,0.001406,8,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,expires_at,3,0.000102,3,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,input_valid_until,3,0.000102,3,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,kind,48,0.000656,8,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,label,48,0.001882,7,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,persistent_writes,48,4.8e-05,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,policy,48,0.001248,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,previous_expires_at,3,0.000102,3,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,reason,48,0.000775,9,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,scheduled_at,1,2.7e-05,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,snapshot_hash,1,6.6e-05,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,software_version,48,0.000384,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,storage_class,29,0.000638,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_events,wire_command,29,0.000116,1,PERMANENT_MEANINGFUL_EVENT,"Forever, deduplicate unchanged benign boilerplate","Keep source at, reason, old/new values and errors",JSON top-level field
+ram_control_samples,actual_charge_dc_a,1440,0.00432,1,KEEP_7D_CONTROL_SAMPLE,7d actual and shadow control,"Keep AC/DC and phase data, source timestamp",JSON top-level field
+ram_control_samples,actual_limit_dc_a,1440,0.00576,1,KEEP_7D_CONTROL_SAMPLE,7d actual and shadow control,"Keep AC/DC and phase data, source timestamp",JSON top-level field
+ram_control_samples,at,1440,0.04896,1440,KEEP_7D_CONTROL_SAMPLE,7d actual and shadow control,"Keep AC/DC and phase data, source timestamp",JSON top-level field
+ram_control_samples,binding_phase,1440,0.001446,4,KEEP_7D_CONTROL_SAMPLE,7d actual and shadow control,"Keep AC/DC and phase data, source timestamp",JSON top-level field
+ram_control_samples,collection_snapshot,1440,0.332404,1440,REFERENCE_CANONICAL_FRAME,7d shared original frame,Must preserve collector read_at and source ages,JSON top-level field
+ram_control_samples,day,1440,0.01728,1,KEEP_7D_CONTROL_SAMPLE,7d actual and shadow control,"Keep AC/DC and phase data, source timestamp",JSON top-level field
+ram_control_samples,device_actions,1440,0.00144,1,STATIC_VERSION_MANIFEST,"Once per version, exception/event if deviates",Physical actuation absence must remain auditable,JSON top-level field
+ram_control_samples,frame_signature,1440,0.09504,1430,QUALITY_OR_INCIDENT,7d raw; forever abnormal/blocked/event summaries,Stale/lease/timeout failures must be explicitly preserved,JSON top-level field
+ram_control_samples,hardware_response_verified,1440,0.0072,1,STATIC_VERSION_MANIFEST,"Once per version, exception/event if deviates",Physical actuation absence must remain auditable,JSON top-level field
+ram_control_samples,input_errors,1440,0.002931,3,QUALITY_OR_INCIDENT,7d raw; forever abnormal/blocked/event summaries,Stale/lease/timeout failures must be explicitly preserved,JSON top-level field
+ram_control_samples,input_reports,1440,9.260153,1440,REFERENCE_PRIORITY_INPUTS,"7d referenced canonical frame, not duplicated 24 keys",1440/1440 exact complete-field matches measured; replay/test needed,JSON top-level field
+ram_control_samples,input_valid_until,1440,0.048886,1120,QUALITY_OR_INCIDENT,7d raw; forever abnormal/blocked/event summaries,Stale/lease/timeout failures must be explicitly preserved,JSON top-level field
+ram_control_samples,intent_expires_at,1440,0.048946,1430,QUALITY_OR_INCIDENT,7d raw; forever abnormal/blocked/event summaries,Stale/lease/timeout failures must be explicitly preserved,JSON top-level field
+ram_control_samples,intent_renewal,1440,0.02863,3,QUALITY_OR_INCIDENT,7d raw; forever abnormal/blocked/event summaries,Stale/lease/timeout failures must be explicitly preserved,JSON top-level field
+ram_control_samples,manual_control,1440,0.929966,1440,CHANGE_EVENTS_PLUS_PERIODIC_QUALITY,7d changed/error/sparse heartbeat; permanent significant transition,Do not hide stale owner/state or emergency transition,JSON top-level field
+ram_control_samples,new_frame,1440,0.00577,2,QUALITY_OR_INCIDENT,7d raw; forever abnormal/blocked/event summaries,Stale/lease/timeout failures must be explicitly preserved,JSON top-level field
+ram_control_samples,owner_reports,1440,1.714372,1440,CHANGE_EVENTS_PLUS_PERIODIC_QUALITY,7d changed/error/sparse heartbeat; permanent significant transition,Do not hide stale owner/state or emergency transition,JSON top-level field
+ram_control_samples,persistent_writes,1440,0.00144,1,STATIC_VERSION_MANIFEST,"Once per version, exception/event if deviates",Physical actuation absence must remain auditable,JSON top-level field
+ram_control_samples,phase,1440,0.448632,1427,KEEP_7D_CONTROL_SAMPLE,7d actual and shadow control,"Keep AC/DC and phase data, source timestamp",JSON top-level field
+ram_control_samples,policy,1440,0.03744,1,STATIC_VERSION_MANIFEST,"Once per version, exception/event if deviates",Physical actuation absence must remain auditable,JSON top-level field
+ram_control_samples,proposed_dc_a,1440,0.019997,32,KEEP_7D_CONTROL_SAMPLE,7d actual and shadow control,"Keep AC/DC and phase data, source timestamp",JSON top-level field
+ram_control_samples,ram_target_ac_w,1440,0.004754,28,KEEP_7D_CONTROL_SAMPLE,7d actual and shadow control,"Keep AC/DC and phase data, source timestamp",JSON top-level field
+ram_control_samples,reason,1440,0.014563,5,QUALITY_OR_INCIDENT,7d raw; forever abnormal/blocked/event summaries,Stale/lease/timeout failures must be explicitly preserved,JSON top-level field
+ram_control_samples,report_skew_s,1440,0.011344,1214,QUALITY_OR_INCIDENT,7d raw; forever abnormal/blocked/event summaries,Stale/lease/timeout failures must be explicitly preserved,JSON top-level field
+ram_control_samples,virtual_limit_dc_a,1440,0.019997,32,KEEP_7D_CONTROL_SAMPLE,7d actual and shadow control,"Keep AC/DC and phase data, source timestamp",JSON top-level field
+ram_control_samples,wallbox,1440,0.665126,1440,CHANGE_EVENTS_PLUS_PERIODIC_QUALITY,7d changed/error/sparse heartbeat; permanent significant transition,Do not hide stale owner/state or emergency transition,JSON top-level field
+ram_control_sessions,accepted_solax_reports,1,0.000601,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,closed_at,1,3.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,counts,1,9.7e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,day,1,1.2e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,device_actions,1,1e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,event_count,1,2e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,exact_restore,1,4e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,first_seen_at,1,3.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,good_frames,1,1e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,interface,1,0.001179,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,last_intent,1,0.000278,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,last_processed_at,1,3.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,last_reason,1,1e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,last_signature,1,6.6e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,late_start_seconds,1,9e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,live_ready,1,5e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,mode,1,1.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,operating_context,1,0.000243,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,owned,1,0.001497,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,persistent_writes,1,1e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,policy,1,2.6e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,previous,1,4e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,restoration,1,0.001723,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,restoration_attempted_at,1,3.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,restoration_status,1,1.9e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,shadow_model,1,0.000303,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,snapshot,1,0.002291,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,snapshot_hash,1,6.6e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,software_version,1,8e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,started_at,1,3.4e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,statistics,1,0.00052,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,status,1,8e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,target_ac_w,1,3e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,unresolved_count,1,1e-06,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,wallbox,1,0.000462,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,window_end,1,2.7e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+ram_control_sessions,window_start,1,2.7e-05,1,ACTIVE_AND_DAILY_FINAL,"Until closed; final result forever, verbose checkpoint 7d",Restart/lease state never expires while active,JSON top-level field
+samples,[table / no payload observed on 11 Nov],0,,,SEVEN_DAY_RAW_THEN_AGGREGATE,7d; hourly or event-derived outputs retained longer,Verify all consumers e.g. 45/90/366d analytic windows,schema/table
+soc_decisions,allocation_policy,136,0.002856,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,assumptions,139,0.036696,1,REFERENCE_SHARED_VERSION,7d full snapshot / permanent pinned version for decisive plan,Reconstruct original sealed decision before hash verification,JSON top-level field
+soc_decisions,attainable_soc_05,136,0.00898,11,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,battery_energy_model,136,0.102544,1,REFERENCE_SHARED_VERSION,7d full snapshot / permanent pinned version for decisive plan,Reconstruct original sealed decision before hash verification,JSON top-level field
+soc_decisions,calibration_context,136,1.539112,3,REFERENCE_SHARED_VERSION,7d full snapshot / permanent pinned version for decisive plan,Reconstruct original sealed decision before hash verification,JSON top-level field
+soc_decisions,calibration_summary,139,1.573897,3,REFERENCE_SHARED_VERSION,7d full snapshot / permanent pinned version for decisive plan,Reconstruct original sealed decision before hash verification,JSON top-level field
+soc_decisions,candidates,136,6.303401,136,MATERIAL_PLAN_OR_7D,Full 7d; permanent only at actual material change / official 03:00 decision,"Preserve original as-of, all alternatives for final chosen plan",JSON top-level field
+soc_decisions,corrections,136,0.020903,4,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,current_soc,136,0.000544,4,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,day,139,0.001668,1,PIN_RESULT_OR_EVENT,7d every issuance; forever decisive/invalid/changed/closed events,Keep 30min validity and revocations independent of storage throttling,JSON top-level field
+soc_decisions,decision_hash,139,0.009174,139,PIN_RESULT_OR_EVENT,7d every issuance; forever decisive/invalid/changed/closed events,Keep 30min validity and revocations independent of storage throttling,JSON top-level field
+soc_decisions,decision_hash_schema,139,0.003753,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,decision_reason,136,0.0034,1,PIN_RESULT_OR_EVENT,7d every issuance; forever decisive/invalid/changed/closed events,Keep 30min validity and revocations independent of storage throttling,JSON top-level field
+soc_decisions,demand_fully_met,136,0.000553,2,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,device_actions,139,0.000139,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,economic_comparison,136,0.002448,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,ev_deficit_ac_kwh,136,0.008296,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,ev_observation,139,0.063972,137,MATERIAL_PLAN_OR_7D,Full 7d; permanent only at actual material change / official 03:00 decision,"Preserve original as-of, all alternatives for final chosen plan",JSON top-level field
+soc_decisions,ev_requirement,139,0.017934,2,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,ev_requirement_source,139,0.006373,2,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,ev_telemetry_roles,139,0.015707,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,first_sustained_pv_cover_at,136,0.003419,2,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,forecast_periods,136,4.313647,136,MATERIAL_PLAN_OR_7D,Full 7d; permanent only at actual material change / official 03:00 decision,"Preserve original as-of, all alternatives for final chosen plan",JSON top-level field
+soc_decisions,forecast_versions,139,43.139766,8,REFERENCE_SHARED_VERSION,7d full snapshot / permanent pinned version for decisive plan,Reconstruct original sealed decision before hash verification,JSON top-level field
+soc_decisions,history_source,139,0.072975,1,REFERENCE_SHARED_VERSION,7d full snapshot / permanent pinned version for decisive plan,Reconstruct original sealed decision before hash verification,JSON top-level field
+soc_decisions,horizon_complete,136,0.000652,2,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,horizon_end,136,0.003672,2,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,house_validation,139,0.194739,3,REFERENCE_SHARED_VERSION,7d full snapshot / permanent pinned version for decisive plan,Reconstruct original sealed decision before hash verification,JSON top-level field
+soc_decisions,input_snapshot,139,1.676266,139,MATERIAL_PLAN_OR_7D,Full 7d; permanent only at actual material change / official 03:00 decision,"Preserve original as-of, all alternatives for final chosen plan",JSON top-level field
+soc_decisions,issued_at,139,0.004726,139,PIN_RESULT_OR_EVENT,7d every issuance; forever decisive/invalid/changed/closed events,Keep 30min validity and revocations independent of storage throttling,JSON top-level field
+soc_decisions,live_ready,139,0.000695,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,missing_inputs,3,0.000372,1,PIN_RESULT_OR_EVENT,7d every issuance; forever decisive/invalid/changed/closed events,Keep 30min validity and revocations independent of storage throttling,JSON top-level field
+soc_decisions,mode,139,0.001946,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,model_hash,136,0.008976,3,PIN_RESULT_OR_EVENT,7d every issuance; forever decisive/invalid/changed/closed events,Keep 30min validity and revocations independent of storage throttling,JSON top-level field
+soc_decisions,model_version_hash,139,0.009174,6,PIN_RESULT_OR_EVENT,7d every issuance; forever decisive/invalid/changed/closed events,Keep 30min validity and revocations independent of storage throttling,JSON top-level field
+soc_decisions,night_charge_ac_kwh,136,0.002429,20,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,night_plan_eligible,136,0.000652,2,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,objective,136,0.00748,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,policy,139,0.006116,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,power_budget,136,0.14063,136,MATERIAL_PLAN_OR_7D,Full 7d; permanent only at actual material change / official 03:00 decision,"Preserve original as-of, all alternatives for final chosen plan",JSON top-level field
+soc_decisions,pre_window_capture,139,0.000694,2,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,priority_alternatives,136,0.844554,136,MATERIAL_PLAN_OR_7D,Full 7d; permanent only at actual material change / official 03:00 decision,"Preserve original as-of, all alternatives for final chosen plan",JSON top-level field
+soc_decisions,reference_forecast_day_kwh,136,0.000859,6,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,schema_version,139,0.000139,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,season,136,0.001088,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,selected,136,0.353607,136,MATERIAL_PLAN_OR_7D,Full 7d; permanent only at actual material change / official 03:00 decision,"Preserve original as-of, all alternatives for final chosen plan",JSON top-level field
+soc_decisions,selection_method,136,0.0068,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,soc_at_03_estimate,136,0.000613,10,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,soc_at_05_estimate,136,0.000623,9,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,status,139,0.003424,3,PIN_RESULT_OR_EVENT,7d every issuance; forever decisive/invalid/changed/closed events,Keep 30min validity and revocations independent of storage throttling,JSON top-level field
+soc_decisions,sunrise,136,0.003672,2,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,target_reached_all_scenarios,136,0.000553,2,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,target_semantics,136,0.008296,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,target_shortfall_soc_pct,136,0.0086,10,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,target_soc_pct,139,0.000284,10,PIN_RESULT_OR_EVENT,7d every issuance; forever decisive/invalid/changed/closed events,Keep 30min validity and revocations independent of storage throttling,JSON top-level field
+soc_decisions,terminal_price_czk_kwh,136,0.000816,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,timeline,136,4.456055,136,MATERIAL_PLAN_OR_7D,Full 7d; permanent only at actual material change / official 03:00 decision,"Preserve original as-of, all alternatives for final chosen plan",JSON top-level field
+soc_decisions,warnings,139,0.05931,3,PIN_RESULT_OR_EVENT,7d every issuance; forever decisive/invalid/changed/closed events,Keep 30min validity and revocations independent of storage throttling,JSON top-level field
+soc_decisions,window_end,139,0.003753,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_decisions,window_start,139,0.003753,1,SEVEN_DAY_OR_PERMANENT_PLAN_FIELD,7d all; forever only if included in pinned result,Material plan reconstruction first,JSON top-level field
+soc_model_versions,at,4,0.000136,4,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_model_versions,battery_model,4,0.009224,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_model_versions,device_actions,4,4e-06,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_model_versions,ev_calibration,4,0.025764,4,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_model_versions,history_source,4,0.0021,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_model_versions,house_data_hash,4,0.000264,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_model_versions,house_hours,4,2e-05,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_model_versions,house_validation,4,0.005604,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_model_versions,policy,4,0.000176,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_model_versions,pv_models,4,0.044744,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_model_versions,pv_pairs,4,1.6e-05,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_model_versions,version,4,3.2e-05,2,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+soc_observations,at,1331,0.045254,1331,AGGREGATE_TO_HOUR_DAY,7d minute raw; 60-366d bounded quality aggregates,"Preserve counter discontinuities, constraint and coverage",JSON top-level field
+soc_observations,ev_counter,1331,0.007984,3,AGGREGATE_TO_HOUR_DAY,7d minute raw; 60-366d bounded quality aggregates,"Preserve counter discontinuities, constraint and coverage",JSON top-level field
+soc_observations,ev_soc,1331,0.005324,20,AGGREGATE_TO_HOUR_DAY,7d minute raw; 60-366d bounded quality aggregates,"Preserve counter discontinuities, constraint and coverage",JSON top-level field
+soc_observations,ev_w,1331,0.003994,2,AGGREGATE_TO_HOUR_DAY,7d minute raw; 60-366d bounded quality aggregates,"Preserve counter discontinuities, constraint and coverage",JSON top-level field
+soc_observations,export_limit_w,1331,0.007984,2,AGGREGATE_TO_HOUR_DAY,7d minute raw; 60-366d bounded quality aggregates,"Preserve counter discontinuities, constraint and coverage",JSON top-level field
+soc_observations,house_w,1331,0.007016,736,AGGREGATE_TO_HOUR_DAY,7d minute raw; 60-366d bounded quality aggregates,"Preserve counter discontinuities, constraint and coverage",JSON top-level field
+soc_observations,inverter_w,1331,0.006368,552,AGGREGATE_TO_HOUR_DAY,7d minute raw; 60-366d bounded quality aggregates,"Preserve counter discontinuities, constraint and coverage",JSON top-level field
+soc_observations,outdoor_c,1331,0.004066,83,AGGREGATE_TO_HOUR_DAY,7d minute raw; 60-366d bounded quality aggregates,"Preserve counter discontinuities, constraint and coverage",JSON top-level field
+soc_observations,pv_counter,1331,0.003994,78,AGGREGATE_TO_HOUR_DAY,7d minute raw; 60-366d bounded quality aggregates,"Preserve counter discontinuities, constraint and coverage",JSON top-level field
+soc_observations,pv_w,1331,0.005114,420,AGGREGATE_TO_HOUR_DAY,7d minute raw; 60-366d bounded quality aggregates,"Preserve counter discontinuities, constraint and coverage",JSON top-level field
+soc_observations,soc,1331,0.005324,56,AGGREGATE_TO_HOUR_DAY,7d minute raw; 60-366d bounded quality aggregates,"Preserve counter discontinuities, constraint and coverage",JSON top-level field
+soc_observations,software_version,1331,0.010648,2,MOVE_TO_PROVENANCE_VERSION,"7d raw, permanent version metadata",No fake freshness,JSON top-level field
+soc_reviews,[table / no payload observed on 11 Nov],0,,,PERMANENT_RESULT,"Forever, light summary or model output","Keep coverage, unknown and model version/policy",schema/table
+standalone_ev_history,[table / no payload observed on 11 Nov],0,,,SEVEN_DAY_RAW_THEN_AGGREGATE,7d; hourly or event-derived outputs retained longer,Verify all consumers e.g. 45/90/366d analytic windows,schema/table
+standalone_imports,ev_rows,1,5e-06,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+standalone_imports,no_external_runtime_database,1,4e-06,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+standalone_imports,sha256,1,6.6e-05,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+standalone_imports,source,1,4.4e-05,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+standalone_imports,source_captured_at,1,3.4e-05,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+standalone_imports,status,1,1e-05,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+standalone_imports,weather_versions,1,3e-06,1,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,JSON top-level field
+telemetry_mappings,[table / no payload observed on 11 Nov],0,,,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,schema/table
+temperature_observations,[table / no payload observed on 11 Nov],0,,,REVIEW_LEGACY_AND_DEPENDENCIES,Keep until reader/compatibility inventory done,Empty in this day does not mean globally unused,schema/table
+versions,[table / no payload observed on 11 Nov],0,,,PINNED_IMMUTABLE_VERSION,"Forever while referenced, otherwise GC after safe grace",Hash/ref graph as-of integrity and no dangling refs,schema/table
+weather_attempts,[table / no payload observed on 11 Nov],0,,,REVIEW_LEGACY_AND_DEPENDENCIES,Keep until reader/compatibility inventory done,Empty in this day does not mean globally unused,schema/table
