@@ -13,7 +13,7 @@ Pro čtvrtek **2026-11-12** má `sensor.cez_indi_cenik` v atributech `today[]` t
 - 03:00–04:00 — **NT 1,8078 Kč/kWh**
 - 04:00–05:00 — **NT 1,8078 Kč/kWh**
 
-Jde o shodu s uživatelem přiloženým grafem. Senzační katalog hlásí `today_valid=true`, měnu Kč/kWh a všechny složky sazeb včetně DPH. `rates.hdo_zdroj` však uvádí **pevný rozvrh PTV3 zadaný uživatelem, nikoli živý signál**; nákupní základ, distribuce, uživatelská úprava `adjustment_pct=-50` a HDO čas nejsou nezávisle ověřenou skutečnou fakturací. Nelze bez kontroly smlouvy a faktury tvrdit, že jde o dodavatelem účtovanou dynamickou cenu.
+Jde o shodu s uživatelem přiloženým grafem. Senzor hlásí `today_valid=true`, měnu Kč/kWh a složky sazeb včetně DPH. **Upřesnění uživatele 12. 11. 2026:** konfigurace `sensor.cez_indi_cenik` byla sestavena **podle skutečné smlouvy ČEZ a ceníku ČEZ INDI**; uživatel ji již doložil a ověřil. **Pro tento dům jde o autoritativní smluvní cenový zdroj**, a cena **1,8078 Kč/kWh** v čase 03:00–05:00 je tudíž správná – nikoli pouze hypotetická cenová varianta. Pole `rates.hdo_zdroj` označuje pevný rozvrh PTV3 nastavený podle uživatelem ověřených podmínek; nejde o live HDO signál. Interní senzor `sensor.current_buy_electricity_price` reprezentuje jiný cenový model a nesmí nahradit smluvní cenu. Původní poznámka o údajně neověřeném smluvním ceníku byla nesprávná.
 
 Z uzavřené noční historie: síťový čítač zaznamenal rozdíl **23,63 kWh**, tedy orientační náklad dle tohoto konkrétního ceníku **23,63 × 1,8078 = 42,72 Kč**. Samostatný odečet wallboxu ukázal přibližně **22,67 kWh AC** (nikoli totéž co celkový odběr domu), skutečné SOC baterie domu **11 → 11 %**, její vstupní energie **0,0 kWh**. Stínový model baterie **10,76 kWh / ~94,49 %** je nerealizovaný návrh a do skutečné energie či faktury se nezapočítává.
 
@@ -49,7 +49,7 @@ Původní hypotéza „systém začne načítat data teprve ve 03:00“ byla po 
 - `startup_preflight.status` = `inputs_prevalidated` nebo `waiting_for_inputs`, s `reason_codes`, původním časem snímku a hodnotami `active=false, device_actions=0, control_lease=null`.
 - **Bez posunu okna**, příkazů HA, změn limitů 25 A, TTL, streamů, cen, automatizací, přidání nového fyzického adaptéru či změny původního `energy_coordinator`.
 - Preflight není náhradou za post-start čerstvost: **dvě nové koherentní sady jsou povinné i po 03:00**. Ani nyní nelze garantovat první nenulový virtuální intent přesně v 03:00:00.
-- Do vydání a provozního ověření 0.6.31 nadále běží v HA **0.6.30**. Úspěšné syntetické testy nejsou důkazem bezchybné budoucí noci.
+- **Aktuální stav 12.11.:** `0.6.31` je na Raspberry Pi v HA skutečně nasazená, `started`, pouze `observe_only`. [Provozní akceptace po nasazení](DEPLOYMENT_0631_20261112.md) potvrdila čerstvý sběr, evidenci s rostoucím ACK a nulové restarty. Úspěch mimo noc ještě neprokazuje skutečný start 02:59/03:00 příští noci.
 
 ## Akceptace a rizika
 

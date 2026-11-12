@@ -3,9 +3,9 @@
 - [Cena ČEZ INDI, audit noci a příprava 02:59](priority_shadow/docs/PREFLIGHT_PRICE_AUDIT_0631.md).
 - Běžící HA 0.6.30 absolvoval jednu úplnou noc 03–05 se zdravou evidencí; původní soukromý report je jen na RPi.
 - Závazný rozsah: observe_only; pro noční audit ignorovat události po 05:00:01 jako činnost tohoto doplňku.
-- Chybný audit ~185 Kč používal jiný senzor než graf. Podle uživatelského sensor.cez_indi_cenik platí obě hodiny NT 1,8078 Kč/kWh a 23,63 kWh odpovídá 42,72 Kč. Nejde o ověřenou fakturu.
+- Chybný audit ~185 Kč používal jiný senzor než graf. Podle uživatelského sensor.cez_indi_cenik platí obě hodiny NT 1,8078 Kč/kWh a 23,63 kWh odpovídá 42,72 Kč. Podle následného potvrzení uživatele 12. 11. 2026 byl tarifní senzor sestaven přesně podle smlouvy ČEZ a ceníku INDI a ověřen; smluvní ceník je pro tyto výpočty autoritativní.
 - 1s kolektor a 5s rychlá smyčka běžely už od 02:55. 0.6.31 od 02:59 připraví analytický model a validuje aktuální fázové reporty; dvě nové sady až po 03 zůstávají povinné.
-- Tento zdroj 0.6.31 zatím není důkazem CI ani nainstalované verze. N06-02, DB-01, LIVE-01/02/03 stále otevřeny.
+- `0.6.31` byla 12.11. nasazena na Raspberry Pi do HA, Supervisor `started/observe_only`. PR #42 a post-merge CI #106 PASS; živý ACK `committed_seq` 3→4, loss 0, monitor/evidence `ok`, 0 restartů. [Přesný důkaz](priority_shadow/docs/DEPLOYMENT_0631_20261112.md). Noc s preflightem 02:59 ještě neproběhla; N06-02, DB-01, LIVE-01/02/03 stále otevřeny.
 
 ---
 

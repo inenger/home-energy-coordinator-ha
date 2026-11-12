@@ -7,7 +7,7 @@ protipříkladů; důkaz dnešního runtime musí procházet produkční entrypo
 
 | Oblast / vada | Spustitelná regrese | Požadovaný invariant |
 |---|---|---|
-| PRICE-01: ceník vs odlišný tržní senzor | [test_preflight_0631](../priority_shadow/tests/test_preflight_0631.py) | Ceník NT 03–05 s 1,8078 Kč/kWh, oddělená cena jiného senzoru; žádné tvrzení o faktuře. |
+| PRICE-01: ceník vs odlišný tržní senzor | [test_preflight_0631](../priority_shadow/tests/test_preflight_0631.py) | Ceník NT 03–05 s 1,8078 Kč/kWh, ověřený uživatelem podle smlouvy ČEZ a ceníku INDI; odlišný senzor se nesmí zaměnit. |
 | START-01: předvalidace v 02:59 | [test_preflight_0631](../priority_shadow/tests/test_preflight_0631.py) | Analytická session připravená před 03, bez aktivní relace, správná DST fold; RAM diagnostika s chybnou fází/model, 2 nové rámce až po 03. |
 | SOC, energie, dostupnost předpovědi, stejné horizonty | [SOC](../priority_shadow/tests/test_soc_fixes.py), [navazující SOC](../priority_shadow/tests/test_soc_fixes_062.py), [planner](../priority_shadow/tests/test_soc_planner.py) | Žádná budoucí znalost, dvojí energie ani nepřiznaný chybějící vstup. |
 | Částečně dosažitelný cíl EV | [0.6.3](../priority_shadow/tests/test_partial_063.py) | Rozlišit žádoucí cíl a dosažený výsledek. |
@@ -87,3 +87,12 @@ test_analytics_admission_0629.py: real long local writer, normal FIFO/fast prior
 ## 0.6.30 · sedm diagnostikovaných softwarových vad
 
 [Kontrakt](../priority_shadow/docs/READINESS_FIXES_0630.md), [Python akceptace](../priority_shadow/tests/test_readiness_audit_0629.py), [asynchronní kontext](../priority_shadow/tests/test_collection_context_0618.py) a [skutečný render](../scripts/test_readiness_audit_0629.mjs). N06-03/04, REC-02, DATA-03/04, MON-03, UI-01: dokladovat konzervativní stop, neproměnit monitor v povel. Historické negativní reprodukce jsou [Python](history/readiness_counterexamples_0629.py) a [JS](history/readiness_counterexamples_0629.mjs).
+
+
+## Po instalaci 0.6.31 – samostatný provozní důkaz
+
+[Instalační report a naměřené meze](../priority_shadow/docs/DEPLOYMENT_0631_20261112.md):
+zdroj/CI PASS, nativní záloha před aktualizací, verze 0.6.31/started/observe_only,
+kolekce/storage/monitor/journal `ok`, nová persistentní potvrzení 3→4,
+žádná ztráta či restart pracovníků. Regrese 02:59 je syntetická; skutečná
+preflight noc 13.11. se zatím neověřila.

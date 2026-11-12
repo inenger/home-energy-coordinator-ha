@@ -60,3 +60,39 @@ přímá nová sada PASS. CI, merge a nasazení jsou samostatné důkazy.
 Původní soukromá data zůstávají na RPi, nikoli ve veřejném GitHubu.
 
 [Plný kontext](../../priority_shadow/docs/PREFLIGHT_PRICE_AUDIT_0631.md).
+
+
+## 12.11.2026 – dodatečné potvrzení autority ceníku ČEZ INDI
+
+Uživatel výslovně opravil předchozí tvrzení asistenta, že ceník nebyl nezávisle
+ověřen: tarifní čidlo `sensor.cez_indi_cenik` bylo již sestaveno **dle
+skutečné smlouvy ČEZ a ceníku INDI**, doloženo a ověřeno. Původní zdokumentovaná
+pochybnost je proto zastaralá a nesmí se dál citovat jako otevřené riziko.
+Měřený nákup 03:00–05:00 dne 12.11 se oceňuje **1,8078 Kč/kWh**; 23,63 kWh
+odpovídá **42,72 Kč**. Předchozí chybný audit ~185 Kč používal nesouvisející
+cenový senzor. Žádná změna ceníku, stávajících automatizací či fyzické akce
+z tohoto opravení nevyplývá. Původní text chybného předpokladu zůstává výše
+v chronologii zachovaný, novější autorita je tento opravený záznam.
+
+
+## 12. 11. 2026 – instalace 0.6.31 po cenové korekci
+
+Veřejný základ `7b38dc7216ce23b98cda82217addb7163103d312`,
+PR #42, CI PR #105 a main #106: dvě job sady každé PASS.
+Aktivní HA byl 0.6.30 / `started` / `observe_only`. Před stopem pořízena
+nová nativní Supervisor partial záloha 0.6.30 a ověřena identita doplňku;
+odděleně zachován zdrojový rollback, kontrolní součet a lokální log.
+Instalátor zastavil pouze stínový doplněk, nahradil jeho Docker context,
+provedl `store reload` / `apps update` a ověřil 3× nové `started` 0.6.31.
+Build na RPi byl pomalejší, ale neselhal; nezaměňovat trvající build s výpadkem.
+
+Přímý post-start první monitor vykazoval krátce `starting` a `committed_seq=0`,
+což samo nebylo označeno za PASS. Následující dva čerstvé odečty prokázaly
+`committed_seq` 3→4, `collection_health=ok`, `evidence_pipeline=ok`,
+`monitor_publication=ok`, `journal_transport=ok`, 0 ztrát/worker restartů,
+`device_actions=0` a zachování uzavřeného 12.11. v history. Jde o důkaz
+skutečného dne po deploy, nikoli o důkaz reálného 02:59 preflightu 13.11.
+Při tomto kroku nebyla žádná chybná hypotéza potlačena ani mazána historie.
+[Provozní report](../../priority_shadow/docs/DEPLOYMENT_0631_20261112.md).
+
+Celé identifikátory backupu, živé JSON a logy zůstaly pouze na Raspberry Pi.

@@ -95,3 +95,13 @@ staré vady**. Pro novou verzi je rozhodující odpovídající regresní test.
 0.6.30 v RPi absolvovala novou noc 03–05. Uživatelský ceník 1,8078 Kč/kWh je
 odlišný od jiného tržního senzoru. Nový zdroj 0.6.31 kontroluje model/fáze
 již 02:59, ale ještě není doložená jeho skutečná noc. Žádné live řízení.
+
+
+## Produkční instalace 0.6.31 – 12. 11. 2026
+
+[Čerstvá Supervisor záloha, podpis zdrojového commitu, HA version/mode,
+skutečný post-install ACK 3→4, monitor/storage health a meze důkazu](../priority_shadow/docs/DEPLOYMENT_0631_20261112.md).
+PR #42 a Actions #105/#106 PASS, nový runtime `started` výhradně `observe_only`,
+nulové povely, nulová ztráta a restarty v aktuálním ověřeném úseku.
+Noc následující po nasazení není nahrazena tímto denním testem.
+Smluvní cena 1,8078 Kč/kWh byla dle uživatele již ověřena proti smlouvě ČEZ INDI.
