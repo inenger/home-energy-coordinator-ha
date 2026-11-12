@@ -11,6 +11,7 @@ from energy.core import TZ,instant,digest
 from energy.soc_calibration import validate_household,pre_window,season
 from energy.soc_energy import Battery
 from energy.soc_evidence import seal,verify
+from energy.soc_storage import read as read_soc_decision
 from energy.soc_history import minute_hours,covered_forecast
 from energy.soc_planner import simulate,slots,plan
 from energy.soc_runtime import schema,session_plan,record_decision,PlannerService,view,inputs
@@ -179,7 +180,7 @@ class EvidenceRegressions(unittest.TestCase):
             s=Store(Path(td)/'x.sqlite');schema(s.db)
             r['model_version_hash']='new-model';r=record_decision(s,r)
             key,blob=s.db.execute('SELECT hash,payload FROM soc_decisions').fetchone()
-            self.assertEqual(key,unpack(blob)['decision_hash']);self.assertTrue(verify(unpack(blob))['verified'])
+            self.assertEqual(key,read_soc_decision(s.db,blob)['decision_hash']);self.assertTrue(verify(read_soc_decision(s.db,blob))['verified'])
             self.assertEqual(verify({'decision_hash':'legacy'})['status'],'legacy_unversioned_hash');s.close()
 
     def make_store(self,path):

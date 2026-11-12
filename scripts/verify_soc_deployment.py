@@ -21,6 +21,7 @@ def main():
     sys.path.insert(0, '/addons/energy_priority_shadow')
     from energy.store import unpack
     from energy.soc_evidence import verify
+    from energy.soc_storage import read as read_soc_decision
     from energy.soc_planner import POLICY
     headers = {'Authorization': 'Bearer '+os.environ['SUPERVISOR_TOKEN']}
 
@@ -82,7 +83,7 @@ def main():
         preserved[table] = True
     v2 = legacy = current_policy = 0
     for key, blob in db.execute('SELECT hash,payload FROM soc_decisions'):
-        d = unpack(blob)
+        d = read_soc_decision(db,blob)
         v = verify(d)
         if v['status'] == 'legacy_unversioned_hash':
             legacy += 1

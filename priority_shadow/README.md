@@ -1,3 +1,10 @@
+# 0.6.32 — sdílené immutable SOC podklady, bez změny energetické logiky
+
+Kompletní SOC rozhodnutí se vrací v původním formátu přes ověřené
+SHA-256 obsahově adresované objekty. Žádná retence, výmaz ani
+omezení historie či snížení počtu vzorků se nezavádí.
+[Audit a přesný benchmark](docs/STORAGE_DEDUP_0632.md).
+
 # 0.6.31 – předběžná kontrola od 02:59 a korekce ceny v nočním auditu
 
 [Detailní zdroj a regresní případy](docs/PREFLIGHT_PRICE_AUDIT_0631.md).
