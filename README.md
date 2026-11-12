@@ -3,7 +3,7 @@
 | Doplněk | Adresář | Verze |
 |---|---|---|
 | Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.4 |
-| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.30 |
+| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.31 |
 
 Oba balíčky mají vlastní Docker build context. Nový stínový doplněk nemění
 verzi ani provoz původního koordinátoru. Veřejné balíčky neobsahují soukromou
@@ -15,6 +15,8 @@ případy a dosud neověřené předpoklady. Další podrobnosti jsou v README
 jednotlivých doplňků. Provoz a soukromé analýzy patří na RPi.
 
 ## Dokumentace
+
+- [Korekce ceny ČEZ INDI, audit 12.11, preflight 02:59](priority_shadow/docs/PREFLIGHT_PRICE_AUDIT_0631.md).
 
 **Začněte [aktuálním stavem a rozcestníkem](docs/PROJECT_STATUS.md).**
 [Otevřené chyby](docs/KNOWN_ISSUES.md) · [Mapa regresí](docs/TEST_MATRIX.md) · [Postup vydání a obnovy](docs/RELEASE_RUNBOOK.md).

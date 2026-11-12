@@ -1,12 +1,14 @@
 # Registr známých problémů a neověřených podmínek
 
-Platí pro veřejný zdroj 0.6.30. Každý další nález dostane stabilní ID.
+Platí pro veřejný zdroj 0.6.31. Každý další nález dostane stabilní ID.
 OPRAVENO označuje opravený mechanismus s regresí; není zárukou všech
 budoucích běhů. OTEVŘENO znamená nevyřešenou příčinu nebo chybějící důkaz.
 OMEZENÍ je výslovná hranice návrhu. Podrobné provozní podklady nejsou veřejné.
 
 | ID | Stav | Problém / dopad | Důkaz a další nutný krok |
 |---|---|---|---|
+| PRICE-01 | OPRAVENO V AUDITU – FAKTURACE NEOVĚŘENA | Starý audit použil senzor current_buy_electricity_price místo uživatelského senzoru cez_indi_cenik. Pro NT 1,8078 Kč/kWh a 23,63 kWh vychází 42,72 Kč; ~185 Kč použilo jiný model. | [Oprava a omezení](../priority_shadow/docs/PREFLIGHT_PRICE_AUDIT_0631.md), [regrese](../priority_shadow/tests/test_preflight_0631.py). Pevný PTV3 rozvrh a smluvní fakturaci ověřit nezávisle. |
+| START-01 | OPRAVENO V KÓDU 0.6.31 – NOČNÍ DŮKAZ ČEKÁ | Kolektor 1 s / rychlá smyčka 5 s běžely již od 02:55; chyběl předběžný model a validace fází před 03. | [Preflight](../priority_shadow/docs/PREFLIGHT_PRICE_AUDIT_0631.md), [regrese](../priority_shadow/tests/test_preflight_0631.py). Pre 03 žádný owner/lease/intent; po hranici dva nové frame; správný DST fold a zachovaný fail-closed. |
 | N06-01 | OPRAVENO V KÓDU | Cold záloha zastavila celý primární doplněk; obnova pomocného procesu to neřeší. | [Hot-backup kontrakt](../priority_shadow/docs/HOT_BACKUP_0624.md), [regrese](../priority_shadow/tests/test_native_backup_0624.py). U každého nasazení ověřit skutečný native archiv, stejný runtime a postup commitů během zálohy, obnovu pouze odděleně. |
 | N06-02 | OTEVŘENO | Kolektor může nedodat novou sadu před expirací cache. Přesný mechanismus konkrétního zpoždění není prokázaný. | [Audit](NIGHT_AUDIT_20261106.md), [kolektor](../priority_shadow/energy/priority_collection.py). Zachytit začátek i průběh aktuálního requestu, doručení, pořadí a monotónní stáří cache, plánování/CPU/I/O. Ukončit až po reprodukci a regresi přes produkční smyčku. Neprodlužovat TTL a nevymýšlet heartbeat. |
 | DB-01 | OTEVŘENO — DIAGNOSTIKA | Lokální writer contention může vyvolat retry analytiky. Samotný kumulativní počet retry neurčuje aktuální zdraví ani příčinu čekání. | [FIFO a retry](../priority_shadow/docs/NIGHT_FIXES_0623.md), [SQLite](../priority_shadow/docs/SQLITE_FIXES_0619.md), [testy](../priority_shadow/tests/test_night_fixes_0623.py). Rozlišit local_writer, SQLITE_BUSY/LOCKED a I/O. Pro konkrétní příčinu doložit držitele a délku čekání bez blokování regulátoru. |

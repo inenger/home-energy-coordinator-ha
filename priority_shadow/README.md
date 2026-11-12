@@ -1,3 +1,9 @@
+# 0.6.31 – předběžná kontrola od 02:59 a korekce ceny v nočním auditu
+
+[Detailní zdroj a regresní případy](docs/PREFLIGHT_PRICE_AUDIT_0631.md).
+Observe_only beze změny, žádné povely ani změna původního koordinátoru.
+Zdroje a nasazení se ověřují samostatně.
+
 # 0.6.30 · opravy provozního auditu
 
 [Regrese, omezení a historie](docs/READINESS_FIXES_0630.md). Pouze observe_only.

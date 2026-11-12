@@ -1,3 +1,14 @@
+# Aktuální vývoj 0.6.31 · 12. 11. 2026
+
+- [Cena ČEZ INDI, audit noci a příprava 02:59](priority_shadow/docs/PREFLIGHT_PRICE_AUDIT_0631.md).
+- Běžící HA 0.6.30 absolvoval jednu úplnou noc 03–05 se zdravou evidencí; původní soukromý report je jen na RPi.
+- Závazný rozsah: observe_only; pro noční audit ignorovat události po 05:00:01 jako činnost tohoto doplňku.
+- Chybný audit ~185 Kč používal jiný senzor než graf. Podle uživatelského sensor.cez_indi_cenik platí obě hodiny NT 1,8078 Kč/kWh a 23,63 kWh odpovídá 42,72 Kč. Nejde o ověřenou fakturu.
+- 1s kolektor a 5s rychlá smyčka běžely už od 02:55. 0.6.31 od 02:59 připraví analytický model a validuje aktuální fázové reporty; dvě nové sady až po 03 zůstávají povinné.
+- Tento zdroj 0.6.31 zatím není důkazem CI ani nainstalované verze. N06-02, DB-01, LIVE-01/02/03 stále otevřeny.
+
+---
+
 # Stav 0.6.30
 
 [Sedm oprav readiness auditu](priority_shadow/docs/READINESS_FIXES_0630.md), bez LIVE a nasazení. N06-02, DB-01 a LIVE stále otevřené. Historické auditní protipříklady zachované.

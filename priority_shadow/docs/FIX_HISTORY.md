@@ -30,3 +30,11 @@ Aktuální zdroj0.6.27, pouze observe_only.
 ## Audit připravenosti 0.6.29 — runtime beze změny
 
 [Audit a reprodukce](../../docs/READINESS_AUDIT_0629.md): N06-03/N06-04/REC-02/DATA-03/DATA-04/MON-03/UI-01 jsou nově otevřené, LIVE-03 výslovné omezení monitorů. Counterexample PASS znamená potvrzenou mezeru. DOC-01 opravuje pouze dokumentaci a její kontrolu. Žádný fyzický adaptér ani aktivace LIVE. První dvě neúspěšné auditní fixture a vyvrácená hypotéza počasí jsou zachované v historii auditu.
+
+
+## 0.6.31 – PRICE-01 a START-01
+
+Opraven cenový zdroj původního nočního auditu, ne historická účetní faktura.
+Preflight v 02:59 připravuje model a vyhodnocuje aktuální vstupy; kolektor již
+běžel zrychleně od 02:55. Vlastnictví, intent a dvě nové sady po 03 jsou
+nezměněné. [Podrobnosti](PREFLIGHT_PRICE_AUDIT_0631.md).

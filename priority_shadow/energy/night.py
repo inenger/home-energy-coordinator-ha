@@ -5,7 +5,7 @@ cannot protect a 25 A breaker; no actuator writes exist in this module.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, time, timedelta
 import math
 from .core import TZ, VERSION, instant
 from .store import pack, unpack
@@ -45,6 +45,14 @@ def window(at):
     local = instant(at).astimezone(TZ)
     minute = local.hour * 60 + local.minute
     return 175 <= minute < 305  # 02:55–05:05, Prague local time
+
+
+def startup_preflight_window(at):
+    """Read-only preparation 02:59–03:00 local; never expands the active window."""
+    now=instant(at)
+    local=now.astimezone(TZ)
+    boundary=datetime.combine(local.date(),time(3),TZ).astimezone(timezone.utc)
+    return boundary-timedelta(minutes=1)<=now<boundary
 
 
 def ensure_schema(db):
