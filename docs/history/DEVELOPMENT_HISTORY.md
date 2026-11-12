@@ -37,3 +37,26 @@ Baseline source79d3f6d/treecde4d286. [Contract and retained failed candidate](..
 Vstupní veřejný merge2b83d779fcf416b72a8827adde1aa7fdd37b7953, runtime beze změny. [Nálezy, odmítnuté hypotézy a kritéria](../READINESS_AUDIT_0629.md). První suite5PASS/1FAIL: audit očekával sémantickou zprávu, která se v produkci ztrácí; vznikl MON-03 a přesná kontrola source location. První rozšířená worker fixture použila e.sqlite místo požadovaného evidence.sqlite; opravena fixture, nikoli recovery aserce. Hypotéza backdating nového počasí vyvrácena skutečným timestampem po převzetí odpovědi. Původní pokusy uchované. Nová sada dokládá vady, neopravuje je. DOC-01 opravuje aktuální rozcestník, verzi registru a rozpadlou tabulku; historické dokumenty nemazat. Soukromé provozní důkazy zůstávají na RPi.
 
 Předpublikační diff check ještě odmítl prázdný řádek na konci přeskládaného registru. Whitespace normalizován před commitem; žádná vzdálená publikace v neúspěšném pokusu neproběhla.
+
+
+## 12. 11. 2026 – PRICE-01 a START-01, 0.6.31
+
+Vstup main 5360c73d593b80b85d0e972ed828935ffd6ebe34, běžící RPi 0.6.30.
+Původní automatický audit zaměnil senzor current_buy_electricity_price (7,7080 /
+7,9089 Kč/kWh) za uživatelem používaný cez_indi_cenik (1,8078 Kč/kWh).
+Uvedených ~185 Kč je chybný ekvivalent pro uživatelův ceník; oprava 23,63 ×
+1,8078 = 42,72 Kč. Není ověřená smluvní fakturovaná částka.
+
+Vyvrácena hypotéza, že sběr začne až ve 03. Produkční noční window zrychluje
+collector na 1 s a RAM smyčku na 5 s již v 02:55. Skutečný nedostatek byl
+předsestavení session/modelu a předběžná kontrola fáze.
+Přidán read-only preflight od 02:59; před 03 žádné RAM sessions / events /
+commands / lease, dvě nové sady po 03 povinné, DST dvojitá hodina ošetřena.
+
+První syntetický test neplatné fáze FAIL: fixture měnila výkon L2 na identickou
+výchozí hodnotu, takže nevytvořila rozpor. Opravena pouze fixture na fyzicky
+nekoherentní proud L2 0,1 A; produkční ochrana nebyla oslabena. Následná
+přímá nová sada PASS. CI, merge a nasazení jsou samostatné důkazy.
+Původní soukromá data zůstávají na RPi, nikoli ve veřejném GitHubu.
+
+[Plný kontext](../../priority_shadow/docs/PREFLIGHT_PRICE_AUDIT_0631.md).

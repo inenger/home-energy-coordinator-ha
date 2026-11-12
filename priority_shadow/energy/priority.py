@@ -354,7 +354,9 @@ def observe(store,states,at,require_soc_plan=False,allocation_policy=None):
     if not last or last.get('priority')!=choice:
         with store.db:store.db.execute('INSERT OR IGNORE INTO priority_events VALUES(?,?)',
             (at,pack({'at':at,'priority':choice,'raw_option':value(points,'priority'),'source':HELPER,'device_actions':0})))
-    if active and allocation_policy=='instant-max-fill-v1':
+    if (active or night.startup_preflight_window(at)) and allocation_policy=='instant-max-fill-v1':
+        # Preflight only: read the existing immutable energy model early. Neither
+        # priority_runs nor charging history are created until 03:00 local.
         from .instant_fill import session as fill_session
         session=fill_session(store,day,at,points)
     else:session=effective_session(store,day,at,points,require_soc_plan) if active else None

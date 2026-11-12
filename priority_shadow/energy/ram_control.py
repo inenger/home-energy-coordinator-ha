@@ -412,6 +412,41 @@ def observe(store,states,result):
     return view(store,at,states)
 
 
+
+def startup_preflight(states,at,session):
+    """Diagnostics only: never creates a session, owner, command or lease.
+
+    A dry evaluation at the upcoming 03:00 boundary checks the *current*
+    report values and their original source ages. It does not make them
+    post-boundary reports. Two new coherent frames remain mandatory at 03:00.
+    """
+    if not night.startup_preflight_window(at):
+        return None
+    now=instant(at)
+    start=datetime.combine(now.astimezone(TZ).date(),time(3),TZ).astimezone(timezone.utc)
+    points,errors,diagnostic=inputs(states,at)
+    values=legacy.read(states);by={row['entity_id']:row for row in states}
+    for eid in legacy.MANAGED:
+        if values.get(eid,{}).get('value') is None:
+            errors.append('missing_managed_state:'+eid)
+    errors.extend(manual_control(states,at)['blocking_reasons'])
+    errors.extend(owner_errors(by,at))
+    choice=priority.LABELS.get(priority.value(points,'priority'))
+    soc=priority.value(points,'battery_soc') if priority.numeric(points,'battery_soc',10800) else None
+    candidate=priority.allocate(points,start.isoformat(),session,soc,choice)
+    if candidate.get('battery_ac_w') is None:
+        errors.append(candidate.get('reason') or 'invalid_charge_inputs')
+    if candidate.get('ev_reallocated_w',0)>max(100,(priority.value(points,'ev_w') or 0)*.03):
+        errors.append('requires_ev_control_not_implemented')
+    errors=sorted(set(errors))
+    return {'at':at,'window_start':start.isoformat(),
+            'status':'inputs_prevalidated' if not errors else 'waiting_for_inputs',
+            'reason_codes':errors,'phase_report_skew_s':diagnostic['report_skew_s'],
+            'original_snapshot_at':at,'active':False,'device_actions':0,
+            'control_lease':None,'post_window_frames_verified':0,
+            'post_window_revalidation_required':True,
+            'note':'Preliminary dry run, never an authorization to actuate.'}
+
 def record_failure(store,at,error_code,diagnostics=None):
     schema(store.db)
     with store.db:

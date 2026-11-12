@@ -1,3 +1,10 @@
+## 0.6.31
+
+- START-01: read-only validace modelu/fází v poslední minutě před 03:00; před startem nevznikne nový virtuální vlastník, lease nebo příkaz.
+- PRICE-01: opraven metodický výběr senzoru v auditu (cez_indi_cenik versus current_buy_electricity_price); faktura dodavatele neověřena.
+- Nové přesné regrese pro DST, cenu, neplatnou fázi/model a dvě nové post-start sady.
+- [Kompletní zdůvodnění a rizika](docs/PREFLIGHT_PRICE_AUDIT_0631.md).
+
 ## 0.6.30
 
 - Opravy N06-03/04, REC-02, DATA-03/04, MON-03 a UI-01; podrobnosti v [kontraktu](docs/READINESS_FIXES_0630.md).

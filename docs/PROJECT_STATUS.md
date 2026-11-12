@@ -1,14 +1,14 @@
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.30 -->
+<!-- shadow-version: 0.6.31 -->
 
-Stav veřejného zdroje k 11. 11. 2026. Historické poznámky v MEMORY a starších
+Stav zdrojového kandidáta k 12. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
 rozcestník a [registr nálezů](KNOWN_ISSUES.md).
 
 | Oblast | Autoritativní zdroj |
 |---|---|
-| Stínový doplněk 0.6.30, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
+| Stínový doplněk 0.6.31, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
 | Původní koordinátor, samostatný balíček | [config](../energy_coordinator/config.yaml) |
 | Známé chyby, nejistoty a podmínky uzavření | [KNOWN_ISSUES](KNOWN_ISSUES.md) |
 | Chyba → regresní test → rozsah důkazu | [TEST_MATRIX](TEST_MATRIX.md) |
@@ -87,3 +87,11 @@ staré vady**. Pro novou verzi je rozhodující odpovídající regresní test.
 ## Opravy v 0.6.30
 
 [Kontrakt oprav sedmi softwarových nálezů](../priority_shadow/docs/READINESS_FIXES_0630.md). Opraveno v izolovaném zdroji, bez hardwarové certifikace, provozního nasazení či změny observe_only. Historický audit 0.6.29 a N06-02, DB-01 a LIVE blokátory zůstávají zachované.
+
+
+## 0.6.31 – korekce auditu noci a příprava 02:59
+
+[Kontrakt ceny a preflightu](../priority_shadow/docs/PREFLIGHT_PRICE_AUDIT_0631.md):
+0.6.30 v RPi absolvovala novou noc 03–05. Uživatelský ceník 1,8078 Kč/kWh je
+odlišný od jiného tržního senzoru. Nový zdroj 0.6.31 kontroluje model/fáze
+již 02:59, ale ještě není doložená jeho skutečná noc. Žádné live řízení.
