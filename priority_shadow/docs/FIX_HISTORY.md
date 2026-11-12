@@ -38,3 +38,22 @@ Opraven cenový zdroj původního nočního auditu, ne historická účetní fak
 Preflight v 02:59 připravuje model a vyhodnocuje aktuální vstupy; kolektor již
 běžel zrychleně od 02:55. Vlastnictví, intent a dvě nové sady po 03 jsou
 nezměněné. [Podrobnosti](PREFLIGHT_PRICE_AUDIT_0631.md).
+
+
+## 12. 11. 2026 – potvrzený smluvní ČEZ INDI tarif
+
+Na základě výslovného potvrzení uživatele byl senzor `sensor.cez_indi_cenik`
+sestaven dle již doložené a ověřené smlouvy ČEZ INDI. Není to pouze neověřená
+modelová sazba. Starý odhad auditu 185 Kč byl nesprávný výběr jiného senzoru.
+Žádné hodnoty tarifní konfigurace nebyly změněny.
+
+
+## 12. 11. 2026 – nasazení 0.6.31
+
+Nativní backup s původní verzí 0.6.30 potvrzen Supervisor API před stopem.
+Instalován pouze samostatný `priority_shadow` z ověřeného merge commitu
+`7b38dc7`, post-merge GitHub Actions PASS. Supervisor `started / 0.6.31`,
+původní `observe_only` zachován. Dva živé snapshoty: durable ACK
+`committed_seq` 3→4, evidence, monitor a journal `ok`, 0 restartů, 0 ztrát,
+starý uzavřený den v journalu zůstává. Bez testu následující celé noci,
+bez zapnutí fyzického řízení. [Podklady](DEPLOYMENT_0631_20261112.md).

@@ -1,9 +1,10 @@
 ## 0.6.31
 
 - START-01: read-only validace modelu/fází v poslední minutě před 03:00; před startem nevznikne nový virtuální vlastník, lease nebo příkaz.
-- PRICE-01: opraven metodický výběr senzoru v auditu (cez_indi_cenik versus current_buy_electricity_price); faktura dodavatele neověřena.
+- PRICE-01: opraven metodický výběr senzoru v auditu (cez_indi_cenik versus current_buy_electricity_price); uživatel 12.11 potvrdil, že ČEZ INDI ceník je doložen a ověřen podle smlouvy.
 - Nové přesné regrese pro DST, cenu, neplatnou fázi/model a dvě nové post-start sady.
 - [Kompletní zdůvodnění a rizika](docs/PREFLIGHT_PRICE_AUDIT_0631.md).
+- [Dokumentační doplněk 12.11.: skutečné nasazení 0.6.31 a ověřené nové ACK na RPi](docs/DEPLOYMENT_0631_20261112.md).
 
 ## 0.6.30
 
