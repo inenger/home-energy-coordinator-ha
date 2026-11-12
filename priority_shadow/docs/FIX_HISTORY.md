@@ -66,3 +66,15 @@ Původní lokální FAIL Node: `'2.5' !== '2,5'` z small-ICU,
 nikoli chyba českého renderu v prohlížeči. UI-02 counterexample
 potvrdil skutečný RangeError. Python 607 PASS.
 Žádná změna aplikace či automatik; historie a archiv na RPi.
+
+## 12.11.2026 – daily byte census, no runtime fix
+
+[Quantified SQL storage audit](../../docs/STORAGE_VOLUME_ANALYSIS_20261112.md):
+24.423 MB logical rows in the completed 11.11 day, seven-day average
+29.896 MB/day, timestamped trailing 24h 26.908 MB.
+RET-02 backup full-copy write amplification from 6h interval,
+RET-03 all 20,154 journal chunks ACKed yet still stored,
+DATA-05 repeated forecast/calibration/session snapshots,
+DATA-06 identical collection_snapshot in 1,440 cross-domain pairs.
+Historical audit and integrity receipts retained. No physical control,
+WAL checkpoint, SQL DELETE, config edit or release version increment.

@@ -115,3 +115,17 @@ Smluvní cena 1,8078 Kč/kWh byla dle uživatele již ověřena proti smlouvě �
 ověřen v izolovaném SQL (SHA, integrity, FK). Nové RET-01/HIST-01 (vysoké),
 UI-02 (střední), SUP-01/START-02/UI-03 a QA-01. Zůstává NO-GO pro LIVE.
 Žádná runtime změna, žádný version bump.
+
+## 12.11.2026 – SQL data volume, duplication, retention design
+
+[Detailed read-only measurements and retention proposal](STORAGE_VOLUME_ANALYSIS_20261112.md).
+Consistent portable snapshot of 07:24 contains 43 SQL tables / 502.485 MB;
+2026-11-11 stored rows 24.423 MB in 12,743 records; seven completed days
+average 29.896 MB/day; rolling 24h 26.908 MB.
+New RET-02 (6h full SQLite portable copy, model 2.01GB/day copy writes),
+RET-03 (20,154 ACKed outbox chunks still in live SQL),
+DATA-05 (duplicate forecast, calibration and session fields),
+DATA-06 (1,440/1,440 identical collection_snapshot pairs).
+Existing RET-01 and HIST-01 still open. Hot 30d retention is
+conditional on immutable all-raw archive, hash/restore, and real
+card read-through after Recorder purge. No data deleted, no runtime change.

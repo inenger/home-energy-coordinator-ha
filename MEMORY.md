@@ -1,3 +1,13 @@
+# SQL evidence volume / retention study, 12. 11. 2026
+
+- [Evidence volume and retention report](docs/STORAGE_VOLUME_ANALYSIS_20261112.md): 11 Nov 24.423 MB of stored rows, average 5–11 Nov 29.896 MB/day, trailing 24h 26.908 MB, 43 tables. Portable copy 502.485 MB at 07:24. These are logical records, not physical daily SSD writes.
+- RET-02: every 6h full portable SQLite backup, estimated 2.01 GB/day of copy writes at today's DB size; preserve RPO until replacement validated.
+- RET-03: all 20,154 transport chunks durable-ACKed, but retained. HIST-01 warns old Recorder days are empty; do not delete without restored archive read-through.
+- DATA-05: 139 SOC decisions contain only 8 forecast_versions, plus repeated calibration and session. DATA-06: 1,440/1,440 identical cross-domain collection_snapshot.
+- Propose 30d hot only after an immutable full-raw archival API, daily manifest SHA-256, tested restore/replay and offsite replication. No runtime edits, deletion or version bump.
+
+---
+
 # Hloubkový audit 0.6.31 – 12. 11. 2026
 
 - [Kompletní audit k main c339139](docs/DEEP_AUDIT_0631_20261112.md): nové RET-01 (růst evidence proti 2 GiB), HIST-01 (staré SQL/ACK chunky nejsou v HA Recorder), UI-02 (RangeError na plan at), SUP-01 (watchdog=false), START-02 (02:59 session bez časované bariéry), UI-03 (nezobrazený preflight), QA-01 (RPi Node bez cs-CZ ICU).
