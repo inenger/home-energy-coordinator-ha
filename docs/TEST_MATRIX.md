@@ -7,6 +7,13 @@ protipříkladů; důkaz dnešního runtime musí procházet produkční entrypo
 
 | Oblast / vada | Spustitelná regrese | Požadovaný invariant |
 |---|---|---|
+| RET-01: dlouhodobá evidence proti 2 GiB limitu | [audit a stav SQL](DEEP_AUDIT_0631_20261112.md) | Před kvótou alarm, immutable archive/restore + SHA a úplné denní počty. |
+| HIST-01: starší den bez HA Recorderu | [auditní SQL/GET reprodukce](DEEP_AUDIT_0631_20261112.md) | Prázdný Recorder, přesto úplný den ze skutečné archived source. |
+| UI-02: neplatný plan timestamp | [audit-only counterexample](../scripts/audit_ui02_invalid_plan_time_0631.mjs) | Aktuálně RangeError; po opravě doNotThrow card.render a čerstvý DOM. |
+| SUP-01: celkový výpadek PID1 | [audit](DEEP_AUDIT_0631_20261112.md) | Po testovacím pádu obnovený Supervisor started, durable ACK a žádný fyzický povel. |
+| START-02: nedeterministická 02:59 úloha | [audit](DEEP_AUDIT_0631_20261112.md) | Integrační 61s drift, validace po 03 a obě DST varianty. |
+| UI-03: zobrazení preflight | [audit](DEEP_AUDIT_0631_20261112.md) | Viditelné ready/waiting/reason bezpečně v HA kartě. |
+| QA-01: místní Node ICU | [audit](DEEP_AUDIT_0631_20261112.md) | Podpora cs-CZ pro locale testy na všech ranerech; CI není lokální test. |
 | PRICE-01: ceník vs odlišný tržní senzor | [test_preflight_0631](../priority_shadow/tests/test_preflight_0631.py) | Ceník NT 03–05 s 1,8078 Kč/kWh, ověřený uživatelem podle smlouvy ČEZ a ceníku INDI; odlišný senzor se nesmí zaměnit. |
 | START-01: předvalidace v 02:59 | [test_preflight_0631](../priority_shadow/tests/test_preflight_0631.py) | Analytická session připravená před 03, bez aktivní relace, správná DST fold; RAM diagnostika s chybnou fází/model, 2 nové rámce až po 03. |
 | SOC, energie, dostupnost předpovědi, stejné horizonty | [SOC](../priority_shadow/tests/test_soc_fixes.py), [navazující SOC](../priority_shadow/tests/test_soc_fixes_062.py), [planner](../priority_shadow/tests/test_soc_planner.py) | Žádná budoucí znalost, dvojí energie ani nepřiznaný chybějící vstup. |
