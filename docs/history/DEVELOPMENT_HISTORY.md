@@ -96,3 +96,22 @@ Při tomto kroku nebyla žádná chybná hypotéza potlačena ani mazána histor
 [Provozní report](../../priority_shadow/docs/DEPLOYMENT_0631_20261112.md).
 
 Celé identifikátory backupu, živé JSON a logy zůstaly pouze na Raspberry Pi.
+
+
+## 12. 11. 2026 – nezávislý audit main c339139 / 0.6.31
+
+[Celý evidence-based report](../DEEP_AUDIT_0631_20261112.md).
+RPi started/observe_only, durable ACK roste, 0 aktuální loss/restart.
+Python 607 PASS (333,487 s). JS 9 PASS; původní FAIL
+`test_deep_fixes_0613.mjs` `'2.5' !== '2,5'` vysvětlen
+lokálním Node bez cs-CZ ICU; neoslaben produkční kód ani test.
+UI-02 nový kontrapříklad reprodukoval RangeError při třech
+vadných datumech přes celý card.render.
+SQL dbstat doložilo RET-01 (479,2 MiB a 2 GiB budget).
+Dva staré dny mají 1441/1439 potvrzených SQL chunků,
+ale HA Recorder 0: HIST-01. Pozor: větší GET na novější den
+zastavil jen 4MB limit **auditního helperu**, ne produkční HTTP.
+SUP-01 watchdog=false, START-02 scheduling mezera, UI-03
+bez preflight labelu. Plná ZIP→SQLite izolovaná záloha
+SHA, quick/integrity_check, FK PASS; ne celý Supervisor restore.
+Rizika N06-02/DB-01/LIVE ponechána otevřená. Privátní podklady RPi.

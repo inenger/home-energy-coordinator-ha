@@ -105,3 +105,13 @@ PR #42 a Actions #105/#106 PASS, nový runtime `started` výhradně `observe_onl
 nulové povely, nulová ztráta a restarty v aktuálním ověřeném úseku.
 Noc následující po nasazení není nahrazena tímto denním testem.
 Smluvní cena 1,8078 Kč/kWh byla dle uživatele již ověřena proti smlouvě ČEZ INDI.
+
+
+## Nezávislý deep audit 0.6.31 — 12. 11. 2026
+
+[Kompletní výsledky a podmínky uzavření](DEEP_AUDIT_0631_20261112.md):
+`0.6.31 / started / observe_only`; 607 Python PASS, 9 JS PASS,
+1 JS locale-only FAIL na RPi Node bez cs-CZ; reálný immutable backup
+ověřen v izolovaném SQL (SHA, integrity, FK). Nové RET-01/HIST-01 (vysoké),
+UI-02 (střední), SUP-01/START-02/UI-03 a QA-01. Zůstává NO-GO pro LIVE.
+Žádná runtime změna, žádný version bump.

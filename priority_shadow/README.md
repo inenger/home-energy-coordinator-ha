@@ -1,6 +1,7 @@
 # 0.6.31 – předběžná kontrola od 02:59 a korekce ceny v nočním auditu
 
 [Detailní zdroj a regresní případy](docs/PREFLIGHT_PRICE_AUDIT_0631.md).
+[Nezávislý audit rizik a důkazů 0.6.31](../docs/DEEP_AUDIT_0631_20261112.md).
 Observe_only beze změny, žádné povely ani změna původního koordinátoru.
 Zdroje a nasazení se ověřují samostatně. [Skutečné nasazení 0.6.31 na RPi, backup a kontrola nové evidence](docs/DEPLOYMENT_0631_20261112.md).
 

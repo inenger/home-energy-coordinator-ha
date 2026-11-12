@@ -1,3 +1,12 @@
+# Hloubkový audit 0.6.31 – 12. 11. 2026
+
+- [Kompletní audit k main c339139](docs/DEEP_AUDIT_0631_20261112.md): nové RET-01 (růst evidence proti 2 GiB), HIST-01 (staré SQL/ACK chunky nejsou v HA Recorder), UI-02 (RangeError na plan at), SUP-01 (watchdog=false), START-02 (02:59 session bez časované bariéry), UI-03 (nezobrazený preflight), QA-01 (RPi Node bez cs-CZ ICU).
+- RPi: `0.6.31 / started / observe_only`, žádné fyzické povely; sběr/SQLite/monitor ok, ACK postupuje. Python 607 PASS za 333,5 s, JS 9 PASS + 1 lokální locale FAIL; GitHub CI PASS.
+- Skutečná předchozí nativní záloha SHA-256/SQLite integrity/FK v izolovaném scratch PASS, plný Supervisor restore samostatně neověřen. Bez automatického mazání evidence; LIVE-01/02/03, N06-02, DB-01 zůstávají otevřené.
+- Tento audit změnil pouze dokumentaci a reprodukční test; zdroj aplikace ani HA konfigurace se nemění a neprovádí se release bump.
+
+---
+
 # Aktuální vývoj 0.6.31 · 12. 11. 2026
 
 - [Cena ČEZ INDI, audit noci a příprava 02:59](priority_shadow/docs/PREFLIGHT_PRICE_AUDIT_0631.md).

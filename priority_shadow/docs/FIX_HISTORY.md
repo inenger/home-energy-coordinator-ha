@@ -57,3 +57,12 @@ původní `observe_only` zachován. Dva živé snapshoty: durable ACK
 `committed_seq` 3→4, evidence, monitor a journal `ok`, 0 restartů, 0 ztrát,
 starý uzavřený den v journalu zůstává. Bez testu následující celé noci,
 bez zapnutí fyzického řízení. [Podklady](DEPLOYMENT_0631_20261112.md).
+
+
+## 12. 11. 2026 – hloubkový audit 0.6.31 (bez runtime opravy)
+
+[RET-01, HIST-01, UI-02, SUP-01, START-02, UI-03, QA-01](../../docs/DEEP_AUDIT_0631_20261112.md).
+Původní lokální FAIL Node: `'2.5' !== '2,5'` z small-ICU,
+nikoli chyba českého renderu v prohlížeči. UI-02 counterexample
+potvrdil skutečný RangeError. Python 607 PASS.
+Žádná změna aplikace či automatik; historie a archiv na RPi.
