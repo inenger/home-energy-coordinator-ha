@@ -216,3 +216,24 @@ Bez změny nočního algoritmu a reálného nabíjení.
 ## 13.11.2026 – post-release real night audit 0.6.32
 
 [Evidence, exceptions and limitations](../NIGHT_AUDIT_0632_20261113.md). RPi SQLite portable snapshot + HA read-only Recorder + automation YAML: 1 443 priority and 1 443 RAM frames, 1 444/1 444 durable ACK, no loss/restart/device actions. Original suspicion of energy model error was rejected: 18,37 kWh is counterfactual grid scenario, actual 12,55 kWh measured at meter. EV 15,92 kWh AC, battery 4,65 kWh DC discharge and SOC 66→20 %. Source ceník stable 1,8078 Kč/kWh, total ~22,69 Kč. Flag for original cheap battery charging was OFF; physical discharge is NOT caused by this observe-only addon. Ops OPS-01 and AUTO-02 remain open. Five phase invalid samples safely rejected near transitions. SOC new shared-part path: 134/134 cryptographic verification, original equivalent 5,1455 MB vs compact + unique 3,1072 MB; 39,61 % SOC-domain saving only, not full DB. No source, physical, price, automation, or retention changes. No raw private time series in Git.
+
+
+## 13.11.2026 – skutečné HEC LIVE řízení v samostatné HA package
+
+[Plná dokumentace](../LIVE_BATTERY_RESERVE_20261113.md).
+Po výslovném povolení fyzického řízení uživatelem bylo pro
+stávající SolaX X3 Hybrid G4 / EVC 11 kW instalováno omezené
+skutečné řízení `number.solax_backup_discharge_min_soc` a
+`number.solax_api_max_charge_current_setting` přímo přes tři
+HA automations. Stínový add-on 0.6.32 se neměnil.
+Před první změnou snapshot, vlastnictví a compare-and-swap
+po 05:00. 3x25 A ochrana 20/22 A phase target + emergency stop
+≥24,5 A. Neprovádělo se grid Force Charge ani přepnutí
+inverter Work Mode či VPP přímé registry. Nativní config záloha
+`492373aa` a samostatný tar. Ověřen `ha core check` PASS,
+Core restart PASS, entity HEC Live a 3 automations ON.
+Fyzické body write/readback reserve20→25→20 a
+20→100→20, EV16→15→16, **automatický recovery**
+od 25/15 do 20/16 PASS s uvolněním owner state.
+První noční uplatnění teprve 14.11; současná shoda
+povel/readback neprokazuje hard-real-time ochranu jističe.
