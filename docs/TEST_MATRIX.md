@@ -113,3 +113,8 @@ preflight noc 13.11. se zatím neověřila.
 | OPS-01: fyzický EV/battery rozdíl mimo doplněk | [Noční měření](NIGHT_AUDIT_0632_20261113.md) | Shoda fázové integrace se senzorem importu a čítačem BMS, cena 03–05 historicky ověřena, žádný zápis od stínového doplňku. Samostatný test ochrany baterie až po explicitním schválení. |
 | AUTO-02: duplicitní EV-on automatizace | [Konfigurační evidence](NIGHT_AUDIT_0632_20261113.md) | Nejdříve ověřit HA traces obou automatizací, případnou konsolidaci a regresi; bez změn v auditu. |
 | Noční SOC 0.6.32 13.11 | [Skutečný SQL replay](NIGHT_AUDIT_0632_20261113.md) | 134/134 původních SOC hash PASS, 1 444/1 444 FIFO ACK, 0 ztrát, 1 438 valid a 5 fail-closed phase rámců. |
+
+
+| HEC LIVE: fyzický write/readback i rollback | [Fyzický pilot a source](LIVE_BATTERY_RESERVE_20261113.md) | Na RPi 20→25→20, 20→100→20 % reserve, EV 16→15→16 A; živý automatický recovery 25/15→20/16, owner off, restoration automation on – PASS. |
+| HEC LIVE: HA package acceptance | [Package](../ha_packages/night_live_coordinator.yaml) | Core full configuration check PASS, restart PASS, všechny tři automations ON, HEC Live status idle, starý stínový doplněk unchanged; [statický stdlib test](../scripts/test_live_package_contract.py). |
+| HEC LIVE: další noc 14.11. | [Otevřená zkouška](LIVE_BATTERY_RESERVE_20261113.md) | 02:59 preflight, fyzické battery reserve, EV current/readback, peak L1/L2/L3, 05:00 restore, účetní a energetické výsledky – PENDING, netvrdit hotové. |

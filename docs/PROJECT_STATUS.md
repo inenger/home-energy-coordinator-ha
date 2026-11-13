@@ -160,3 +160,16 @@ raw sampling, journal ACK, 6h backupu ani fyzického řízení.
 ## 13.11.2026 – kompletní noc 0.6.32
 
 [Čerstvý read-only audit](NIGHT_AUDIT_0632_20261113.md): 1 443 prioritních/RAM snímků, 1 444 ACK, 0 loss/action, čerstvý 02:59 preflight PASS. Skutečné EV 15,92 kWh AC, domácí baterie vybití 4,65 kWh DC a SOC 66→20 %, síť 12,55 kWh, cena ČEZ 1,8078 Kč/kWh. OPS-01 je koordinace původního HA a měniče, nikoli aktuační selhání stínového doplňku. Pět fázově neplatných rámců fail-closed. SOC lossless storage pro 134 rozhodnutí 39,61 % méně v této doméně. Bez změny kódu, retence a fyzického řízení.
+
+
+## HEC LIVE v1 – skutečné noční řízení aktivováno v HA 13.11.
+
+[Dokumentovaný rozsah](LIVE_BATTERY_RESERVE_20261113.md). Tři HA automations ON:
+preflight 02:59:40, 03–05 omezení EV 6–16 A dle fyzických
+fázových proudů, 05:00 nezávislé obnovení původních nastavení.
+On-grid backup min SOC 100 % při FVE≤15 kWh a 25 % při FVE≥50 kWh.
+Současný stínový doplněk 0.6.32 zůstává observe_only. Zálohy
+HA native 492373aa + config tar. Core check a restart PASS,
+fyzické zápisy a readbacky do rezervy/EV PASS; plný
+automatizovaný recovery PASS. První skutečná noc je 14.11.2026
+– souběžné EV/phase chování a energetická úspora zatím PENDING.

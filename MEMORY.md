@@ -1,3 +1,13 @@
+# 13.11.2026 – HEC LIVE v1, skutečné noční řízení HA
+
+- [Živý HA package](ha_packages/night_live_coordinator.yaml) + [bezpečnost, rollback a testy](docs/LIVE_BATTERY_RESERVE_20261113.md): od 13.11. jsou tři nové HA automations ON; fyzické povely jdou přes HA, ne přes původní `priority_shadow 0.6.32`, který dál běží `observe_only`.
+- 02:59:40 uložit původní `number.solax_backup_discharge_min_soc` a `number.solax_api_max_charge_current_setting` do perzistentních helperů; při FVE<=15 kWh reserve 100 %, >=50 kWh 25 %, mezihodnoty lineární. EV nejprve max12 A, 03–05 regulovat 6–16 A podle reálných L1/L2/L3; nad24,5 A emergency Stop. Změny cizího vlastníka nepřepisovat.
+- 05:00 nezávislá obnovovací automatizace, retrigger každou minutu mimo okno. HA core config check a restart PASS, tři automations ON, `sensor.hec_live_skutecne_rizeni=idle` mimo noc, owner off. Přesné kontrolní limity 20 % a 16 A jsou obnovené.
+- Reálné fyzické piloty 20→25→20 %; 16→15→16 A; 20→100→20 % – all readback PASS. E2E vlastní snapshot + fyzická změna 25/15 → nezávislá automatika vrací 20/16 a owner off PASS. Záloha HA config nativní `492373aa` + tar/sha v `/share/hec-live-deploy-20261113/`.
+- **První skutečné automatické okno až 14.11.**, neprohlašovat energy safety/live phase protection za plně ověřené. Domácí baterii zatím nenabíjet ze sítě při EV (3 A DC/3x25A/nezvalidovaný fyzický adaptér). Stínový doplněk a data beze změn.
+
+---
+
 # Noční audit 0.6.32: 13. 11. 2026
 
 - Kompletní read-only audit: [report](docs/NIGHT_AUDIT_0632_20261113.md). 1 443 pravidelných 5s vzorků, 1 444/1 444 ACK, 0 loss a 0 device actions. Preflight 02:59 valid, 5 transient invalid phase vzorků bezpečně odmítnuto.

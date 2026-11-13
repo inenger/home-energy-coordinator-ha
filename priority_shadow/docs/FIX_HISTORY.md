@@ -105,3 +105,14 @@ transakce mezi object/decision zápisem prokazuje rollback obou částí.
 Původní F07 test přímo rozbaloval nový BLOB jako starý JSON a končil
 KeyError; nově prochází produkční hydratační funkci a vyžaduje stejný
 decision hash. Žádná změna data retence, ACK, tarifu či aktuace.
+
+
+## 13.11.2026 – živý akční modul jako nezávislý HA package
+
+[Source](../../ha_packages/night_live_coordinator.yaml),
+[kontrakt](../../docs/LIVE_BATTERY_RESERVE_20261113.md).
+Skutečné HA povely nejsou součástí tohoto stínového add-onu,
+který zůstává 0.6.32 observe_only. Fyzické rezervy SolaX
+a limit proudu EVC byly mimo noční okno otestované, obnova
+automatizací včetně reálného 25/15→20/16 PASS. Žádný
+upgrade add-onu, žádné mazání SQL, žádný Force Charge.

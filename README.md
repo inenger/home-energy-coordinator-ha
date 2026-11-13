@@ -4,6 +4,7 @@
 |---|---|---|
 | Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.4 |
 | Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.32 |
+| **Skutečné řízení baterie a Tesly 03–05** | [HA package](ha_packages/night_live_coordinator.yaml) | LIVE v1 · 13.11.2026 |
 
 Oba balíčky mají vlastní Docker build context. Nový stínový doplněk nemění
 verzi ani provoz původního koordinátoru. Veřejné balíčky neobsahují soukromou
@@ -15,6 +16,8 @@ případy a dosud neověřené předpoklady. Další podrobnosti jsou v README
 jednotlivých doplňků. Provoz a soukromé analýzy patří na RPi.
 
 ## Dokumentace
+
+- [Ostré řízení: instalace, fázové limity, návrat po 05:00 a fyzické testy](docs/LIVE_BATTERY_RESERVE_20261113.md).
 
 - [Audit noci 13.11: skutečná energie EV/baterie, cena, fáze, preflight a SOC úspora 0.6.32](docs/NIGHT_AUDIT_0632_20261113.md).
 

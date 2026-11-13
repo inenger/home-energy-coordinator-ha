@@ -25,6 +25,7 @@ jobs:
           bash -n scripts/recover_missing_local_source.sh
           bash -n scripts/upgrade_local_app.sh
           python scripts/validate_versions.py
+          python scripts/test_live_package_contract.py
           python scripts/verify_documentation.py
           python scripts/test_documentation_contract.py
           grep -Fxq 'slug: energy_coordinator' energy_coordinator/config.yaml
