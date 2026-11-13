@@ -16,6 +16,8 @@ jednotlivých doplňků. Provoz a soukromé analýzy patří na RPi.
 
 ## Dokumentace
 
+- [Audit noci 13.11: skutečná energie EV/baterie, cena, fáze, preflight a SOC úspora 0.6.32](docs/NIGHT_AUDIT_0632_20261113.md).
+
 - [Korekce ceny ČEZ INDI, audit 12.11, preflight 02:59](priority_shadow/docs/PREFLIGHT_PRICE_AUDIT_0631.md).
 - [Ověřené nasazení 0.6.31 na RPi, záloha a nové ACK](priority_shadow/docs/DEPLOYMENT_0631_20261112.md).
 - [Hloubkový audit 0.6.31: důkazy, rizika, priority](docs/DEEP_AUDIT_0631_20261112.md).

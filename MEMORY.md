@@ -1,3 +1,11 @@
+# Noční audit 0.6.32: 13. 11. 2026
+
+- Kompletní read-only audit: [report](docs/NIGHT_AUDIT_0632_20261113.md). 1 443 pravidelných 5s vzorků, 1 444/1 444 ACK, 0 loss a 0 device actions. Preflight 02:59 valid, 5 transient invalid phase vzorků bezpečně odmítnuto.
+- OPS-01: skutečná baterie 66 % → 20 % během EV nabíjení, 4,65 kWh DC; EV 15,92 kWh AC, síť 12,55 kWh za 1,8078 Kč/kWh (22,69 Kč). Přitom původní HA grid charge povolení OFF; stínový doplněk nic neovládal. AUTO-02: dvě možné duplicitní původní EV-priorita automatizace.
+- SOC dedup 0.6.32: 134/134 hash PASS, 5,1455 → 3,1072 MB, 39,61 % úspora jen SOC domény. Runtime 0.6.32 se nemění; fyzické řízení stále NO-GO.
+
+---
+
 # Runtime 0.6.32 — optimalizace podle hodnoty dat, nikoli kvóty
 
 - Poslední zadání **ruší plošné 7denní pravidlo**. Uchovat data 7/14/45/366

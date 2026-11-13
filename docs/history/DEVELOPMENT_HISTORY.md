@@ -212,3 +212,7 @@ Nevypínat 6h backup ani nemazat ACKed journal záznamy.
 Přidán pouze offline materializer pro downgrade 0.6.31,
 který nemodifikuje vstupní databázi.
 Bez změny nočního algoritmu a reálného nabíjení.
+
+## 13.11.2026 – post-release real night audit 0.6.32
+
+[Evidence, exceptions and limitations](../NIGHT_AUDIT_0632_20261113.md). RPi SQLite portable snapshot + HA read-only Recorder + automation YAML: 1 443 priority and 1 443 RAM frames, 1 444/1 444 durable ACK, no loss/restart/device actions. Original suspicion of energy model error was rejected: 18,37 kWh is counterfactual grid scenario, actual 12,55 kWh measured at meter. EV 15,92 kWh AC, battery 4,65 kWh DC discharge and SOC 66→20 %. Source ceník stable 1,8078 Kč/kWh, total ~22,69 Kč. Flag for original cheap battery charging was OFF; physical discharge is NOT caused by this observe-only addon. Ops OPS-01 and AUTO-02 remain open. Five phase invalid samples safely rejected near transitions. SOC new shared-part path: 134/134 cryptographic verification, original equivalent 5,1455 MB vs compact + unique 3,1072 MB; 39,61 % SOC-domain saving only, not full DB. No source, physical, price, automation, or retention changes. No raw private time series in Git.

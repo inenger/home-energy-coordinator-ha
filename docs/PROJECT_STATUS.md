@@ -156,3 +156,7 @@ rozhodnutí 8. a 11.11. má stejný packed payload i původní hash.
 Plošná 7d retence už není požadována; 7/14/45/366d horizonty a
 ostatní analytické čtečky zůstávají beze změny. Žádné úpravy
 raw sampling, journal ACK, 6h backupu ani fyzického řízení.
+
+## 13.11.2026 – kompletní noc 0.6.32
+
+[Čerstvý read-only audit](NIGHT_AUDIT_0632_20261113.md): 1 443 prioritních/RAM snímků, 1 444 ACK, 0 loss/action, čerstvý 02:59 preflight PASS. Skutečné EV 15,92 kWh AC, domácí baterie vybití 4,65 kWh DC a SOC 66→20 %, síť 12,55 kWh, cena ČEZ 1,8078 Kč/kWh. OPS-01 je koordinace původního HA a měniče, nikoli aktuační selhání stínového doplňku. Pět fázově neplatných rámců fail-closed. SOC lossless storage pro 134 rozhodnutí 39,61 % méně v této doméně. Bez změny kódu, retence a fyzického řízení.
