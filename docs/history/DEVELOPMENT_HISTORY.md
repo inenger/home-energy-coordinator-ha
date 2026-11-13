@@ -237,3 +237,14 @@ Fyzické body write/readback reserve20→25→20 a
 od 25/15 do 20/16 PASS s uvolněním owner state.
 První noční uplatnění teprve 14.11; současná shoda
 povel/readback neprokazuje hard-real-time ochranu jističe.
+
+
+## 13.11.2026 09:05–09:10 – okamžitý bezpečný návrat k observe_only
+
+Uživatel výslovně nařídil dnešní noc zachovat ve stínovém režimu.
+Všechny tři nové HA LIVE automations byly vypnuty, HA package
+odpojena z aktivní konfigurace a přesunuta mimo /config.
+Core check PASS, HA restart PASS, automation entity unavailable.
+SolaX SOC limit 20 % a EVC 16 A potvrzeny. Shadow 0.6.32
+started observe_only. Bez reaktivace bez nového schválení.
+[Záznam pozastavení](../LIVE_BATTERY_RESERVE_20261113.md).
