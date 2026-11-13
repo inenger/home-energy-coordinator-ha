@@ -329,3 +329,7 @@ Nové otevřené nálezy po nezávislém ověření0.6.13: [audit30.10.2026](doc
 and [per-field retention policy matrix](../docs/FIELD_RETENTION_POLICY_MATRIX_20261112.csv).
 These are proposed changes only. Existing observe_only 0.6.31 remains running,
 no GC, compact or control changes.
+
+
+Datová optimalizace 0.6.33: [zpětná kompakce a retence](../docs/DB_OPTIMIZATION_RELEASE_0633.md).
+Režim zůstává výhradně observe_only.

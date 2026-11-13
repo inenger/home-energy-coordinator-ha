@@ -2,7 +2,7 @@
 import copy,threading,time
 from .store import Store
 from .sqlite_writes import details as storage_details
-from . import night,priority,priority_audit,soc_runtime
+from . import night,priority,priority_audit,soc_runtime,evidence_retention
 from .collector import ReadOnlyHA
 
 class Maintenance:
@@ -35,7 +35,13 @@ class Maintenance:
             audit=priority_audit.day_summary(store,at,self.audit_error)
             try:optimizer['review_history']=soc_runtime.review(store,audit,at)
             except Exception as error:optimizer['review_error_code']=type(error).__name__
-            return {'at':at,'soc_optimizer':optimizer,'fve_soc_audit':audit,'summary_errors':errors}
+            try:
+                retention_status=evidence_retention.prune(store,at)
+            except Exception as error:
+                retention_status={'status':'error','error_code':type(error).__name__,
+                                  'storage_error':storage_details(error)}
+            return {'at':at,'soc_optimizer':optimizer,'fve_soc_audit':audit,
+                    'summary_errors':errors,'retention':retention_status}
         finally:store.close()
     def run(self):
         next_run=0

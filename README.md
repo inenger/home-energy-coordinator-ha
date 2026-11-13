@@ -3,7 +3,7 @@
 | Doplněk | Adresář | Verze |
 |---|---|---|
 | Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.4 |
-| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.32 |
+| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.33 |
 | **Skutečné řízení baterie a Tesly 03–05** | [HA package](ha_packages/night_live_coordinator.yaml) | LIVE v1 · 13.11.2026 |
 
 Oba balíčky mají vlastní Docker build context. Nový stínový doplněk nemění
@@ -16,6 +16,8 @@ případy a dosud neověřené předpoklady. Další podrobnosti jsou v README
 jednotlivých doplňků. Provoz a soukromé analýzy patří na RPi.
 
 **Aktuální stav 13.11. v 09:10:** Ostrý HEC LIVE je odpojen od HA a deaktivován. Noc 13.–14.11. je pouze pozorovací; další reaktivace vyžaduje výslovné rozhodnutí. [Doklad o bezpečném pozastavení](docs/LIVE_BATTERY_RESERVE_20261113.md).
+
+- [0.6.33 datová optimalizace: zpětná kompakce, diferencovaná retence, zachování historie](docs/DB_OPTIMIZATION_RELEASE_0633.md).
 
 ## Dokumentace
 

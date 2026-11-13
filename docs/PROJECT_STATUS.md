@@ -1,3 +1,15 @@
+## 13.11.2026 – databázová optimalizace 0.6.33
+
+[Specifikace a retence](DB_OPTIMIZATION_RELEASE_0633.md).
+Bezztrátový jednorázový cutover SOC a priority session
+dedup, 14/90denní retenční politika, trvalé důležité
+výsledky, ACK/FIFO bezpečnostní brány.
+HEC LIVE zůstává vypnutý pro noc 13.–14.11.2026.
+Před označením reálně nasazeno je třeba ověřit RPi
+runtime, integritu, evidence backlog a skutečný objem DB.
+
+---
+
 ## 13.11.2026 09:10 – LIVE v1 stažen z aktivního HA
 
 Na výslovný pokyn nové fyzické automations vypnuty a jejich
@@ -11,7 +23,7 @@ Noc 13.–14.11. pouze pozorovací, bez automatické opětovné aktivace.
 
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.32 -->
+<!-- shadow-version: 0.6.33 -->
 
 Stav zdrojového kandidáta k 12. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento

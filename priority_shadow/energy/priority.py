@@ -5,6 +5,7 @@ import math
 from . import night
 from .core import TZ, VERSION, instant, digest
 from .store import pack, unpack
+from . import priority_sample_storage
 from .power_allocation import allocate_power
 
 HELPER='input_select.nocni_stinova_priorita'
@@ -426,11 +427,11 @@ def observe(store,states,at,require_soc_plan=False,allocation_policy=None):
         run['previous']={k:row[k] for k in ('at','variants','actual_ev_w')}
         run['last_processed_at']=at;run.pop('clock_recovery_after',None)
         with store.db:
-            store.db.execute('INSERT OR IGNORE INTO priority_samples VALUES(?,?,?)',(at,day,pack(row)))
+            store.db.execute('INSERT OR IGNORE INTO priority_samples VALUES(?,?,?)',(at,day,priority_sample_storage.encoded(store.db,row)))
             store.db.execute('INSERT OR REPLACE INTO priority_runs VALUES(?,?)',(day,pack(run)))
     elif run:
         prior=store.db.execute('SELECT payload FROM priority_samples WHERE day=? ORDER BY at DESC LIMIT 1',(day,)).fetchone()
-        row=unpack(prior[0]) if prior else {'day':day,'models':run['models']}
+        row=priority_sample_storage.read(store.db,prior[0]) if prior else {'day':day,'models':run['models']}
         row={**row,'models':{k:dict(m)for k,m in run['models'].items()},'temporal_status':temporal_status,'models_as_of':watermark}
         if temporal_status=='duplicate_observation' and prior:variants=row['variants']
         else:
@@ -488,7 +489,7 @@ def finish(store,day):
     if _get(store,'priority_summaries',day):return _get(store,'priority_summaries',day)
     run=_get(store,'priority_runs',day)
     if not run:return None
-    rows=[unpack(r[0]) for r in store.db.execute('SELECT payload FROM priority_samples WHERE day=? ORDER BY at',(day,))]
+    rows=[priority_sample_storage.read(store.db,r[0]) for r in store.db.execute('SELECT payload FROM priority_samples WHERE day=? ORDER BY at',(day,))]
     if not rows:return None
     last=rows[-1];prev=run.get('previous');end=instant(f'{day}T05:00:00'+instant(last['at']).astimezone(TZ).strftime('%z'))
     dt=(end-instant(prev['at'])).total_seconds() if prev else 0
@@ -520,6 +521,6 @@ def recent(store,day=None):
     if day is None:
         row=store.db.execute('SELECT day FROM priority_runs ORDER BY day DESC LIMIT 1').fetchone()
         day=row[0] if row else None
-    rows=[unpack(r[0]) for r in store.db.execute('SELECT payload FROM priority_samples WHERE day=? ORDER BY at',(day,))] if day else []
+    rows=[priority_sample_storage.read(store.db,r[0]) for r in store.db.execute('SELECT payload FROM priority_samples WHERE day=? ORDER BY at',(day,))] if day else []
     return {'day':day,'samples':rows,'summary':_get(store,'priority_summaries',day) if day else None,
             'history':[unpack(r[0]) for r in store.db.execute('SELECT payload FROM priority_summaries ORDER BY day DESC LIMIT 14')]}
