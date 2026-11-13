@@ -1,3 +1,17 @@
+# AKTUÁLNÍ PROVOZNÍ STAV 13.11.2026 09:10 SEČ: OSTRÉ ŘÍZENÍ POZASTAVENO
+
+Výslovný požadavek: dnešní noc 13.–14.11.2026 musí zůstat jen pozorovací. Veškeré nové LIVE automatizace byly vypnuty, odpojeny od aktivní konfigurace Home Assistant Core a nesmějí se samy znovu zapnout ani následující noc bez nového schválení uživatele.
+
+- 09:05: tři nové HEC LIVE HA automatizace vypnuty přes API. Stav vlastníka OFF, původní rezerva 20 % a limit EV 16 A potvrzen.
+- 09:06: include hec_live_energy odstraněn z konfigurace; soubor package přesunut mimo /config do /share/hec-live-deploy-20261113/HELD_not_active_night_20261113.yaml (SHA-256 baeee4a14756747e23a6838d1a4feb37c80d1794e632156cb49abfd554f37708).
+- Kontrola HA Core konfigurace PASS, restart Core PASS. Po restartu všechny tři nové automation entity hlásí unavailable, protože jejich zdroj již není aktivně načten.
+- Původní addon local_energy_priority_shadow 0.6.32 je started / observe_only. Původní jiné HA automatizace zůstaly beze změn.
+- Automatická reaktivace NEEXISTUJE. Další ostré nasazení teprve po novém výslovném rozhodnutí.
+
+Zbývající text této stránky popisuje historickou implementaci a reálné krátké HW pilotní testy z rána 13.11., NIKOLI současný běžící režim.
+
+---
+
 # HEC LIVE v1 – skutečné noční řízení rezervy SolaX a proudu EVC
 
 **Nasazení:** 13.11.2026, Raspberry Pi / Home Assistant Core 2026.11.1.  

@@ -15,6 +15,8 @@ Paměť obsahuje aktuální stav, důvody rozhodnutí, poučení z auditů, regr
 případy a dosud neověřené předpoklady. Další podrobnosti jsou v README
 jednotlivých doplňků. Provoz a soukromé analýzy patří na RPi.
 
+**Aktuální stav 13.11. v 09:10:** Ostrý HEC LIVE je odpojen od HA a deaktivován. Noc 13.–14.11. je pouze pozorovací; další reaktivace vyžaduje výslovné rozhodnutí. [Doklad o bezpečném pozastavení](docs/LIVE_BATTERY_RESERVE_20261113.md).
+
 ## Dokumentace
 
 - [Ostré řízení: instalace, fázové limity, návrat po 05:00 a fyzické testy](docs/LIVE_BATTERY_RESERVE_20261113.md).

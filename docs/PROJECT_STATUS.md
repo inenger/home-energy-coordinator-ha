@@ -1,3 +1,14 @@
+## 13.11.2026 09:10 – LIVE v1 stažen z aktivního HA
+
+Na výslovný pokyn nové fyzické automations vypnuty a jejich
+HA package odpojena z konfigurace. Core check a restart PASS.
+Původní SOC rezerva 20 % / wallbox 16 A; shadow addon 0.6.32
+started observe_only. Tři nové automations po restartu unavailable.
+Noc 13.–14.11. pouze pozorovací, bez automatické opětovné aktivace.
+[Podrobný stav](LIVE_BATTERY_RESERVE_20261113.md).
+
+---
+
 # Aktuální stav a rozcestník projektu
 
 <!-- shadow-version: 0.6.32 -->

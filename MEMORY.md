@@ -1,3 +1,9 @@
+# 13.11.2026 09:10 – LIVE pozastaven / noc 13.–14.11. observe_only
+
+Po výslovném požadavku uživatele všechny tři nové HA automation OFF a odpojeny z aktivní konfigurace. Core check a restart PASS, automation entity unavailable, SolaX reserve 20 %, EV16 A. Shadow addon 0.6.32 started observe_only. Bez automatického re-enable bez nového schválení. Viz [provozní stav](docs/LIVE_BATTERY_RESERVE_20261113.md).
+
+---
+
 # 13.11.2026 – HEC LIVE v1, skutečné noční řízení HA
 
 - [Živý HA package](ha_packages/night_live_coordinator.yaml) + [bezpečnost, rollback a testy](docs/LIVE_BATTERY_RESERVE_20261113.md): od 13.11. jsou tři nové HA automations ON; fyzické povely jdou přes HA, ne přes původní `priority_shadow 0.6.32`, který dál běží `observe_only`.
