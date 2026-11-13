@@ -109,3 +109,7 @@ zdroj/CI PASS, nativní záloha před aktualizací, verze 0.6.31/started/observe
 kolekce/storage/monitor/journal `ok`, nová persistentní potvrzení 3→4,
 žádná ztráta či restart pracovníků. Regrese 02:59 je syntetická; skutečná
 preflight noc 13.11. se zatím neověřila.
+
+| OPS-01: fyzický EV/battery rozdíl mimo doplněk | [Noční měření](NIGHT_AUDIT_0632_20261113.md) | Shoda fázové integrace se senzorem importu a čítačem BMS, cena 03–05 historicky ověřena, žádný zápis od stínového doplňku. Samostatný test ochrany baterie až po explicitním schválení. |
+| AUTO-02: duplicitní EV-on automatizace | [Konfigurační evidence](NIGHT_AUDIT_0632_20261113.md) | Nejdříve ověřit HA traces obou automatizací, případnou konsolidaci a regresi; bez změn v auditu. |
+| Noční SOC 0.6.32 13.11 | [Skutečný SQL replay](NIGHT_AUDIT_0632_20261113.md) | 134/134 původních SOC hash PASS, 1 444/1 444 FIFO ACK, 0 ztrát, 1 438 valid a 5 fail-closed phase rámců. |
