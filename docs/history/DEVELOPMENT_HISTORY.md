@@ -248,3 +248,17 @@ Core check PASS, HA restart PASS, automation entity unavailable.
 SolaX SOC limit 20 % a EVC 16 A potvrzeny. Shadow 0.6.32
 started observe_only. Bez reaktivace bez nového schválení.
 [Záznam pozastavení](../LIVE_BATTERY_RESERVE_20261113.md).
+
+
+## 13.11.2026 – 0.6.33 SQLite migration / tiered retention
+
+[Dokument](../DB_OPTIMIZATION_RELEASE_0633.md).
+Dělení opakovaných session podle SHA-256, plně bezztrátová
+hydratace. Jednorázová migrace do aktuální SQLite po zastavení
+writerů a kompletní validaci hodnot, metadat, FIFO rowid a ACK.
+14 dnů uzavřené detailní priority/night/ram a potvrzený
+přenosový deník, 90 dnů SOC observations; důležité souhrny,
+rozhodnutí, revize a safety eventy navždy.
+Nezaměňovat úspěšný historický offline benchmark
+(−119,46 MB) za produkční update. Přesné provozní
+výsledky změřit po bezpečném cutover.

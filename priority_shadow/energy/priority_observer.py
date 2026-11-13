@@ -116,6 +116,20 @@ def main():
     optionfile=Path('/data/options.json')
     opts=json.loads(optionfile.read_text()) if optionfile.exists()else {}
     if opts.get('mode','observe_only')!='observe_only':raise ValueError('Only observe_only is supported')
+    # Privileged, operator-requested, one-shot SQLite migration executes while
+    # all evidence writers are STOPPED. A failure must not produce a partial swap.
+    from .offline_compaction import run as run_offline_compaction
+    try:
+        migration=run_offline_compaction(DATA/'evidence.sqlite')
+        if migration.get('status')!='no_request':
+            print(json.dumps({'offline_db_compaction':migration},ensure_ascii=False),flush=True)
+    except Exception as error:
+        print(json.dumps({'offline_db_compaction':'failed',
+                          'error_code':type(error).__name__},ensure_ascii=False),flush=True)
+        # Fail closed instead of quietly continuing after a failed cutover.
+        # Original SQLite backup lives on /share; a manual recovery is needed.
+        raise
+
     for sig in (signal.SIGINT,signal.SIGTERM):signal.signal(sig,lambda *_:STOP.set())
     # Spawn procesy nemají zděděná SQLite spojení ani zámky vláken.
     evidence=EvidenceBridge(DATA/'evidence.sqlite',opts).start()

@@ -92,4 +92,5 @@ def estimate(samples, at):
 def from_db(db, at):
     cutoff=(instant(at)-timedelta(days=7)).isoformat()
     rows=db.execute('SELECT payload FROM priority_samples WHERE at>=? AND at<=? ORDER BY at',(cutoff,at))
-    return estimate((unpack(r[0]) for r in rows),at)
+    from .priority_sample_storage import read as read_priority_sample
+    return estimate((read_priority_sample(db,r[0]) for r in rows),at)

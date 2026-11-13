@@ -118,3 +118,7 @@ preflight noc 13.11. se zatím neověřila.
 | HEC LIVE: fyzický write/readback i rollback | [Fyzický pilot a source](LIVE_BATTERY_RESERVE_20261113.md) | Na RPi 20→25→20, 20→100→20 % reserve, EV 16→15→16 A; živý automatický recovery 25/15→20/16, owner off, restoration automation on – PASS. |
 | HEC LIVE: HA package acceptance | [Package](../ha_packages/night_live_coordinator.yaml) | Core full configuration check PASS, restart PASS, všechny tři automations ON, HEC Live status idle, starý stínový doplněk unchanged; [statický stdlib test](../scripts/test_live_package_contract.py). |
 | HEC LIVE: další noc 14.11. | [Otevřená zkouška](LIVE_BATTERY_RESERVE_20261113.md) | 02:59 preflight, fyzické battery reserve, EV current/readback, peak L1/L2/L3, 05:00 restore, účetní a energetické výsledky – PENDING, netvrdit hotové. |
+
+
+| 0.6.33 SOC + priority retrocompaction | [Implementace](../priority_shadow/energy/offline_compaction.py) / [syntetický E2E](../priority_shadow/tests/test_migration_0633.py) | Per-row equality, full metadata, ACK/high-water, RAM rowid po VACUUM, atomický swap a rollback, původní 621/621 regresí PASS. |
+| 0.6.33 retenční politika | [ACK brány](../priority_shadow/energy/evidence_retention.py) / [testy](../priority_shadow/tests/test_compaction_retention_0633.py) | 14d detail, 90d observations, trvalé souhrny a události, mimo 02:55–05:05, až 3 dny po 12h, bez limitu MB/den. |

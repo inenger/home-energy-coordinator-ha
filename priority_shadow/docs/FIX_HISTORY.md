@@ -116,3 +116,14 @@ který zůstává 0.6.32 observe_only. Fyzické rezervy SolaX
 a limit proudu EVC byly mimo noční okno otestované, obnova
 automatizací včetně reálného 25/15→20/16 PASS. Žádný
 upgrade add-onu, žádné mazání SQL, žádný Force Charge.
+
+
+## 13.11.2026 – 0.6.33 bezztrátová optimalizace
+
+[Specifikace](../../docs/DB_OPTIMIZATION_RELEASE_0633.md).
+Nové hashované immutable priority session, jednorázová
+retrokompakce na aktuální DB, ACK-gated 14/90d retence.
+Původní offline 7200 SOC verdikt shodný a 119,46 MB
+ušetřeno, ale to byl jen nenainstalovaný benchmark.
+Bezpečnostní události jsou neomezeně zachované.
+Žádné přepnutí původního observe_only do LIVE.

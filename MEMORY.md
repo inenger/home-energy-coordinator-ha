@@ -1,3 +1,21 @@
+# 13.11.2026 – DB 0.6.33: zpětná SOC/priority kompakce a retence
+
+- Nový runtime 0.6.33 zachovává observe_only; dokument
+  [DB optimalizace](docs/DB_OPTIMIZATION_RELEASE_0633.md).
+  Nikdy automaticky nepřepnout HEC LIVE.
+- 14 dnů detail priority/nočních/ram vzorků a potvrzeného přenosového
+  deníku; 90 dnů SOC observation; denní souhrny, SOC rozhodnutí,
+  důkazní data, revize a bezpečnostní události bez omezení.
+- Migrace aktuálního souboru jen po stopu writerů. Kontrola
+  plných SOC a priority hodnot, záloha a fail-closed rollback.
+- Původní offline měření 529,08→409,63 MB je stará SOC pouze
+  offline analýza, nikoliv nový produkční výsledek.
+- Plná sada 621 testů skončila PASS ve 13:44; 7 cílených
+  syntetických testů 0.6.33 PASS. Stav po nasazení ověřit
+  samostatně.
+
+---
+
 # 13.11.2026 09:10 – LIVE pozastaven / noc 13.–14.11. observe_only
 
 Po výslovném požadavku uživatele všechny tři nové HA automation OFF a odpojeny z aktivní konfigurace. Core check a restart PASS, automation entity unavailable, SolaX reserve 20 %, EV16 A. Shadow addon 0.6.32 started observe_only. Bez automatického re-enable bez nového schválení. Viz [provozní stav](docs/LIVE_BATTERY_RESERVE_20261113.md).

@@ -1,6 +1,6 @@
 # Registr známých problémů a neověřených podmínek
 
-Platí pro veřejný zdroj 0.6.32. Každý další nález dostane stabilní ID.
+Platí pro veřejný zdroj 0.6.33. Každý další nález dostane stabilní ID.
 OPRAVENO označuje opravený mechanismus s regresí; není zárukou všech
 budoucích běhů. OTEVŘENO znamená nevyřešenou příčinu nebo chybějící důkaz.
 OMEZENÍ je výslovná hranice návrhu. Podrobné provozní podklady nejsou veřejné.
@@ -8,6 +8,7 @@ OMEZENÍ je výslovná hranice návrhu. Podrobné provozní podklady nejsou veř
 | ID | Stav | Problém / dopad | Důkaz a další nutný krok |
 |---|---|---|---|
 | OPS-01 | VYSOKÁ PROVOZNÍ PRIORITA / OTEVŘENO | Reálné noční EV nabíjení 13.11 vedlo k vybíjení domácí baterie 66→20 % (~4,65 kWh DC), přestože 03–05 platila nízká cena 1,8078 Kč/kWh. Stínové řízení 0 actions, nelze chybu připsat aktuátoru doplňku. | [Audit 13.11](NIGHT_AUDIT_0632_20261113.md). HA grid-charge povolení bylo OFF, charge limit 3 A/discharge limit 30 A, režim Back Up Mode. Fyzickou ochranu navrhnout a otestovat odděleně; NO-GO live. |
+| DB-0633 | IMPLEMENTOVÁNO / PRODUKČNÍ DŮKAZY OTEVŘENY | Starší SOC data, duplicitní priority session a nepotřebná high-rate historie rostly bez retence. | [0.6.33 specifikace](DB_OPTIMIZATION_RELEASE_0633.md). Uzavřít až po produkčním ověření celé DB, FIFO/ACK a další noci. |
 | LIVE-05 | POZASTAVENO / JEN OBSERVE_ONLY | HA package od 13.11 fyzicky ovládá on-grid SOC reserve a proud EV; neřeší zatím bezpečné souběžné grid nabíjení baterie, záruku hard-real-time fází nebo přímé VPP. | [Povely a fyzická obnova PASS](LIVE_BATTERY_RESERVE_20261113.md). První noc 14.11 ještě neproběhla, původní stínový add-on je nadále observe_only a není vydáván za fyzický adaptér. |
 | AUTO-02 | STŘEDNÍ/NEOVĚŘENO / OTEVŘENO | HA původní konfigurace obsahuje dvě EV-priorita-ON automatizace s ekvivalentním triggerem. Duplicitní akce jsou možné, nikoli prokázané v trace. | [Read-only inspekce](NIGHT_AUDIT_0632_20261113.md). Porovnat trace, eventy, notifikace a zařízení; při případné konsolidaci ověřit stejnou bezpečnost. |
 | RET-01 | NOVÉ — VYSOKÁ / OTEVŘENO | 479,2 MiB SQLite nyní, hard limit 2 GiB; rostou SOC rozhodnutí, plný ACK outbox a vzorky bez dlouhodobé archivace. Po limitu může durable ACK stagnovat. | [Úplný audit, důkaz, akceptace](DEEP_AUDIT_0631_20261112.md): bez tiché ztráty, cold archiv s SHA/count/restore a alarm 60/75/90 %. |
