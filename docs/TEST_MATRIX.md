@@ -1,3 +1,5 @@
+
+| WIN-01: zimní cíl 100 % / 15kWh PV / TČ / EV 2h | [Zadání a reprodukce](WINTER_OPERATION_POLICY_20261115.md), [issue #52](https://github.com/inenger/home-energy-coordinator-ha/issues/52) | Budoucí celý produkční replay: při mrazu desired SOC 100 %; attainable fyzicky omezené; odlišit reserve Min SOC 20 % a nightcharge Upper SOC 70 %; nedosažení EV 80 % není alarm; stale BT1/BT28 fail safe; observe_only = 0 actions. **PENDING: zatím není runtime test/oprava.** |
 # Mapa chyb, testů a důkazů
 
 Cesty jsou skutečné součásti repozitáře. Tabulka není tvrzení, že každý
