@@ -1,3 +1,5 @@
+**Nasazení:** 0.6.34 je od 15.11.2026 instalována na RPi v režimu `started / observe_only`; fyzické HEC LIVE zůstává odpojené. [Provozní ověření a limity](docs/DEPLOYMENT_0634_20261115.md).
+
 ## Aktuální stav – 15. 11. 2026
 
 **Verze 0.6.34:** [WIN-01 + RET-05](docs/WIN_RET_RELEASE_0634.md) sjednocuje poradní zimní SOC potřebu s ekonomickým modelem a doplňuje ověřené uzavírání nočních souhrnů. Stínový doplněk i nadále používá `observe_only` a nevydává fyzické povely. HEC LIVE zůstává odpojený od HA a nesmí se samočinně aktivovat.

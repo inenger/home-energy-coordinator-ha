@@ -1,3 +1,9 @@
+## 15.11.2026 – 0.6.34 na RPi potvrzena, retence běží ve fázích
+
+[Deploy a reálné ověření](DEPLOYMENT_0634_20261115.md). GitHub PR #53 a CI merge PASS; lokální Home Assistant Supervisor: 0.6.34 `started/observe_only`, fyzické akce 0. Po restartu skutečně vznikly 3 uzavřené `night_summaries` pro 23.–25.10. s úplným SHA-256 ověřením. Automatický purge zůstává omezen 12h intervalem, takže zatím neproběhl; úplná nová noc neověřená. HEC LIVE je stále odpojený.
+
+---
+
 # Aktuální zdrojový stav – 0.6.34 (15. 11. 2026)
 
 **WIN-01 + RET-05 opraveny ve zdrojovém kódu, [vydání 0.6.34](WIN_RET_RELEASE_0634.md).** Zimní poradní SOC cíl pracuje s čerstvou venkovní teplotou, konzervativní hodinovou energetickou bilancí FVE/domu včetně tepelného čerpadla a odděluje ekonomické optimum od nedosažitelného požadavku 100 %. `night_summaries` se v aktivní maintenance cestě doplňují po uzavření noci s SHA-256 proveniencí a retence vyžaduje plnou shodu původních vzorků. Historická rozhodnutí nejsou přepsána.

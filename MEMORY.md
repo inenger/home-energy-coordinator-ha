@@ -1,3 +1,12 @@
+# 15.11.2026 – potvrzené nasazení 0.6.34 na RPi
+
+- Merge `73612310f348` a CI `43746539754` PASS, RPi Supervisor aktualizoval samostatný stínový doplněk z 0.6.33 na 0.6.34, `started` a `observe_only` s `device_actions=0`. Běžné SolaX Back Up Mode/20 % rezerva, EVC16 A a HEC LIVE odpojené zůstaly beze změny.
+- Před aktualizací byl vytvořen podporovaný partial native backup a záloha předchozího zdroje; soukromé identifikátory jsou pouze v provozním prostoru na RPi. Dashboard karta byla nahrazena a původní kopie zachována.
+- V první přenosné databázové kopii byly skutečně vytvořeny 3 uzavřené noční souhrny (23–25.10.) s přesným SHA-256 vůči 517/517/539 původním řádkům. SQLite `quick_check=ok`, FK žádné, ACK outbox/receipts shodné, bez nepotvrzených řádků.
+- Reálné smazání starších raw podléhá stále 12hodinovému časovému omezení, **zatím se neprovedlo**. Nová plná noc s 0.6.34 zatím neproběhla. Ekonomické vs zimní cíle byly v HA přeneseny v policy `soc-energy-scenarios-v6-cold-load-targets`; večerní as-of data (6,1 °C / předpověď min4°C, neúplný horizont) nevyžadují 100 %. [Provozní report](docs/DEPLOYMENT_0634_20261115.md).
+
+---
+
 # 15. 11. 2026 – 0.6.34: WIN-01 a RET-05 (nový zdroj)
 
 - [Rozsah opravy a historický replay](docs/WIN_RET_RELEASE_0634.md). Nové poradní zimní cíle: při teplotě ≤2 °C a konzervativním hodinovém energetickém deficitu vůči baterii ≥70 % je `desired_target_soc_pct=100`; `economic_target_soc_pct` se uchovává odděleně, `physical_charge_target_soc_pct=None`. Hodnoty jsou shadow, **není to automatický povel**. EV priorita, 03–05 a fyzické nastavení SolaX/EV se nemění.

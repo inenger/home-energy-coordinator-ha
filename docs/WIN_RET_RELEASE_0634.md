@@ -1,3 +1,7 @@
+**Následné provozní potvrzení:** [nasazení na RPi 15.11.2026](DEPLOYMENT_0634_20261115.md). Zdroj, CI i Supervisor 0.6.34 jsou ověřeny; 3 první noční SHA souhrny PASS, naplánovaná retence zatím čeká na 12hodinovou bránu. Nová úplná noční zkušenost stále chybí.
+
+---
+
 # 0.6.34 — WIN-01 zimní plán SOC a RET-05 noční retenční souhrny
 
 **Rozsah:** samostatný `priority_shadow`, nadále výhradně `observe_only` a `device_actions=0`. HEC LIVE / aktivní HA automatizace, SolaX Back Up Mode, limity baterie, tarify, Tesla wallbox a hardware se **nemění**.
