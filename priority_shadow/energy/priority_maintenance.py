@@ -28,6 +28,10 @@ class Maintenance:
                 try:priority.finish(store,day)
                 except Exception as error:errors.append({'day':day,'error_code':type(error).__name__,'storage_error':storage_details(error)})
             optimizer=planner.observe(store,states,at,self.client)
+            try:night_finalization=night.finalize_pending(store,at)
+            except Exception as error:
+                night_finalization={'status':'error','error_code':type(error).__name__,
+                                    'storage_error':storage_details(error)}
             if time.monotonic()>=self.next_audit:
                 try:priority_audit.update_day_audit(store,self.client,at);self.audit_error=None
                 except Exception as error:self.audit_error=type(error).__name__
@@ -41,7 +45,7 @@ class Maintenance:
                 retention_status={'status':'error','error_code':type(error).__name__,
                                   'storage_error':storage_details(error)}
             return {'at':at,'soc_optimizer':optimizer,'fve_soc_audit':audit,
-                    'summary_errors':errors,'retention':retention_status}
+                    'summary_errors':errors,'night_finalization':night_finalization,'retention':retention_status}
         finally:store.close()
     def run(self):
         next_run=0

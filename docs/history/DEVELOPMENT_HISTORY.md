@@ -1,3 +1,11 @@
+## 15. 11. 2026 – 0.6.34 WIN-01 / RET-05
+
+**Vstupní commit `f015427`.** [Zadání a úplný kontrakt](../WIN_RET_RELEASE_0634.md). Oproti 0.6.33 přidána modelová zimní potřeba 100 % bez jakéhokoli fyzického setpointu a bezztrátová uzávěrka starších nočních souhrnů s kontrolou SHA. Ověřeno na izolovaných historických as-of datech 15.11. (původní cíl 25 %, nový zimní 100 %) a 23.–25.10. (517/517/539 záznamů).
+
+**Neúspěšný test:** první E2E syntetická kontrola neprávem očekávala pokrytí přesně 120 minut, implementace správně vydala 119,75 kvůli hranici posledního aktivního vzorku. Opravena chybná testovací podmínka, **ne samotný výpočet**. Test chybějícího souhrnu, nekompletní noci i tampered raw následně PASS. Nepotvrzené: přesná fyzikální teplotní účinnost TČ/COP, live limit a chování nové verze během celé skutečné noci. HEC LIVE ponecháno vypnuté.
+
+---
+
 
 ## 15.11.2026 – WIN-01, korekce zimní interpretace noci (docs only)
 

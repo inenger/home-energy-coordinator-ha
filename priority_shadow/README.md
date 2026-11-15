@@ -1,3 +1,14 @@
+# 0.6.34 – poradní zimní cílové SOC a bezpečná retence nočních vzorků
+
+[Specifikace, historický replay a hranice validace](../docs/WIN_RET_RELEASE_0634.md).
+Nový as-of zimní model používá venkovní BT1 / záložní BT28, hodinový vývoj spotřeby domu již **včetně tepelného čerpadla**, hodinovou Solcast, referenční energii baterie a dostupný dvouhodinový výkon. Výsledky rozlišují ekonomický cíl, zimní požadavek 100 %, dosažitelný SOC a nulový fyzický setpoint. Stávající priorita EV / baterie se nemění.
+
+Starší `night_samples` nyní mohou být odstraněny až po uzavření úplné noci, uloženém SHA-256 důkazu a opětovném ověření surových řádků. Při neúplném pokrytí a nesouladu dat zůstávají všechny detaily zachovány; sběr v intervalu 02:55–05:05 zůstává nedotčen. `observe_only`, žádný akční adaptér a HEC LIVE mimo provoz.
+
+## Historie starších vydání (není aktuální chování)
+
+---
+
 # 0.6.32 — sdílené immutable SOC podklady, bez změny energetické logiky
 
 Kompletní SOC rozhodnutí se vrací v původním formátu přes ověřené

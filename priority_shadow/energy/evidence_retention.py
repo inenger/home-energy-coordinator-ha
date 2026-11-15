@@ -26,7 +26,16 @@ def _latest(db):
     return unpack(row[0]) if row else {}
 
 def _day_finalized(db,day,table):
-    return db.execute(f"SELECT 1 FROM {table} WHERE day=?",(day,)).fetchone() is not None
+    row=db.execute(f"SELECT payload FROM {table} WHERE day=?",(day,)).fetchone()
+    if not row:return False
+    if table!='night_summaries':return True
+    summary=unpack(row[0])
+    if (summary.get('status')!='sealed' or not summary.get('sealed_at')
+            or summary.get('summary_schema')!='night-summary-provenance-v2'
+            or summary.get('covered_minutes',0)<110):return False
+    source=list(db.execute('SELECT at,payload FROM night_samples WHERE day=? ORDER BY at',(day,)))
+    return (bool(source) and summary.get('source_rows_count')==len(source)
+            and summary.get('source_rows_sha256')==night.rows_digest(source))
 
 def _journal_eligible(db,day,ack):
     records=db.execute("SELECT seq,payload FROM journal_transport_outbox WHERE day=? ORDER BY seq",(day,)).fetchall()

@@ -1,3 +1,9 @@
+## 0.6.34 – WIN-01 + RET-05 (15. 11. 2026)
+
+[Kompletní dokumentace, skutečný read-only replay a prvotní FAIL testu](../../docs/WIN_RET_RELEASE_0634.md). Výchozí commit `f015427`. Doplněn winter target 100 % při potvrzeném chladném energeticky nedostatečném dni, odlišené ekonomické/dosažitelné cíle. Opravena absence `night_summaries` na aktivní maintenance cestě; průkaz SHA-256 před 14d čistěním. Neúplné noci se nikdy automaticky nemažou. `observe_only` a 0 povelů.
+
+---
+
 ## 0.6.30 · sedm oprav auditu
 
 [Kontrakt a historické FAIL](READINESS_FIXES_0630.md). Jen observe_only, nedotčené fyzické řízení a originální provozní data.

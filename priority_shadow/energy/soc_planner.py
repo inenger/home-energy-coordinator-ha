@@ -9,8 +9,9 @@ from .soc_calibration import correction, season
 from .power_allocation import allocate_power
 from .soc_evidence import seal
 from .phase_budget import limits, checked
+from .winter_soc import evaluate as evaluate_cold_demand
 
-POLICY='soc-energy-scenarios-v5-attainable-targets'
+POLICY='soc-energy-scenarios-v6-cold-load-targets'
 PLAN_STATUSES=('conditional_shadow_plan','partial_shadow_plan')
 
 
@@ -274,7 +275,7 @@ def _plan(now,inputs,history,pv_models,household,versions):
     result['warnings'].append('phase_budget_is_shadow_estimate_not_breaker_protection')
     if result['power_budget']['status']!='empirical_shadow_candidate':result['warnings'].append('legacy_phase_budget_fallback')
     model=history['battery_model'];candidates=[]
-    targets=[0]+list(range(max(5,int(math.ceil(inputs['reserve_soc']/5)*5)),96,5))
+    targets=[0]+list(range(max(5,int(math.ceil(inputs['reserve_soc']/5)*5)),101,5))
     scenarios=('central','low_pv_high_load','high_pv_low_load')
     for target in targets:
         variants={s:simulate(rows,inputs,model,target,s,start,end,terminal_price) for s in scenarios}
@@ -300,6 +301,21 @@ def _plan(now,inputs,history,pv_models,household,versions):
     winner=min(feasible,key=lambda r:(round(r['max_regret_czk'],6),
                round(max(v['unserved_ev_ac_kwh'] for v in r['scenarios'].values()),6),
                round(r['scenarios']['central']['grid_charge_ac_kwh'],6),r['target_soc_pct']))
+    economic_target=winner['target_soc_pct']
+    # WIN-01: a physical battery setpoint is NEVER inferred from a shadow
+    # forecast. Cold load adequacy is a desired SOC intent, not an actuator.
+    winter=evaluate_cold_demand(rows,inputs,model,end,horizon)
+    desired=winter['desired_target_soc_pct']
+    if desired == 100:
+        winner=next(r for r in candidates if r['target_soc_pct']==100)
+    else:
+        desired=economic_target
+    # A 100% cold reserve target is an *intent*, not a claim that EV and
+    # battery can both meet their wishes. Reevaluate comparability after
+    # overriding the economic candidate, including the battery-first case.
+    partial=partial or any(
+        v['unserved_ev_ac_kwh']>.05 or not v['battery_feasible']
+        for v in winner['scenarios'].values())
     central=winner['scenarios']['central'];model_snapshot=Battery(model).snapshot()
     reference_forecast=sum(r['raw_pv_kw']*r['hours'] for r in rows
                            if datetime.fromtimestamp(r['start'],TZ).date().isoformat()==day)
@@ -310,11 +326,15 @@ def _plan(now,inputs,history,pv_models,household,versions):
                   allocation_policy=('ev_deficit_then_battery_regret' if inputs['priority']=='ev' else 'battery_regret_then_ev_deficit') if partial else 'full_demand_minimax',
                   ev_deficit_ac_kwh={s:v['unserved_ev_ac_kwh'] for s,v in winner['scenarios'].items()},target_soc_pct=winner['target_soc_pct'],
                   night_plan_eligible=result['horizon_complete'],
-                  decision_reason='skip_grid_charge' if winner['target_soc_pct']==0 else 'minimum_scenario_regret',
+                  decision_reason='winter_cold_load_adequacy' if winter['desired_target_soc_pct']==100 else
+                      'skip_grid_charge' if winner['target_soc_pct']==0 else 'minimum_scenario_regret',
+                  winter_demand=winter,desired_target_soc_pct=desired,
+                  economic_target_soc_pct=economic_target,physical_charge_target_soc_pct=None,
+                  attainable_soc_05_pct=central['soc_at_05'],
                   target_reached_all_scenarios=all(v['target_reached'] for v in winner['scenarios'].values()),
                   attainable_soc_05={s:v['soc_at_05'] for s,v in winner['scenarios'].items()},
                   target_shortfall_soc_pct={s:v['target_shortfall_soc_pct'] for s,v in winner['scenarios'].items()},
-                  target_semantics='economic_request_under_power_constraints_not_guaranteed_soc',
+                  target_semantics='winter_desired_not_guaranteed_or_physical_setpoint' if winter['desired_target_soc_pct']==100 else 'economic_request_under_power_constraints_not_guaranteed_soc',
                   reference_forecast_day_kwh=reference_forecast,
                   objective='grid_import_cost_with_common_terminal_inventory_value',
                   selection_method='partial_service_lexicographic' if partial else 'minimax_regret_no_assumed_scenario_probabilities',
@@ -339,7 +359,7 @@ def plan(now,inputs,history,pv_models,household,versions):
     if result.get('status') in PLAN_STATUSES:
         other='battery' if inputs['priority']=='ev' else 'ev'
         alternate=_plan(now,{**inputs,'priority':other},history,pv_models,household,versions)
-        fields=('status','target_soc_pct','ev_deficit_ac_kwh','demand_fully_met','economic_comparison','allocation_policy','selected','horizon_complete','attainable_soc_05','target_shortfall_soc_pct','target_reached_all_scenarios')
+        fields=('status','target_soc_pct','desired_target_soc_pct','economic_target_soc_pct','attainable_soc_05_pct','ev_deficit_ac_kwh','demand_fully_met','economic_comparison','allocation_policy','selected','horizon_complete','attainable_soc_05','target_shortfall_soc_pct','target_reached_all_scenarios')
         result['priority_alternatives']={inputs['priority']:{k:deepcopy(result.get(k)) for k in fields},
                                        other:{k:deepcopy(alternate.get(k)) for k in fields}}
     return seal(result)

@@ -431,6 +431,15 @@
     "required_for_quality": false,
     "note": ""
   },
+  "outdoor_temp_secondary": {
+    "entity_id": "sensor.outdoor_temperature_eb101_bt28_31622",
+    "label_cs": "Venkovní teplota TČ – BT28 záloha",
+    "unit": "°C",
+    "min": -50,
+    "max": 110,
+    "required_for_quality": false,
+    "note": "Pouze při neplatném nebo starém BT1"
+  },
   "floor_supply_temp": {
     "entity_id": "sensor.external_supply_line_bt25_30040",
     "label_cs": "Topná voda do podlahy – nikoli pokojová teplota",
