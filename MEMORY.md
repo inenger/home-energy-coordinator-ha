@@ -1,3 +1,12 @@
+# 15.11.2026 — WIN-01: oprava zimního energetického zadání (bez runtime změny)
+
+- [Zimní provozní kontrakt](docs/WINTER_OPERATION_POLICY_20261115.md); [Issue #52](https://github.com/inenger/home-energy-coordinator-ha/issues/52). Uživatel potvrdil správný režim SolaX Back Up Mode se základním 20% discharge Min SOC a dvouhodinové EV okno 03–05; nedosažení EV 80 % není chyba.
+- Při mrazu / okolí 0 °C, FVE ~15 kWh a značném odběru TČ má být **požadovaný** cíl nabití domácí baterie až 100 %. Je oddělen od skutečně dosažitelného SOC, od fyzického setpointu a od nastavení on-grid Min SOC. WIN-01 zatím není implementováno.
+- RPi 15.11.: BT1 −1,8 °C, BT28 −3,3 °C; čidlo TČ dostupné. Shadow `instant_fill` 100 % je pouze maximální modelový stínový cíl, nikoliv potvrzený fyzický příkaz ani důvod ke kritickému alarmu. Ekonomický `soc_planner` vracel 30 % a zkouší max 95 %, což nezohledňuje potvrzený zimní požadavek. Vzorky 03–05 ~1443, EV ~22,33 kWh, baterie 19 % bez nabíjení, 0 device actions.
+- Aktuální `number.solax_backup_nightcharge_upper_soc=70 %` je jiný parametr než `number.solax_backup_discharge_min_soc=20 %`. Pro případnou budoucí live akci vyžaduje oddělenou validaci a obnovu. HEC LIVE nadále odpojen, doplněk v `observe_only`, bez automatické reaktivace.
+
+---
+
 # 13.11.2026 – DB 0.6.33: zpětná SOC/priority kompakce a retence
 
 - Nový runtime 0.6.33 zachovává observe_only; dokument
