@@ -25,6 +25,8 @@ IDS={
  'pv_w':'sensor.solax_pv_power_total','inverter_w':'sensor.solax_inverter_power',
  'export_limit_w':'number.solax_export_control_user_limit',
  'outdoor_c':'sensor.current_outdoor_temperature_bt1_30002',
+ 'outdoor_secondary_c':'sensor.outdoor_temperature_eb101_bt28_31622',
+ 'heat_pump_w':'sensor.tepelne_cerpadlo',
  'sunrise':'sensor.sun_next_rising','battery_temperature':'sensor.solax_battery_temperature',
  'tesla_limit_a':'number.tesla_model_y_juniper_nabijeci_proud',
  'tariff':'sensor.cez_indi_cenik',
@@ -59,6 +61,11 @@ def observation(states,at):
     for key in ('ev_counter','pv_counter'):row[key]=_number(by,IDS[key],at,'kWh',26*3600)
     for key in ('soc','ev_soc'):row[key]=_number(by,IDS[key],at,'%',10800)
     row['outdoor_c']=_number(by,IDS['outdoor_c'],at,'°C',7200)
+    row['outdoor_c_source']='BT1' if row['outdoor_c'] is not None else None
+    if row['outdoor_c'] is None:
+        row['outdoor_c']=_number(by,IDS['outdoor_secondary_c'],at,'°C',7200)
+        if row['outdoor_c'] is not None:row['outdoor_c_source']='BT28'
+    row['heat_pump_w']=_number(by,IDS['heat_pump_w'],at,'W',180)
     return row
 
 
@@ -73,6 +80,11 @@ def inputs(states,at,ev_model,options,weather_rows,use_temperature):
             'ev_calibration':{k:v for k,v in ev_model.items() if k!='sessions'},
             'reserve_soc_approved':None,'reserve_soc':15,
             'reserve_source':'empirical_energy_map_reference_not_control_policy'}
+    result['outdoor_c_source']='BT1' if result['outdoor_c'] is not None else None
+    if result['outdoor_c'] is None:
+        result['outdoor_c']=_number(by,IDS['outdoor_secondary_c'],at,'°C',7200)
+        if result['outdoor_c'] is not None:result['outdoor_c_source']='BT28'
+    result['heat_pump_w']=_number(by,IDS['heat_pump_w'],at,'W',180)
     approved=options.get('planner_approved_reserve_soc')
     if approved not in (None,''):
         try:approved=float(approved)
@@ -284,7 +296,7 @@ class PlannerService:
 
 def view(result):
     if not result:return {'status':'waiting_for_calculation','device_actions':0}
-    keys=('ev_observation','ev_requirement_source','ev_telemetry_roles','power_budget','attainable_soc_05','target_shortfall_soc_pct','target_reached_all_scenarios','target_semantics','schema_version','policy','issued_at','day','status','target_soc_pct','decision_reason','warnings',
+    keys=('ev_observation','ev_requirement_source','ev_telemetry_roles','power_budget','winter_demand','desired_target_soc_pct','economic_target_soc_pct','physical_charge_target_soc_pct','attainable_soc_05_pct','attainable_soc_05','target_shortfall_soc_pct','target_reached_all_scenarios','target_semantics','schema_version','policy','issued_at','day','status','target_soc_pct','decision_reason','warnings',
           'window_start','window_end','horizon_end','horizon_complete','current_soc','soc_at_03_estimate','soc_at_05_estimate',
           'night_charge_ac_kwh','first_sustained_pv_cover_at','sunrise','objective','selection_method','season',
           'priority_alternatives','ev_requirement','ev_deficit_ac_kwh','demand_fully_met','allocation_policy','economic_comparison','model_hash','model_version_hash','decision_hash','decision_hash_schema','night_plan_eligible','assumptions','missing_inputs','corrections','pre_window_capture')

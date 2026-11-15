@@ -1,7 +1,15 @@
+## 0.6.34 – zimní požadovaný cíl oddělený od ekonomického cíle
+
+[Úplná specifikace WIN-01](../../docs/WIN_RET_RELEASE_0634.md). Ekonomický plán nadále porovnává stejný počet scénářů s dostupnými as-of hodinovými vstupy. Kandidáty zkouší 0 a 5–100 % po 5 %. Při čerstvé venkovní teplotě ≤2 °C (BT1, fallback BT28, případně dostupná as-of předpověď) a stresovém deficitu mezi 05 a dalšími 03 ≥70 % empirické referenční využitelné energie baterie požaduje shadow `desired_target_soc_pct=100`, ačkoliv `economic_target_soc_pct` může být nižší.
+
+Pro názornost `target_soc_pct` nese poradní vybraný požadavek; `attainable_soc_05_pct` je modelová dosažitelná hodnota, `physical_charge_target_soc_pct` je **vždy `None`**. EV priorita i okno 03–05 se zachovávají. Tepelné čerpadlo je již zahrnuto v historickém profilu spotřeby domu, nesmí se přičítat znovu. Fyzický start, nastavení Back Up Mode i 3×25 A jsou mimo rozsah.
+
+---
+
 # Jak se vybírá cílové SOC
 
 Implementace: `soc_planner.py`, politika
-`soc-energy-scenarios-v5-attainable-targets`. Výpočet je deterministický,
+`soc-energy-scenarios-v6-cold-load-targets`. Výpočet je deterministický,
 bez volání AI. AI může na RPi kontrolovat důkazy a navrhovat změny kódu;
 není součástí rozhodování ani podmínkou běhu.
 

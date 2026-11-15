@@ -1,3 +1,7 @@
+**Aktualizace 15. 11. 2026:** [Stínové runtime řešení 0.6.34](WIN_RET_RELEASE_0634.md) implementuje WIN-01 jako zimní poradní target, nadále `observe_only`. Následující odstavce zachovávají původní zadání a přípravu a nesmí být považovány za současný stav release.
+
+---
+
 # WIN-01 — Zimní energetická politika (schválené zadání, 15. 11. 2026)
 
 **Stav:** produktové požadavky potvrzeny, **zatím NEIMPLEMENTOVÁNO** do runtime `priority_shadow 0.6.33`. [GitHub issue #52](https://github.com/inenger/home-energy-coordinator-ha/issues/52). Pozorovací režim `observe_only` beze změny; HEC LIVE nesmí být automaticky aktivován.

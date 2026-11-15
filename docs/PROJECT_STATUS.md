@@ -1,3 +1,13 @@
+# Aktuální zdrojový stav – 0.6.34 (15. 11. 2026)
+
+**WIN-01 + RET-05 opraveny ve zdrojovém kódu, [vydání 0.6.34](WIN_RET_RELEASE_0634.md).** Zimní poradní SOC cíl pracuje s čerstvou venkovní teplotou, konzervativní hodinovou energetickou bilancí FVE/domu včetně tepelného čerpadla a odděluje ekonomické optimum od nedosažitelného požadavku 100 %. `night_summaries` se v aktivní maintenance cestě doplňují po uzavření noci s SHA-256 proveniencí a retence vyžaduje plnou shodu původních vzorků. Historická rozhodnutí nejsou přepsána.
+
+Zimní práh je stále konzervativní neověřený model pro stínovou analýzu, **nikoli fyzické řízení**. Původní 3×25A / live validace zůstává otevřená. HEC LIVE je odpojen, pouze `observe_only`, 0 fyzických akcí. Stav zdroje, CI a RPi instalace musí být ověřovány samostatně.
+
+Následující oddíly zachovávají chronologii starších verzí a v minulosti známé stavy; nevyvozovat z nich současný runtime.
+
+---
+
 ## 15.11.2026 — WIN-01: zimní SOC politika, dokumentační specifikace
 
 [Požadavek a oprava interpretace auditu](WINTER_OPERATION_POLICY_20261115.md); [Issue #52](https://github.com/inenger/home-energy-coordinator-ha/issues/52). Při mrazu a ~15 kWh predikci PV s vysokou spotřebou TČ má být požadovaný SOC baterie **100 %**. Odlišit od dosažitelného SOC a fyzického nabíjecího limitu. `Back Up Mode` / 20 % minimální rezerva jsou správné; EV 03–05 nemusí dosáhnout 80 %. Požadavek zatím **není implementován**, runtime 0.6.33 a HEC LIVE nejsou změněny.
@@ -29,7 +39,7 @@ Noc 13.–14.11. pouze pozorovací, bez automatické opětovné aktivace.
 
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.33 -->
+<!-- shadow-version: 0.6.34 -->
 
 Stav zdrojového kandidáta k 12. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
@@ -37,7 +47,7 @@ rozcestník a [registr nálezů](KNOWN_ISSUES.md).
 
 | Oblast | Autoritativní zdroj |
 |---|---|
-| Stínový doplněk 0.6.31, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
+| Stínový doplněk 0.6.34, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
 | Původní koordinátor, samostatný balíček | [config](../energy_coordinator/config.yaml) |
 | Známé chyby, nejistoty a podmínky uzavření | [KNOWN_ISSUES](KNOWN_ISSUES.md) |
 | Chyba → regresní test → rozsah důkazu | [TEST_MATRIX](TEST_MATRIX.md) |

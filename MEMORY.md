@@ -1,3 +1,13 @@
+# 15. 11. 2026 – 0.6.34: WIN-01 a RET-05 (nový zdroj)
+
+- [Rozsah opravy a historický replay](docs/WIN_RET_RELEASE_0634.md). Nové poradní zimní cíle: při teplotě ≤2 °C a konzervativním hodinovém energetickém deficitu vůči baterii ≥70 % je `desired_target_soc_pct=100`; `economic_target_soc_pct` se uchovává odděleně, `physical_charge_target_soc_pct=None`. Hodnoty jsou shadow, **není to automatický povel**. EV priorita, 03–05 a fyzické nastavení SolaX/EV se nemění.
+- BT1, záložní BT28, příkon TČ jako podpůrný signál; house profil už obsahuje TČ, žádné dvojí započtení. Causální archiv as-of i úplný horizont jsou povinné; při neplatné teplotě zůstává ekonomický model. Neimplikuje to ověřený COP či počasím řízené fyzické limity.
+- RET-05: skutečná údržbová cesta nyní volá omezený `night.finalize_pending`; souhrn se zamkne jako immutable `sealed` pouze u dostatečně kompletní noci a s digestem původních řádků. `night_samples` se mažou až při souhlasném digestu. Při nesouladu/nekompletním dni fail-closed. Žádný přepis historie.
+- RPi soukromý replay 15.11. (old 25 % → new desired 100 %) a 23–25.10. (517/517/539 uzavřených řádků v izolované SQLite) PASS. První falešné očekávání pokrytí 120 vs měřených 119,75 minut opraveno v testu; algoritmus se kvůli testu neměnil. Publikace/CI/nasazení jsou zvláštní akce.
+- Explicitní zákaz znovu aktivovat HEC LIVE bez nového schválení. `Back Up Mode`, on-grid Min SOC 20 %, EVC podle uživatele, bez automatického prodloužení EV nabíjení mimo 03–05.
+
+---
+
 # 15.11.2026 — WIN-01: oprava zimního energetického zadání (bez runtime změny)
 
 - [Zimní provozní kontrakt](docs/WINTER_OPERATION_POLICY_20261115.md); [Issue #52](https://github.com/inenger/home-energy-coordinator-ha/issues/52). Uživatel potvrdil správný režim SolaX Back Up Mode se základním 20% discharge Min SOC a dvouhodinové EV okno 03–05; nedosažení EV 80 % není chyba.

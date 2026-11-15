@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone, time, timedelta
 import math
+import hashlib
 from .core import TZ, VERSION, instant
 from .store import pack, unpack
 
@@ -197,9 +198,21 @@ def record(store, states, at):
     return result
 
 
-def summarize(store, day):
+def rows_digest(records):
+    """Stable proof over the exact original (timestamp, packed payload) bytes."""
+    h=hashlib.sha256()
+    for at,blob in records:
+        h.update(len(at.encode()).to_bytes(4,'big'))
+        h.update(at.encode())
+        h.update(len(blob).to_bytes(8,'big'))
+        h.update(blob)
+    return h.hexdigest()
+
+
+def summarize(store, day, sealed_at=None):
     ensure_schema(store.db)
-    rows = [unpack(x[0]) for x in store.db.execute('SELECT payload FROM night_samples WHERE day=? ORDER BY at',(day,))]
+    source=list(store.db.execute('SELECT at,payload FROM night_samples WHERE day=? ORDER BY at',(day,)))
+    rows = [unpack(x[1]) for x in source]
     if not rows:return None
     session_row = store.db.execute('SELECT payload FROM night_sessions WHERE day=?',(day,)).fetchone()
     session = unpack(session_row[0]) if session_row else None
@@ -228,12 +241,48 @@ def summarize(store, day):
             'frozen_session':session,'energy':{k:round(v,4) for k,v in energy.items()},
             'reason_counts':{k:sum(r['shadow']['reason']==k for r in active)
                              for k in {r['shadow']['reason'] for r in active}},
+            'source_rows_sha256':rows_digest(source),'source_rows_count':len(source),
+            'summary_schema':'night-summary-provenance-v2',
             'limitations':['Descriptive shadow, not observed savings or breaker protection.',
                            'Each energy series has its own valid 15-second coverage; gaps and unchanged power reports older than 90 seconds are excluded.',
                            'AC and DC energies are separate.']}
+    # A truncated or incomplete night is still useful evidence but MUST NOT
+    # authorize deletion of raw samples. Distinguish it from a sealed record.
+    stamps=[instant(r['at']).astimezone(TZ) for r in active]
+    first=stamps[0].hour*60+stamps[0].minute if stamps else 999
+    last=stamps[-1].hour*60+stamps[-1].minute if stamps else -1
+    full=(session is not None and len(active)>=400 and first<=182 and last>=297
+          and result['covered_minutes']>=110)
+    result['status']='sealed' if sealed_at is not None and full else 'incomplete'
+    result['sealed_at']=sealed_at if result['status']=='sealed' else None
     with store.db:
-        store.db.execute('INSERT OR REPLACE INTO night_summaries VALUES(?,?)',(day,pack(result)))
+        # Sealed daily results are immutable. Never rewrite old audit evidence.
+        store.db.execute('INSERT OR IGNORE INTO night_summaries VALUES(?,?)',(day,pack(result)))
     return result
+
+
+def finalize_pending(store, at, max_days=3):
+    """Bounded completed-day backfill, also for legacy shadow nights.
+
+    Never finalize at 02:55–05:05. Missing or incomplete nights remain
+    permanently unpruned until a validated immutable summary exists.
+    """
+    if window(at):return {'status':'skipped_night_window','days':[]}
+    now=instant(at).astimezone(TZ)
+    cutoff=(now.date() if now.hour*60+now.minute>=305
+            else now.date()-timedelta(days=1)).isoformat()
+    days=[d for (d,) in store.db.execute(
+        '''SELECT DISTINCT s.day FROM night_samples s
+           WHERE s.day<=? AND NOT EXISTS
+           (SELECT 1 FROM night_summaries n WHERE n.day=s.day)
+           ORDER BY s.day LIMIT ?''',(cutoff,max_days))]
+    result=[]
+    for day in days:
+        summary=summarize(store,day,sealed_at=instant(at).isoformat())
+        if summary:result.append({'day':day,'status':summary['status'],
+                                   'samples':summary['sample_count'],
+                                   'digest':summary['source_rows_sha256']})
+    return {'status':'ok','days':result}
 
 
 def recent(store, day=None):

@@ -1,9 +1,17 @@
+## Aktuální stav – 15. 11. 2026
+
+**Verze 0.6.34:** [WIN-01 + RET-05](docs/WIN_RET_RELEASE_0634.md) sjednocuje poradní zimní SOC potřebu s ekonomickým modelem a doplňuje ověřené uzavírání nočních souhrnů. Stínový doplněk i nadále používá `observe_only` a nevydává fyzické povely. HEC LIVE zůstává odpojený od HA a nesmí se samočinně aktivovat.
+
+[Zimní požadavky](docs/WINTER_OPERATION_POLICY_20261115.md) · [Otevřené provozní hranice](docs/KNOWN_ISSUES.md) · [Regrese](docs/TEST_MATRIX.md). Starší verze uvedené níže jsou historické záznamy, nikoli aktuální nastavení zařízení.
+
+---
+
 # Home Energy Coordinator · Home Assistant
 
 | Doplněk | Adresář | Verze |
 |---|---|---|
 | Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.4 |
-| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.33 |
+| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.34 |
 | **Skutečné řízení baterie a Tesly 03–05** | [HA package](ha_packages/night_live_coordinator.yaml) | LIVE v1 · 13.11.2026 |
 
 Oba balíčky mají vlastní Docker build context. Nový stínový doplněk nemění
