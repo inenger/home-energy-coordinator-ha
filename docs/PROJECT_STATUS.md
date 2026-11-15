@@ -1,3 +1,9 @@
+## 15.11.2026 — WIN-01: zimní SOC politika, dokumentační specifikace
+
+[Požadavek a oprava interpretace auditu](WINTER_OPERATION_POLICY_20261115.md); [Issue #52](https://github.com/inenger/home-energy-coordinator-ha/issues/52). Při mrazu a ~15 kWh predikci PV s vysokou spotřebou TČ má být požadovaný SOC baterie **100 %**. Odlišit od dosažitelného SOC a fyzického nabíjecího limitu. `Back Up Mode` / 20 % minimální rezerva jsou správné; EV 03–05 nemusí dosáhnout 80 %. Požadavek zatím **není implementován**, runtime 0.6.33 a HEC LIVE nejsou změněny.
+
+---
+
 ## 13.11.2026 – databázová optimalizace 0.6.33
 
 [Specifikace a retence](DB_OPTIMIZATION_RELEASE_0633.md).
