@@ -1,3 +1,9 @@
+
+## 15.11.2026 – WIN-01, korekce zimní interpretace noci (docs only)
+
+Baseline veřejného zdroje `e32bb216d515`, runtime `0.6.33 observe_only`. Read-only provozní audit 14.–15.11. nesprávně označil modelový 100% SOC cíl za kritickou chybu a nedosažených 80 % Tesly za problém. Uživatel upřesnil zamýšlený kontrakt: Back Up Mode / Min SOC 20 % jsou správné; EV nabíjí levně jen 03–05, poté manuální volba; při mrazu a ~15 kWh PV má být požadovaný SOC domácí baterie 100 % kvůli vytápění.
+
+Na RPi potvrzena samostatná entita síťového nabíjecího stropu 70 %, čidla TČ BT1/BT28 a dostupný příkon TČ. `instant_fill` 100 % je shadow max-fill, zatímco `soc_planner` samostatně vybíral 30 % a testuje cíle nejvýše 95 %. Neprovádí se editace historie starého auditu ani přepsání původních důkazů; předchozí hodnocení bylo opraveno dokumentační revizí. [WIN-01](../WINTER_OPERATION_POLICY_20261115.md), [issue #52](https://github.com/inenger/home-energy-coordinator-ha/issues/52). Pro další verzi požadován syntetický a historický end-to-end replay, rozlišení desired / attainable / physical target. **Bez změny kódu, runtime, nasazení RPi či povelů.**
 ## 0.6.30 · readiness opravy, 11. 11. 2026
 
 Vstupní commit `dee01fc`. Sedm softwarových counterexample reprodukcí převedeno na akceptaci; originály uchovány jako readiness_counterexamples_0629.py/mjs. SOC první kandidát neuložil revokaci kvůli rollback při výjimce v SQLite transakci, poté opraven commit a pozdější raise. Asynchronní REST první varianta vyžadovala upravit staré testy závislé na synchronní odpovědi. Další kandidát pickle fingerprint selhal na determinismu po multiprocessing a watchdog chybně zahrnoval již potvrzené seq; obojí napraveno, skutečné spawn replay regrese po opravě PASS. Komplexní RPi testovací průchod přerušen kvůli ochraně HA hostitele, nenárokovat PASS. [Podrobný report](../../priority_shadow/docs/READINESS_FIXES_0630.md).
