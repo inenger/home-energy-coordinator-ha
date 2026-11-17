@@ -130,6 +130,19 @@ def main():
         # Original SQLite backup lives on /share; a manual recovery is needed.
         raise
 
+    # DB-OPT-01: manually authorized, one-shot, pager-only compaction.
+    # Must finish BEFORE any publisher, journal or control worker is started.
+    # The original database remains byte-for-byte preserved under /share.
+    from .offline_repack import run as run_offline_repack
+    try:
+        repack=run_offline_repack(DATA/'evidence.sqlite')
+        if repack.get('status')!='no_request':
+            print(json.dumps({'offline_db_repack':repack},ensure_ascii=False),flush=True)
+    except Exception as error:
+        print(json.dumps({'offline_db_repack':'failed',
+                          'error_code':type(error).__name__},ensure_ascii=False),flush=True)
+        raise
+
     for sig in (signal.SIGINT,signal.SIGTERM):signal.signal(sig,lambda *_:STOP.set())
     # Spawn procesy nemají zděděná SQLite spojení ani zámky vláken.
     evidence=EvidenceBridge(DATA/'evidence.sqlite',opts).start()

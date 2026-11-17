@@ -1,3 +1,9 @@
+## 17. 11. 2026 – DB-OPT-01, source 0.6.36
+
+**Výchozí commit `afae05da900b78084a1e7df7c52d4b8a47260b0c`.** [Metodika a výsledky](../DB_OPT_0636_20261117.md). Po 0.6.35 zdravá 14denní retence, ale SQLite `auto_vacuum=0` a ~19,37 MB volných stránek. Návrh mazat transportní potvrzení, SOC rozhodnutí nebo zkrátit detaily byl odmítnut pro ztrátu auditní a replay evidence. Recompression outbox nulová, ostatní 1,7–3,1 %; nevolit kvůli integritě digestů. Otestován `VACUUM INTO` na soukromé portable kopii a srovnání všech tabulek včetně rowid/bytes: 47 tabulek, 289 566 řádků PASS, 429,36→409,53 MB. Nový operator-request-only repack s dvojím jištěním.
+
+---
+
 ## 17. 11. 2026 – WIN-01 0.6.35: nezávislý energetický deficit (vývoj)
 
 **Baseline 0.6.34 / commit `41a57fdf`.** [Podrobná evidence](../WIN01_ENERGY_ADEQUACY_0635.md). Otevřený provozní nález: 16.11. při +4,6°C a net deficitu 14,12 kWh i 17.11. při +4,9°C a deficitu 15,27 kWh zůstal shadow desired target 50 %, protože staré pravidlo 100 % vyžadovalo současně teplotu ≤2 °C. Rozšířena podmínka o úplný central+stress energetický deficit. Historické záznamy neměněny, výstupy pouze poradní. Zavedena jednotková hranice, plošný anti-overcharge test, HW a CI ověření oddělené.

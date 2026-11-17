@@ -1,3 +1,12 @@
+# 17. 11. 2026 – DB-OPT-01 / 0.6.36 addon evidence.sqlite
+
+- Výslovné zadání: optimalizovat **jen** interní stínovou DB `/data/evidence/evidence.sqlite` a její přenosný soubor, nikoliv `/homeassistant/home-assistant_v2.db`. Plný audit: [DB-OPT-01](docs/DB_OPT_0636_20261117.md).
+- Snapshot 08:10 SEČ má 429 359 104 B, freelist 19 374 080 B. Read-only zkušební `VACUUM INTO` 409 526 272 B (−19 832 832 B); všech 47 tabulek a 289 566 řádků přesně shodných včetně rowid/transport BLOB/ACK. Aktuální interní live velikost určit po startu 0.6.36 zvlášť; snapshot nenahrazuje live DB.
+- 14denní raw/90denní SOC observation retence už běží, nedokončenou noc 30.10. se 106,98min archivem chrání fail-closed. Deduplikace 0.6.33 už funguje; současné další rekomprese poskytují jen 0–3 % a riskují digesty. Zůstat u one-shot čistého VACUUM bez obsahu.
+- Nový `offline_repack.run` se spustí pouze s přesným operator request na RPi před startem workerů; pořádné snapshot/backup/compare_all/atomic swap/rollback; fyzické HEC LIVE, SolaX/Tesla a HA recorder nedotčené.
+
+---
+
 # 17.11.2026 – potvrzené nasazení 0.6.35
 
 - [Provozní evidence](docs/DEPLOYMENT_0635_20261117.md). PR #54, merge 4a9195c, PR i main CI PASS. RPi ARM64 build a aktualizace PASS, started/observe_only, device_actions=0, HEC LIVE odpojený. Před instalací nativní partial backup předchozí v0.6.34 (703 MB) a samostatné zdrojové zálohy na RPi.

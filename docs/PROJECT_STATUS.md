@@ -1,3 +1,9 @@
+## Zdrojová verze 0.6.36 — DB-OPT-01 (17. 11. 2026)
+
+[Bezpečné bezztrátové přebalení databáze doplňku](DB_OPT_0636_20261117.md). Uložení více než 14denní historie, hash a ACK brány a nastavení `observe_only` beze změny. 429,36 MB přenosná kopie → 409,53 MB na validovaném izolovaném `VACUUM INTO`, 47/47 tabulek a 289 566/289 566 řádků plně shodných. Hlavní `home-assistant_v2.db` se nesmí měnit. Nasazení a výsledek live interní DB jsou samostatné provozní důkazy.
+
+---
+
 ## 17.11.2026 – 0.6.35 nainstalována na RPi
 
 [Deploy, CI a readback](DEPLOYMENT_0635_20261117.md). Merge 4a9195c; CI PR i main PASS; RPi Supervisor ARM build PASS, nový doplněk started/observe_only, žádné fyzické akce. Politika energy-adequacy-v2 publikována a ověřena SHA. Baterie/EV settings nedotčeny, HEC LIVE unavailable. Pro 18.11. předpovědní horizont neúplný; celá nová noc 0.6.35 teprve bude potřeba ověřit.
@@ -59,7 +65,7 @@ Noc 13.–14.11. pouze pozorovací, bez automatické opětovné aktivace.
 
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.35 -->
+<!-- shadow-version: 0.6.36 -->
 
 Stav zdrojového kandidáta k 12. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
