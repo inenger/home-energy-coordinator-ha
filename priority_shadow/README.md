@@ -1,3 +1,9 @@
+# 0.6.35 – energeticky řízený požadovaný SOC (WIN-01)
+
+[Nová pravidla, as-of replay 12.–17.11. a regresní kontrakt](../docs/WIN01_ENERGY_ADEQUACY_0635.md). Teplota ≤2 °C není nutnou podmínkou pro plné modelové nabití: výrazný denní deficit i při +5 °C aktivuje poradní 100% cíl. Za chladného dne zůstává konzervativnější práh. Ekonomický cíl a dosažitelný SOC se stále ukazují zvlášť. Plná baterie **není zaručena**, a nikdy nevzniká fyzický setpoint, aktuační adaptér či zásah do EV.
+
+---
+
 # 0.6.34 – poradní zimní cílové SOC a bezpečná retence nočních vzorků
 
 [Specifikace, historický replay a hranice validace](../docs/WIN_RET_RELEASE_0634.md).

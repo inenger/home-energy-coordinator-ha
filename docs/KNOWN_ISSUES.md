@@ -1,13 +1,13 @@
 # Registr známých problémů a neověřených podmínek
 
-Platí pro veřejný zdroj 0.6.34. Každý další nález dostane stabilní ID.
+Platí pro veřejný zdroj 0.6.35. Každý další nález dostane stabilní ID.
 OPRAVENO označuje opravený mechanismus s regresí; není zárukou všech
 budoucích běhů. OTEVŘENO znamená nevyřešenou příčinu nebo chybějící důkaz.
 OMEZENÍ je výslovná hranice návrhu. Podrobné provozní podklady nejsou veřejné.
 
 | ID | Stav | Problém / dopad | Důkaz a další nutný krok |
 |---|---|---|---|
-| WIN-01 | OPRAVENO VE STÍNOVÉM KÓDU 0.6.34 / PROVOZNÍ VALIDACE OTEVŘENA | Studená, energeticky riziková noc nově přepne *požadované* SOC na 100 % bez změny priority EV, bez fyzického setpointu. Ekonomické optimum se eviduje zvlášť. COP a fyzické souběhy nejsou ověřeny. | [0.6.34 implementace a replay](WIN_RET_RELEASE_0634.md), [issue #52](https://github.com/inenger/home-energy-coordinator-ha/issues/52), [E2E test](../priority_shadow/tests/test_winter_retention_0634.py). Zkontrolovat novou celou noc a nezávislou validaci počasí/TČ. |
+| WIN-01 | OPRAVENO VE ZDROJI 0.6.35 / ČEKÁ PROVOZNÍ REGRESI | Silný energetický deficit při +5 °C byl v 0.6.34 blokován podmínkou mrazu ≤2 °C; 16.–17.11. cíl jen 50 % i při centrální nedostatečnosti 14–15,3 kWh vůči 8,8 kWh modelové využitelné kapacitě. 0.6.35 používá severe net-energy kritérium nezávisle na teplotě plus starou opatrnější cold větev. | [Oprava a skutečný as-of replay](WIN01_ENERGY_ADEQUACY_0635.md), [regrese](../priority_shadow/tests/test_winter_energy_0635.py), [issue #52](https://github.com/inenger/home-energy-coordinator-ha/issues/52). Ověřit po CI, nasazení RPi a dalších nocích, stále observe_only. |
 | RET-05 | OPRAVENO VE STÍNOVÉM KÓDU 0.6.34 / RETENCE REÁLNÉ NOCI NEOVĚŘENA | Aktivní údržba 0.6.33 neuzavírala `night_summaries`, stará `night_samples` se hromadila. Nově bounded backfill po 05:05, immutable sealed SHA, ověření digestu před retencí. Neúplná a změněná raw evidence se nemaže. | [0.6.34 replay a kontrakt](WIN_RET_RELEASE_0634.md), [regrese](../priority_shadow/tests/test_winter_retention_0634.py). Ověřit na RPi po aktualizaci opětovný readback, FK, ACK, 14d kontrolu a monotónnost sekvencí. |
 | OPS-01 | VYSOKÁ PROVOZNÍ PRIORITA / OTEVŘENO | Reálné noční EV nabíjení 13.11 vedlo k vybíjení domácí baterie 66→20 % (~4,65 kWh DC), přestože 03–05 platila nízká cena 1,8078 Kč/kWh. Stínové řízení 0 actions, nelze chybu připsat aktuátoru doplňku. | [Audit 13.11](NIGHT_AUDIT_0632_20261113.md). HA grid-charge povolení bylo OFF, charge limit 3 A/discharge limit 30 A, režim Back Up Mode. Fyzickou ochranu navrhnout a otestovat odděleně; NO-GO live. |
 | DB-0633 | IMPLEMENTOVÁNO / PRODUKČNÍ DŮKAZY OTEVŘENY | Starší SOC data, duplicitní priority session a nepotřebná high-rate historie rostly bez retence. | [0.6.33 specifikace](DB_OPTIMIZATION_RELEASE_0633.md). Uzavřít až po produkčním ověření celé DB, FIFO/ACK a další noci. |

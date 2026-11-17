@@ -1,3 +1,11 @@
+## 0.6.35 – WIN-01: energetický deficit i při +5 °C
+
+[Úplná specifikace](../../docs/WIN01_ENERGY_ADEQUACY_0635.md). `energy-adequacy-v2` odděluje dvě podmínky požadovaného (nikoliv fyzického) cílového SOC 100 %: **severe_energy_deficit** v úplném horizontu s centrálním čistým požadavkem ≥1× referenčně využitelné energie baterie **a zároveň** konzervativním deficitem ≥1,25×; **cold_deficit** do 2 °C s konzervativním deficitem ≥0,70×. Pokud neplatí ani jedna, zůstává ekonomický plán. Nepřekročení EV 80 % v 03–05 není chyba, cílový SOC 100 % se nemusí stihnout. `physical_charge_target_soc_pct=None`, `device_actions=0` za všech okolností; model nezapíná HEC LIVE.
+
+Nově se v dashboardu ukazuje `Energeticky požadovaný cíl` i u vysokého deficitu bez mrazu, s modelem ceny a dosažitelným SOC vedle něj.
+
+---
+
 ## 0.6.34 – zimní požadovaný cíl oddělený od ekonomického cíle
 
 [Úplná specifikace WIN-01](../../docs/WIN_RET_RELEASE_0634.md). Ekonomický plán nadále porovnává stejný počet scénářů s dostupnými as-of hodinovými vstupy. Kandidáty zkouší 0 a 5–100 % po 5 %. Při čerstvé venkovní teplotě ≤2 °C (BT1, fallback BT28, případně dostupná as-of předpověď) a stresovém deficitu mezi 05 a dalšími 03 ≥70 % empirické referenční využitelné energie baterie požaduje shadow `desired_target_soc_pct=100`, ačkoliv `economic_target_soc_pct` může být nižší.

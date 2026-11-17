@@ -1,3 +1,7 @@
+**Vývojové vydání 0.6.35:** [WIN-01: vysoký energetický deficit bez mrazové podmínky](docs/WIN01_ENERGY_ADEQUACY_0635.md). Zdrojová verze, CI a instalace v Home Assistantu jsou samostatně ověřované kroky. Historická instalace 0.6.34 je uvedena níže a nesmí být zaměňována za aktuální zdroj. `observe_only` a HEC LIVE odpojené zůstávají závazné.
+
+---
+
 **Nasazení:** 0.6.34 je od 15.11.2026 instalována na RPi v režimu `started / observe_only`; fyzické HEC LIVE zůstává odpojené. [Provozní ověření a limity](docs/DEPLOYMENT_0634_20261115.md).
 
 ## Aktuální stav – 15. 11. 2026
@@ -13,7 +17,7 @@
 | Doplněk | Adresář | Verze |
 |---|---|---|
 | Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.4 |
-| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.34 |
+| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.35 |
 | **Skutečné řízení baterie a Tesly 03–05** | [HA package](ha_packages/night_live_coordinator.yaml) | LIVE v1 · 13.11.2026 |
 
 Oba balíčky mají vlastní Docker build context. Nový stínový doplněk nemění
