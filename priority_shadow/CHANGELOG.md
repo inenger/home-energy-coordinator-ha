@@ -1,3 +1,11 @@
+## 0.6.36 – DB-OPT-01 (17. 11. 2026)
+
+- Operátorem potvrzené offline bezztrátové SQLite přebalení *pouze* addon `evidence.sqlite`, s originální snapshot zálohou, úplnou bitovou porovnávací regresí a fail-closed obnovou. Bez automatického spuštění, pouze s `REQUEST.json`.
+- Zkušební přenosná kopie 429 359 104 → 409 526 272 B (−4,62 %); 47 tabulek a 289 566 řádků shodných. Produkční výsledek ověřit zvlášť. Nezasahuje do Recorderu HA, retence 14/90 dní, ACK, SOC a HEC LIVE.
+- [Důkazy a provozní hranice](../docs/DB_OPT_0636_20261117.md).
+
+---
+
 ## 0.6.32 — bezztrátová deduplikace SOC podkladů (12. 11. 2026)
 
 - Velká SOC rozhodnutí sdílejí identické verze předpovědi,

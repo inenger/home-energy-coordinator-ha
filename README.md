@@ -1,3 +1,7 @@
+**Nová verze zdroje 0.6.36 (DB-OPT-01):** [bezztrátové přebalení databáze pouze stínového doplňku](docs/DB_OPT_0636_20261117.md). Na izolované přenosné kopii ověřena úspora 19,83 MB bez změny kterýchkoliv 289 566 záznamů. Provozní migrace aktuální live DB je samostatný, výslovně vyžadovaný restart addonu. Hlavní databáze HA a fyzické řízení nedotčeny.
+
+---
+
 **Nasazení 0.6.35 (17.11.2026):** RPi Supervisor started/observe_only. Nová WIN-01 politika publikuje výsledky, HEC LIVE odpojeno. [Provozní evidence](docs/DEPLOYMENT_0635_20261117.md).
 
 **Vývojové vydání 0.6.35:** [WIN-01: vysoký energetický deficit bez mrazové podmínky](docs/WIN01_ENERGY_ADEQUACY_0635.md). Zdrojová verze, CI a instalace v Home Assistantu jsou samostatně ověřované kroky. Historická instalace 0.6.34 je uvedena níže a nesmí být zaměňována za aktuální zdroj. `observe_only` a HEC LIVE odpojené zůstávají závazné.
@@ -19,7 +23,7 @@
 | Doplněk | Adresář | Verze |
 |---|---|---|
 | Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.4 |
-| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.35 |
+| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.36 |
 | **Skutečné řízení baterie a Tesly 03–05** | [HA package](ha_packages/night_live_coordinator.yaml) | LIVE v1 · 13.11.2026 |
 
 Oba balíčky mají vlastní Docker build context. Nový stínový doplněk nemění

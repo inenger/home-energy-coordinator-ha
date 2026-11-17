@@ -1,3 +1,9 @@
+# 0.6.36 – DB-OPT-01, zmenšení stínové SQLite bez ztráty historie
+
+[Metodika, kontrolní součty a hranice](../docs/DB_OPT_0636_20261117.md). Jen se souhlasem operátora po specifickém `REQUEST.json` a pouze před startem pracovníků. Plná záchranná SQLite kopie /share a nativní HA partial backup, 47 tabulek/289 566 záznamů izolované zkoušky shodných. `VACUUM INTO` bez změny obsahu, ACK, SOC hash, původní 14d/90d retenční politiky; žádný recorder purge nebo hardware.
+
+---
+
 # 0.6.35 – energeticky řízený požadovaný SOC (WIN-01)
 
 [Nová pravidla, as-of replay 12.–17.11. a regresní kontrakt](../docs/WIN01_ENERGY_ADEQUACY_0635.md). Teplota ≤2 °C není nutnou podmínkou pro plné modelové nabití: výrazný denní deficit i při +5 °C aktivuje poradní 100% cíl. Za chladného dne zůstává konzervativnější práh. Ekonomický cíl a dosažitelný SOC se stále ukazují zvlášť. Plná baterie **není zaručena**, a nikdy nevzniká fyzický setpoint, aktuační adaptér či zásah do EV.

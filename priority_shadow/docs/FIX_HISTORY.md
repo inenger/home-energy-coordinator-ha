@@ -1,3 +1,9 @@
+## 0.6.36 – DB-OPT-01 (17. 11. 2026)
+
+[Reálná read-only auditovaná kopie, bezztrátová metoda a zdokumentované meze](../../docs/DB_OPT_0636_20261117.md). V 0.6.35 přenosná kopie 429,36 MB, SQLite freelist 19,37 MB. `VACUUM INTO` na této kopii → 409,53 MB; všech 47 tabulek a 289 566 řádků bitově/logicky identických včetně rowid a transportních BLOBů. Zavedeno opt-in `offline_repack`, originální snapshot, úplná kontrola před atomickým swapem, rollback při neúspěchu; RET-05 a VIN-01 beze změny.
+
+---
+
 ## 0.6.35 – WIN-01: net-energy adequacy (17.11.2026)
 
 [Nález, kontrola historické příčiny a testovací selhání](../../docs/WIN01_ENERGY_ADEQUACY_0635.md). V předchozí 0.6.34 při +4,6–5,3 °C, FVE 3–5 kWh, očekávané spotřebě domu ~17,8 kWh cíl 50 % nesprávně přetrval kvůli pevné teplotní bráně. Nová nezávislá silná energetická podmínka (central≥1× usable a stress≥1,25× usable) vedle staré konzervativní chladové podmínky. Bez aktuačních povelů, změn retention, limitů EV/SolaX. Nové E2E, negativní případy a read-only as-of replay 12.–17.11.

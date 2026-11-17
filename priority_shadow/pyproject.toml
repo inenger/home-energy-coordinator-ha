@@ -1,5 +1,5 @@
 [project]
 name = "home-energy-priority-shadow"
-version = "0.6.35"
+version = "0.6.36"
 requires-python = ">=3.11"
 description = "RPi Home Assistant observe-only SOC planning and evidence"
