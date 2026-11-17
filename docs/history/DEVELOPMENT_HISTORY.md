@@ -1,3 +1,11 @@
+## 17. 11. 2026 – WIN-01 0.6.35: nezávislý energetický deficit (vývoj)
+
+**Baseline 0.6.34 / commit `41a57fdf`.** [Podrobná evidence](../WIN01_ENERGY_ADEQUACY_0635.md). Otevřený provozní nález: 16.11. při +4,6°C a net deficitu 14,12 kWh i 17.11. při +4,9°C a deficitu 15,27 kWh zůstal shadow desired target 50 %, protože staré pravidlo 100 % vyžadovalo současně teplotu ≤2 °C. Rozšířena podmínka o úplný central+stress energetický deficit. Historické záznamy neměněny, výstupy pouze poradní. Zavedena jednotková hranice, plošný anti-overcharge test, HW a CI ověření oddělené.
+
+**Prvotní selhání:** 3 staré testy očekávaly zákaz 100 % nad mrazem, 1 starý test kontroloval jen původní text chladového důvodu; tyto očekávání odporovaly nově potvrzenému zadání a byly upraveny. První úprava dashboardu měla chybějící závorku, `node --check` opraven. Soukromá data z RPi nejsou v GitHubu.
+
+---
+
 ## 15. 11. 2026 – 0.6.34 WIN-01 / RET-05
 
 **Vstupní commit `f015427`.** [Zadání a úplný kontrakt](../WIN_RET_RELEASE_0634.md). Oproti 0.6.33 přidána modelová zimní potřeba 100 % bez jakéhokoli fyzického setpointu a bezztrátová uzávěrka starších nočních souhrnů s kontrolou SHA. Ověřeno na izolovaných historických as-of datech 15.11. (původní cíl 25 %, nový zimní 100 %) a 23.–25.10. (517/517/539 záznamů).

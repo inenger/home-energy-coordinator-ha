@@ -1,4 +1,4 @@
-"""Causal cold-weather SOC intent, independent from physical charge permission.
+"""Causal energy-adequacy SOC intent, independent from physical charge permission.
 
 The house model already includes all heat pumps. Never add heat-pump watts to
 house watts: use the observed pump as corroborating evidence, and the
@@ -7,9 +7,11 @@ conservative non-EV house/PV energy envelope to quantify next-day deficit.
 from .pricing import valid
 from .soc_energy import Battery
 
-POLICY = "winter-cold-load-adequacy-v1"
+POLICY = "energy-adequacy-v2"
 COLD_C = 2.0
-RISK_FRACTION = 0.70
+COLD_RISK_FRACTION = 0.70
+SEVERE_CENTRAL_DEFICIT_FRACTION = 1.0
+SEVERE_STRESS_DEFICIT_FRACTION = 1.25
 
 
 def _temperature(value):
@@ -17,12 +19,13 @@ def _temperature(value):
 
 
 def evaluate(rows, inputs, model, night_end, horizon=None):
-    """Return desired 100% only for cold, energy-deficient *future* days.
+    """Separate deficit-driven and cold-driven *desired* 100% SOC.
 
-    No temperature or no closed forecast horizon => no forced target;
-    ordinary economic optimizer remains authoritative. The temperature is
-    observed as-of the decision or forecast as-of the same decision, not a
-    hindsight weather observation. The result is a shadow intent only.
+    The energy-only rule can trigger at +5°C (or with missing temperature) but
+    requires a complete, causal forecast and BOTH a central energy shortage and
+    a pessimistic-envelope shortage. Cold lowers the pessimistic threshold,
+    while a missing or incomplete energy horizon never triggers this override.
+    The result remains a shadow intent, never a physical inverter setpoint.
     """
     future = [r for r in rows if r["start"] >= night_end.timestamp()]
     observed = _temperature(inputs.get("outdoor_c"))
@@ -44,6 +47,7 @@ def evaluate(rows, inputs, model, night_end, horizon=None):
     home_central = sum(r["house_kw"] * r["hours"] for r in future)
     pv_low = sum(r["pv_low_kw"] * r["hours"] for r in future)
     pv_central = sum(r["pv_ac_kw"] * r["hours"] for r in future)
+    net_central = max(0.0, home_central - pv_central)
     net_stress = max(0.0, home_high - pv_low)
     reserve = inputs.get("reserve_soc")
     capacity = (
@@ -52,12 +56,23 @@ def evaluate(rows, inputs, model, night_end, horizon=None):
     )
     complete = (bool(future) and all(valid(r.get("hours")) and r["hours"] > 0 for r in future)
                 and (horizon is None or future[-1]["end"] >= horizon.timestamp()))
-    deficit = complete and capacity is not None and capacity > 0 and net_stress >= capacity * RISK_FRACTION
-    require_full = cold and deficit
+    valid_capacity = capacity is not None and capacity > 0
+    severe_shortfall = (complete and valid_capacity and
+                        net_central >= capacity * SEVERE_CENTRAL_DEFICIT_FRACTION and
+                        net_stress >= capacity * SEVERE_STRESS_DEFICIT_FRACTION)
+    cold_shortfall = (complete and valid_capacity and cold and
+                      net_stress >= capacity * COLD_RISK_FRACTION)
+    require_full = severe_shortfall or cold_shortfall
+    status = (
+        "insufficient_energy_forecast" if not complete else
+        "missing_battery_energy_reference" if not valid_capacity else
+        "severe_energy_deficit" if severe_shortfall else
+        "cold_deficit" if cold_shortfall else
+        "no_temperature_asof" if observed is None and cold_forecast is None else
+        "ordinary_economic_plan"
+    )
     return {
-        "policy": POLICY, "status": "cold_deficit" if require_full else
-            "no_temperature_asof" if observed is None and cold_forecast is None else
-            "insufficient_energy_forecast" if not complete else "ordinary_economic_plan",
+        "policy": POLICY, "status": status,
         "desired_target_soc_pct": 100 if require_full else None,
         "outdoor_sensor_c": observed,
         "forecast_min_temperature_c": cold_forecast,
@@ -70,9 +85,16 @@ def evaluate(rows, inputs, model, night_end, horizon=None):
         "forecast_house_high_kwh": round(home_high, 4),
         "forecast_pv_central_kwh": round(pv_central, 4),
         "forecast_pv_low_kwh": round(pv_low, 4),
+        "central_net_demand_kwh": round(net_central, 4),
         "stress_net_demand_kwh": round(net_stress, 4),
         "usable_battery_above_reference_reserve_kwh": round(capacity, 4) if capacity is not None else None,
-        "required_deficit_fraction": RISK_FRACTION,
+        "cold_required_stress_fraction": COLD_RISK_FRACTION,
+        "severe_required_central_fraction": SEVERE_CENTRAL_DEFICIT_FRACTION,
+        "severe_required_stress_fraction": SEVERE_STRESS_DEFICIT_FRACTION,
+        "central_deficit_to_usable_capacity": round(net_central/capacity, 4) if valid_capacity else None,
+        "stress_deficit_to_usable_capacity": round(net_stress/capacity, 4) if valid_capacity else None,
+        "cold_condition_met": cold,
+        "energy_deficit_condition_met": bool(severe_shortfall),
         "horizon_complete": complete,
         "scope": "shadow_intent_no_actuator_and_no_weather_probability"
     }

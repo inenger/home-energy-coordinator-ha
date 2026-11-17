@@ -1,3 +1,9 @@
+## 0.6.35 – WIN-01: net-energy adequacy (17.11.2026)
+
+[Nález, kontrola historické příčiny a testovací selhání](../../docs/WIN01_ENERGY_ADEQUACY_0635.md). V předchozí 0.6.34 při +4,6–5,3 °C, FVE 3–5 kWh, očekávané spotřebě domu ~17,8 kWh cíl 50 % nesprávně přetrval kvůli pevné teplotní bráně. Nová nezávislá silná energetická podmínka (central≥1× usable a stress≥1,25× usable) vedle staré konzervativní chladové podmínky. Bez aktuačních povelů, změn retention, limitů EV/SolaX. Nové E2E, negativní případy a read-only as-of replay 12.–17.11.
+
+---
+
 ## 0.6.34 – WIN-01 + RET-05 (15. 11. 2026)
 
 [Kompletní dokumentace, skutečný read-only replay a prvotní FAIL testu](../../docs/WIN_RET_RELEASE_0634.md). Výchozí commit `f015427`. Doplněn winter target 100 % při potvrzeném chladném energeticky nedostatečném dni, odlišené ekonomické/dosažitelné cíle. Opravena absence `night_summaries` na aktivní maintenance cestě; průkaz SHA-256 před 14d čistěním. Neúplné noci se nikdy automaticky nemažou. `observe_only` a 0 povelů.

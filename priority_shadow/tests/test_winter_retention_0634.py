@@ -25,8 +25,10 @@ class WinterIntent(unittest.TestCase):
         self.assertEqual(r['status'],'partial_shadow_plan')
         self.assertEqual(r['target_soc_pct'],100)
         self.assertEqual(r['desired_target_soc_pct'],100)
-        self.assertEqual(r['winter_demand']['status'],'cold_deficit')
-        self.assertEqual(r['decision_reason'],'winter_cold_load_adequacy')
+        self.assertIn(r['winter_demand']['status'],
+                      ('cold_deficit','severe_energy_deficit'))
+        self.assertIn(r['decision_reason'],
+                      ('winter_cold_load_adequacy','severe_energy_deficit'))
         self.assertIsNone(r['physical_charge_target_soc_pct'])
         self.assertEqual(r['device_actions'],0)
         self.assertFalse(r['live_ready'])
@@ -40,15 +42,42 @@ class WinterIntent(unittest.TestCase):
             self.assertIn(key,compact)
         self.assertEqual(compact['device_actions'],0)
 
-    def test_warm_high_load_not_inferred_cold(self):
+    def test_warm_5c_low_pv_and_high_house_need_100(self):
+        r=self.calc(temperature=5.2,pv=3.1642,house=1.4)
+        self.assertEqual(r['winter_demand']['status'],'severe_energy_deficit')
+        self.assertEqual(r['target_soc_pct'],100)
+        self.assertEqual(r['desired_target_soc_pct'],100)
+        self.assertEqual(r['decision_reason'],'severe_energy_deficit')
+        self.assertTrue(r['winter_demand']['energy_deficit_condition_met'])
+        self.assertFalse(r['winter_demand']['cold_condition_met'])
+        self.assertIsNone(r['physical_charge_target_soc_pct'])
+        self.assertEqual(r['device_actions'],0)
+        self.assertLess(r['attainable_soc_05_pct'],100)
+        self.assertTrue(verify(r)['verified'])
+        self.assertEqual(view(r)['desired_target_soc_pct'],100)
+
+    def test_warm_high_load_is_energy_driven_not_falsely_cold(self):
         r=self.calc(temperature=12,pv=15.3,house=1.4)
+        self.assertEqual(r['winter_demand']['status'],'severe_energy_deficit')
+        self.assertFalse(r['winter_demand']['cold_condition_met'])
+        self.assertEqual(r['desired_target_soc_pct'],100)
+
+    def test_warm_high_pv_ordinary_economic(self):
+        r=self.calc(temperature=12,pv=65,house=1)
         self.assertEqual(r['winter_demand']['status'],'ordinary_economic_plan')
         self.assertIsNone(r['winter_demand']['desired_target_soc_pct'])
         self.assertEqual(r['desired_target_soc_pct'],r['economic_target_soc_pct'])
 
-    def test_missing_temperature_does_not_create_fictitious_freeze(self):
-        r=self.calc(temperature=None,pv=15.3)
+    def test_missing_temperature_with_energy_shortfall_can_still_trigger(self):
+        r=self.calc(temperature=None,pv=3.1642)
         self.assertEqual(r['winter_demand']['temperature_source'],'no_cold_evidence')
+        self.assertEqual(r['winter_demand']['status'],'severe_energy_deficit')
+        self.assertEqual(r['target_soc_pct'],100)
+
+    def test_missing_temperature_and_no_energy_shortfall_stays_economic(self):
+        r=self.calc(temperature=None,pv=65,house=1)
+        self.assertEqual(r['winter_demand']['temperature_source'],'no_cold_evidence')
+        self.assertEqual(r['winter_demand']['status'],'no_temperature_asof')
         self.assertEqual(r['target_soc_pct'],r['economic_target_soc_pct'])
 
     def test_cold_abundant_pv_does_not_force_full(self):

@@ -1,3 +1,12 @@
+# 17. 11. 2026 – WIN-01 energetický deficit: zdroj 0.6.35
+
+- [Kontrakt, skutečný as-of replay a dokumentované neúspěšné testy](docs/WIN01_ENERGY_ADEQUACY_0635.md). V 0.6.34 chybně blokovala 100% desired target podmínka venkovní teploty ≤2 °C, přestože 16.–17.11. při +5 °C model hlásil net demand 14–15,3 kWh proti 8,8 kWh využitelné energie baterie.
+- Nová `energy-adequacy-v2`: 100 % desired při **úplném** as-of horizontu a současně `central_net>=100 % battery usable` + `stress_net>=125 % battery usable`, **nezávisle na teplotě**, anebo při chladu ≤2 °C a stresovém deficitu ≥70 %. Jde o stínové modelové rozhodnutí, nikoli fyzickou akci. Nedostatek teploty nebrání samostatnému energetickému důvodu; nedostatek horizontu ano.
+- Šest replayů 12.–17.11., archivované rozhodnutí cca 02:55 SEČ: 35,75,50,25,50,50 % původních cílů → ve všech šesti energeticky rizikových nocích desired 100 %. Původní historie není změněna. Den s dostatečnou FVE/nízkou spotřebou nesmí automaticky přejít na 100 %.
+- Nový kód mění jen `priority_shadow` a dashboard, HEC LIVE stále vypnuto; 3×25 A proudové špičky, limit wallboxu, zálohy Google Drive a fyzická validace jsou jiná otevřená témata.
+
+---
+
 # 15.11.2026 – potvrzené nasazení 0.6.34 na RPi
 
 - Merge `73612310f348` a CI `43746539754` PASS, RPi Supervisor aktualizoval samostatný stínový doplněk z 0.6.33 na 0.6.34, `started` a `observe_only` s `device_actions=0`. Běžné SolaX Back Up Mode/20 % rezerva, EVC16 A a HEC LIVE odpojené zůstaly beze změny.

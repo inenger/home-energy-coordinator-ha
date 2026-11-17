@@ -1,3 +1,11 @@
+# Aktuální stav zdrojového projektu – 0.6.35 (17. 11. 2026)
+
+[WIN-01 energetická korekce](WIN01_ENERGY_ADEQUACY_0635.md). Zůstává explicitní `observe_only`; HEC LIVE vypnuto. Zimní politika vyhodnocuje dvě samostatné větve: **velký energetický deficit i nad 2 °C** a mírnější konzervativní deficit při chladu. Cíle fyzického nabíjení zůstávají `None`, noční EV okno 03–05 a priorita beze změny. Historický replay posledních šesti nocí podporuje požadavek 100 %, ale není to doklad skutečného fyzického dobití.
+
+Zveřejnění v main, CI a reálné nasazení se sledují odděleně; doklad jejich dokončení se přidá po ověření. Níže jsou chronologické záznamy předchozí 0.6.34, které se nesmí považovat za aktuální požadavky.
+
+---
+
 ## 15.11.2026 – 0.6.34 na RPi potvrzena, retence běží ve fázích
 
 [Deploy a reálné ověření](DEPLOYMENT_0634_20261115.md). GitHub PR #53 a CI merge PASS; lokální Home Assistant Supervisor: 0.6.34 `started/observe_only`, fyzické akce 0. Po restartu skutečně vznikly 3 uzavřené `night_summaries` pro 23.–25.10. s úplným SHA-256 ověřením. Automatický purge zůstává omezen 12h intervalem, takže zatím neproběhl; úplná nová noc neověřená. HEC LIVE je stále odpojený.
@@ -45,7 +53,7 @@ Noc 13.–14.11. pouze pozorovací, bez automatické opětovné aktivace.
 
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.34 -->
+<!-- shadow-version: 0.6.35 -->
 
 Stav zdrojového kandidáta k 12. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
