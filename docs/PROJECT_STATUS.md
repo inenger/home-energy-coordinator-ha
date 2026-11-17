@@ -1,3 +1,9 @@
+## 17.11.2026 – DB-OPT-01 PROVOZNĚ DOKONČENO (0.6.36)
+
+[Protokol skutečného cutoveru a rollback](DEPLOYMENT_DB_OPT_0636_20261117.md): Přesná interní SQLite databáze addon `priority_shadow` zmenšena **429 359 104 → 410 025 984 B** (−19 333 120 B / 4,50 %). 47 tabulek a 290 119 řádků beze změny včetně rowid/BLOB/ACK. Originální úplná záloha /share a nativní Supervisor backup předchozí verze na RPi zachovány. Addon po výměně `started 0.6.36 observe_only`; čerstvá monitorovací data, integrity SHA, evidence pipeline OK, 0 fyzických akcí. Žádné SQL DELETE nebo změna 14/90denní politiky ani hlavního HA Recorderu.
+
+---
+
 ## Zdrojová verze 0.6.36 — DB-OPT-01 (17. 11. 2026)
 
 [Bezpečné bezztrátové přebalení databáze doplňku](DB_OPT_0636_20261117.md). Uložení více než 14denní historie, hash a ACK brány a nastavení `observe_only` beze změny. 429,36 MB přenosná kopie → 409,53 MB na validovaném izolovaném `VACUUM INTO`, 47/47 tabulek a 289 566/289 566 řádků plně shodných. Hlavní `home-assistant_v2.db` se nesmí měnit. Nasazení a výsledek live interní DB jsou samostatné provozní důkazy.

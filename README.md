@@ -1,3 +1,5 @@
+**Produkční potvrzení DB-OPT-01 (17.11.2026):** addon 0.6.36 byl nasazen na RPi a jeho skutečná interní SQLite prošla bezztrátovým přebalením 429,36 → 410,03 MB (−19,33 MB). Před výměnou porovnáno všech 47 tabulek a 290 119 záznamů včetně rowid a původních BLOBů; addon po přebalení opět publikuje zdravotní data. [Provozní protokol](docs/DEPLOYMENT_DB_OPT_0636_20261117.md).
+
 **Nová verze zdroje 0.6.36 (DB-OPT-01):** [bezztrátové přebalení databáze pouze stínového doplňku](docs/DB_OPT_0636_20261117.md). Na izolované přenosné kopii ověřena úspora 19,83 MB bez změny kterýchkoliv 289 566 záznamů. Provozní migrace aktuální live DB je samostatný, výslovně vyžadovaný restart addonu. Hlavní databáze HA a fyzické řízení nedotčeny.
 
 ---

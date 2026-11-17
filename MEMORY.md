@@ -1,3 +1,12 @@
+# 17.11.2026 – DB-OPT-01 produkční cutover na RPi dokončen
+
+- [Provozní evidence](docs/DEPLOYMENT_DB_OPT_0636_20261117.md): GitHub PR #55 merge `39ed0c2`, PR CI i main CI PASS; nativní partial Supervisor backup addonu v0.6.35, testovací portable preview a druhý původní snapshot /share.
+- True internal addon `/data/evidence/evidence.sqlite`: **429 359 104 → 410 025 984 B**, úspora **19 333 120 B = 4,50 %**. Úplná kontrola všech **47 tabulek a 290 119 řádků** (včetně rowid, každého BLOBu, schématu, ACK cursorů), quick_check a FK PASS; operátorský request spotřebován a označen completed. Původní immutable snapshot zachován.
+- Home Assistant Supervisor started 0.6.36 observe_only, čerstvý publikovaný monitor 0.6.36 SHA PASS, `collection_health=ok`, `monitor_publication=ok`, `evidence_pipeline=ok`, `pending_or_lost_batches=0`, `device_actions=0`. Další pravidelný SOC výpočet může startovat později než první publikační heartbeat.
+- Zachována 14denní raw, 90denní SOC observation retence, sealed night sumáře, transportní SHA/ACK, SolaX 1s Modbus. Hlavní HA recorder a HEC LIVE nedotčeny.
+
+---
+
 # 17. 11. 2026 – DB-OPT-01 / 0.6.36 addon evidence.sqlite
 
 - Výslovné zadání: optimalizovat **jen** interní stínovou DB `/data/evidence/evidence.sqlite` a její přenosný soubor, nikoliv `/homeassistant/home-assistant_v2.db`. Plný audit: [DB-OPT-01](docs/DB_OPT_0636_20261117.md).
