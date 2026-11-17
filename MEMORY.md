@@ -1,3 +1,11 @@
+# 17.11.2026 – potvrzené nasazení 0.6.35
+
+- [Provozní evidence](docs/DEPLOYMENT_0635_20261117.md). PR #54, merge 4a9195c, PR i main CI PASS. RPi ARM64 build a aktualizace PASS, started/observe_only, device_actions=0, HEC LIVE odpojený. Před instalací nativní partial backup předchozí v0.6.34 (703 MB) a samostatné zdrojové zálohy na RPi.
+- V HA nový SOC policy soc-energy-scenarios-v7-demand-adequacy-targets, winter_demand policy energy-adequacy-v2; SHA publisher PASS; active physical charge target None, live_ready=false. Pro 18.11. není ještě úplný horizont, proto se energetický 100% override správně nepoužije. Další celá noc 0.6.35 je dosud neověřená.
+- Back Up Mode / 20% Min SOC / 70% backup charging ceiling / EV 16 A nezměněné. Nezapínat HEC LIVE bez nového výslovného požadavku.
+
+---
+
 # 17. 11. 2026 – WIN-01 energetický deficit: zdroj 0.6.35
 
 - [Kontrakt, skutečný as-of replay a dokumentované neúspěšné testy](docs/WIN01_ENERGY_ADEQUACY_0635.md). V 0.6.34 chybně blokovala 100% desired target podmínka venkovní teploty ≤2 °C, přestože 16.–17.11. při +5 °C model hlásil net demand 14–15,3 kWh proti 8,8 kWh využitelné energie baterie.

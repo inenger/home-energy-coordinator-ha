@@ -1,3 +1,7 @@
+**Nasazení potvrzeno 17.11.2026:** [Provozní evidence 0.6.35](DEPLOYMENT_0635_20261117.md). Publikované as-of vstupy a policy ověřeny, HEC LIVE odpojený. Historický replay není budoucí celá noc.
+
+---
+
 # 0.6.35 — WIN-01: nedostatek energie má přednost před teplotní hranicí
 
 **Datum:** 17. 11. 2026. **Výchozí commit:** `41a57fdf3575f7fc954e7abb49d5693001be34b0`. **Rozsah:** výhradně `priority_shadow`. HEC LIVE stále odpojeno, `observe_only`, `device_actions=0`, žádné SolaX/Tesla fyzické setpointy.

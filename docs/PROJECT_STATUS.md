@@ -1,3 +1,9 @@
+## 17.11.2026 – 0.6.35 nainstalována na RPi
+
+[Deploy, CI a readback](DEPLOYMENT_0635_20261117.md). Merge 4a9195c; CI PR i main PASS; RPi Supervisor ARM build PASS, nový doplněk started/observe_only, žádné fyzické akce. Politika energy-adequacy-v2 publikována a ověřena SHA. Baterie/EV settings nedotčeny, HEC LIVE unavailable. Pro 18.11. předpovědní horizont neúplný; celá nová noc 0.6.35 teprve bude potřeba ověřit.
+
+---
+
 # Aktuální stav zdrojového projektu – 0.6.35 (17. 11. 2026)
 
 [WIN-01 energetická korekce](WIN01_ENERGY_ADEQUACY_0635.md). Zůstává explicitní `observe_only`; HEC LIVE vypnuto. Zimní politika vyhodnocuje dvě samostatné větve: **velký energetický deficit i nad 2 °C** a mírnější konzervativní deficit při chladu. Cíle fyzického nabíjení zůstávají `None`, noční EV okno 03–05 a priorita beze změny. Historický replay posledních šesti nocí podporuje požadavek 100 %, ale není to doklad skutečného fyzického dobití.

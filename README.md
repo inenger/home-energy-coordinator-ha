@@ -1,3 +1,5 @@
+**Nasazení 0.6.35 (17.11.2026):** RPi Supervisor started/observe_only. Nová WIN-01 politika publikuje výsledky, HEC LIVE odpojeno. [Provozní evidence](docs/DEPLOYMENT_0635_20261117.md).
+
 **Vývojové vydání 0.6.35:** [WIN-01: vysoký energetický deficit bez mrazové podmínky](docs/WIN01_ENERGY_ADEQUACY_0635.md). Zdrojová verze, CI a instalace v Home Assistantu jsou samostatně ověřované kroky. Historická instalace 0.6.34 je uvedena níže a nesmí být zaměňována za aktuální zdroj. `observe_only` a HEC LIVE odpojené zůstávají závazné.
 
 ---
