@@ -14,6 +14,8 @@ def module():
     return m
 
 
+@unittest.skipUnless(MONITOR.is_file(),
+    'Vendor source is intentionally outside standalone addon Docker build context')
 class PollGroupTimingTests(unittest.TestCase):
     def test_merged_slow_groups_and_p95_p99(self):
         mon = module().PollIntervalMonitor()
