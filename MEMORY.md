@@ -1,3 +1,10 @@
+# 22.11.2026 – PEAK-02/MODBUS-02 v0.6.38 provozně nasazeno
+- [Ověřená přejímka a latence](docs/DEPLOYMENT_PEAK_0638_20261122.md): 663 testů PASS a GitHub CI oba joby PASS, hotfix Docker vendor-only test path commit 3072f8e (3 tests skip jen v izolovaném obrazu). Supervisor po upgrade started 0.6.38 observe_only, 0 fyzických povelů, HA health/pipeline/monitor = ok; reálná phase_peak freshness 1.129s všechny fáze, jistič 25A/fázi a modbus group stats přítomné.
+- Modbus 1s FAST bez změny, reálné FAST rolling p95 1.2–1.5s, p99 1.6–3.5s a 15–17% overruns, všechny dokončené poll cykly úspěšné. MEDIUM+DEFAULT 5s P99 1.6–4.1s, žádný overrun. Originální SolaX vendor __init__.py zálohován na RPi.
+- Jeden startup MONITOR_PAYLOAD_OVERFLOW řídicího deníku, full evidence archived; pozdější health=ok monitor=ok overflow_count=1, sledovat v první kompletní noci 22/23.11. Bez změny HA Recorderu či zařízení, LIVE stále NO-GO.
+
+---
+
 # 22. 11. 2026 – 0.6.38 PEAK-02 / MODBUS-02
 - [Kontrakt a testy](docs/PHASE_FRESHNESS_MODBUS_0638_20261122.md): 8s proudové highwater oddělené od 3s freshness, phase_quality, inferred missing report/gap, fail-closed pro stale / >25A. HEC LIVE stále disabled, Noční sběr 1s, RAM tick 5s.
 - SolaX custom Modbus 2026.11.04 má cykly sdružené podle numerické periody, tedy FAST=1s a MEDIUM+DEFAULT=5s. Volitelný diagnostický lokální patch opravuje pouze publikaci P95/P99/průměru/overrun/úspěšnosti; nemění Modbus request, scan_interval ani hardware. Zdroj portable monitoru v ops/solax_modbus/poll_interval_monitor.py a kontrakt v docs. Originál integrace nutno zachovat při instalaci; upstream aktualizace může patch odstranit.

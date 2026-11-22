@@ -1,3 +1,8 @@
+## 22.11.2026 – PEAK-02/MODBUS-02 verze 0.6.38 PRODUKČNÍ READBACK PASS
+[Provozní přejímka a otevřená noční validace](DEPLOYMENT_PEAK_0638_20261122.md). 0.6.38 skutečně installed+started observe_only na RPi; 663 testů, CI PASS; SolaX health Healthy/100%/0 quarantine. Nové phase_quality L1–L3 (3s freshness) a oddělená 8s maxima funkční na fyzických reportech; nový Modbus FAST a společný MEDIUM+DEFAULT P95/P99 čten z HA. Po startu jedna monitor payload overflow bez ztráty evidence, zdraví se vrátilo na ok. Další kompletní noc vyžaduje vyhodnocení; ostrý LIVE nadále vypnutý.
+
+---
+
 ## 22.11.2026 – PEAK-02/MODBUS-02, zdrojová 0.6.38
 [Implementační kontrakt](PHASE_FRESHNESS_MODBUS_0638_20261122.md). 3s čerstvost posledního skutečného reportu L1/L2/L3 je nezávislá na 8s max. Doplňkové monitorování SolaX Modbus podle numerické periody (1s FAST, 5s MEDIUM+DEFAULT) v RAM. Původní HA Recorder/retence/baterie/EV nedotčeny. Real-world nasazení a následující noc vyhodnotit samostatně.
 

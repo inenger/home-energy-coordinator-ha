@@ -1,4 +1,4 @@
-**0.6.38 – PEAK-02 / MODBUS-02:** [3s čerstvost fáze při zachování 8s maxim a měření SolaX 1s/5s skupin](docs/PHASE_FRESHNESS_MODBUS_0638_20261122.md). Limit 25 A/fázi, stínové řízení 5s, Modbus 1s beze změny, fyzické povely 0. **Reálná kontrola po instalaci je samostatná.**
+**0.6.38 – PEAK-02 / MODBUS-02 (nasazeno 22. 11. na RPi):** [3s čerstvost fáze při zachování 8s maxim a měření SolaX 1s/5s skupin](docs/PHASE_FRESHNESS_MODBUS_0638_20261122.md). Limit 25 A/fázi, stínové řízení 5s, Modbus 1s beze změny, fyzické povely 0. **Reálná kontrola po instalaci je samostatná.**
 
 ---
 
