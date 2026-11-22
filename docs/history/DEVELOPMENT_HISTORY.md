@@ -1,3 +1,10 @@
+## 22. 11. 2026 – PEAK-01 / MODBUS-01, zdroj 0.6.37
+
+**Baseline**: `a9068abc4d264ff800c3e580340622d3ac873569` (v0.6.36). Skutečný read-only noční audit odhalil několik krátkých špiček v HA 1s Recorderu, které se nevešly do pětisekundového maxima stínového deníku. Rozlišeny dvě hypotézy: (a) SolaX nehlásí 1s data (vyvráceno konkrétním 1s Recorder záznamem), (b) kolektor přepisuje 1s cache, kontrola `priority_collection.py` (potvrzeno). Nová `PhasePeakWindow` drží jen časově validní 1s hodnoty a virtual guard >25 A; žádné fyzické povely. První syntetická regrese omylem vyžadovala vypršení celé 8s cache po pouhých 6s od posledního reportu; opraveno očekávání (pouze test, algoritmus nezměněn). MODBUS-01: `overrun_count` se navyšuje při dokončení přes periodu, není to automatická chyba cyklu; při úspěšnosti 100 % ponecháno 1s, případný 2s test je samostatná schvalovaná změna. [Podrobnosti](../PHASE_PEAK_CAPTURE_0637_20261122.md).
+
+
+---
+
 ## 17. 11. 2026 – DB-OPT-01, source 0.6.36
 
 **Výchozí commit `afae05da900b78084a1e7df7c52d4b8a47260b0c`.** [Metodika a výsledky](../DB_OPT_0636_20261117.md). Po 0.6.35 zdravá 14denní retence, ale SQLite `auto_vacuum=0` a ~19,37 MB volných stránek. Návrh mazat transportní potvrzení, SOC rozhodnutí nebo zkrátit detaily byl odmítnut pro ztrátu auditní a replay evidence. Recompression outbox nulová, ostatní 1,7–3,1 %; nevolit kvůli integritě digestů. Otestován `VACUUM INTO` na soukromé portable kopii a srovnání všech tabulek včetně rowid/bytes: 47 tabulek, 289 566 řádků PASS, 429,36→409,53 MB. Nový operator-request-only repack s dvojím jištěním.

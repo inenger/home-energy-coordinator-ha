@@ -1,3 +1,9 @@
+## 22. 11. 2026 – nový zdroj 0.6.37 / PEAK-01
+
+[Kontrakt, důkaz selhání před opravou, syntetické testy a MODBUS-01](PHASE_PEAK_CAPTURE_0637_20261122.md). Přímé proudy L1/L2/L3 se sbírají každou 1s v noci, ale dosud se do 5s souhrnu předával jen poslední snímek; návrh zpracovává každou novou časově platnou HA zprávu a předává 8s highwater. Potvrzený hlavní jistič **25 A/fázi**, nad25 nebo unverified fail-closed v simulaci; žádné zařízení neovládá, původní SOC/retence beze změny. Cumulative SolaX overrun není sám důkazem timeoutu, perioda rychlého Modbusu zůstává 1 s. **GitHub, CI a nasazení rozlišovat; v tomto statusu jde o zdrojovou implementaci, nikoli již potvrzenou následující noc.**
+
+---
+
 ## 17.11.2026 – DB-OPT-01 PROVOZNĚ DOKONČENO (0.6.36)
 
 [Protokol skutečného cutoveru a rollback](DEPLOYMENT_DB_OPT_0636_20261117.md): Přesná interní SQLite databáze addon `priority_shadow` zmenšena **429 359 104 → 410 025 984 B** (−19 333 120 B / 4,50 %). 47 tabulek a 290 119 řádků beze změny včetně rowid/BLOB/ACK. Originální úplná záloha /share a nativní Supervisor backup předchozí verze na RPi zachovány. Addon po výměně `started 0.6.36 observe_only`; čerstvá monitorovací data, integrity SHA, evidence pipeline OK, 0 fyzických akcí. Žádné SQL DELETE nebo změna 14/90denní politiky ani hlavního HA Recorderu.
@@ -71,7 +77,7 @@ Noc 13.–14.11. pouze pozorovací, bez automatické opětovné aktivace.
 
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.36 -->
+<!-- shadow-version: 0.6.37 -->
 
 Stav zdrojového kandidáta k 12. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento

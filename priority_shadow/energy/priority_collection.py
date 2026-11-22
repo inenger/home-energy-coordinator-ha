@@ -4,6 +4,7 @@ from datetime import datetime,timezone
 from pathlib import Path
 from .collector import atomic_json
 from . import night
+from .phase_peaks import PhasePeakWindow
 
 class CollectionFailure(RuntimeError):
     def __init__(self, failure):
@@ -18,6 +19,7 @@ class SnapshotCollector:
         self.persistence_lock=threading.Lock();self.ack_wake=threading.Event();self.ack_requested=None;self.ack_thread=None
         self.condition=threading.Condition();self.stop=threading.Event()
         self.states=None;self.received=None;self.error=None;self.duration=None;self.thread=None
+        self.phase_peaks=PhasePeakWindow()
         self.request_started=None;self.thread_failed=False;self.watcher=None
         self.restart_attempts=[];self.restart_count=0;self.restart_limit=3;self.restart_window=300.
         self.thread_problem=None
@@ -50,6 +52,7 @@ class SnapshotCollector:
                 'error_code':type(error).__name__,
                 'control_first_at':control_first or datetime.now(timezone.utc).isoformat()}
             self.states=None;self.error=type(error).__name__
+            self.phase_peaks.reset()
             self.condition.notify_all()
         if self.defer_failure_persistence:
             with self.condition:self.failure_dirty=True
@@ -118,7 +121,9 @@ class SnapshotCollector:
             with self.condition:self.request_started=start
             try:
                 states=self.client.priority_states()
+                received_at=datetime.now(timezone.utc).isoformat()
                 with self.condition:
+                    self.phase_peaks.observe(states,received_at,time.monotonic())
                     self.states=states;self.received=time.monotonic();self.error=None
                     self.duration=self.received-start;self.sequence+=1
                     self.receipt={'sequence':self.sequence,'request_started_at':started_at,
@@ -181,6 +186,7 @@ class SnapshotCollector:
                 # Atomicky se stejnou sadou; pozdější snapshot() už může patřit
                 # jinému requestu. Jde o čas získání HA stavu, nikoli heartbeat.
                 states[0]['collection_snapshot']=dict(self.receipt)
+                states[0]['collection_phase_peaks']=self.phase_peaks.snapshot(time.monotonic())
             return states
 
     def snapshot(self):
@@ -192,7 +198,8 @@ class SnapshotCollector:
                  'thread_alive':bool(self.thread and self.thread.is_alive()),'thread_problem':self.thread_problem,
                  'thread_restart_count':self.restart_count,'thread_restart_limit':self.restart_limit,
                  'thread_restart_budget_exhausted':len(self.restart_attempts)>=self.restart_limit,
-                 'request_in_progress_s':time.monotonic()-self.request_started if self.request_started is not None else None}
+                 'request_in_progress_s':time.monotonic()-self.request_started if self.request_started is not None else None,
+                 'phase_peaks':self.phase_peaks.snapshot(time.monotonic())}
 
     def close(self):
         self.stop.set();self.ack_wake.set()
