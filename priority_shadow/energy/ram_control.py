@@ -6,6 +6,7 @@ zůstává zablokován, dokud není ověřena hranice AC/DC a vypršení povelu.
 from datetime import datetime,time,timedelta,timezone
 import math
 from . import control_journal as legacy,priority,night
+from .phase_peaks import BREAKER_A
 from .core import TZ,VERSION,instant,digest
 from .store import pack,unpack
 
@@ -305,6 +306,15 @@ def observe(store,states,result):
             if not errors:
                 valid_until=input_valid_until(points,by,run['window_end'])
                 if valid_until<=now:errors.append('input_validity_deadline_reached')
+            # Every 1s collector report contributes to this 5s step. A
+            # confirmed phase overrun must inhibit virtual power increases;
+            # missing/aged phase reports cannot be treated as zero amperes.
+            peak_window=result.get('collection_phase_peaks')
+            if peak_window is not None:
+                if peak_window.get('status')!='ok':
+                    errors.append('fast_phase_peak_window_unverified')
+                if peak_window.get('over_limit_phases'):
+                    errors.append('observed_phase_current_above_25a')
             errors=sorted(set(errors))
             reports=diagnostic['solax_reports'];accepted=run.get('accepted_solax_reports')
             if accepted:
@@ -386,6 +396,8 @@ def observe(store,states,result):
                 'intent_renewal':renewal,'intent_expires_at':run.get('last_intent',{}).get('expires_at'),
                 'input_valid_until':valid_until.isoformat() if valid_until else None,
                 'collection_snapshot':result.get('collection_snapshot'),
+                'phase_peak_window':result.get('collection_phase_peaks'),
+                'ac_breaker_per_phase_a':BREAKER_A,
                 'input_reports':{k:points[k]for k in (*FAST_KEYS,'ev_w','battery_v','battery_a','battery_limit_a','battery_soc','priority',*(f'grid_l{i}_a_reported'for i in (1,2,3)))},
                 'manual_control':mode_context,
                 'owner_reports':{eid:night.point(by.get(eid),at)for eid in CONTROL_STATE_IDS}}
@@ -393,12 +405,20 @@ def observe(store,states,result):
             for key in ('unverified_current_samples','missing_current_phase_samples'):stats.setdefault(key,0)
             stats['unverified_current_samples']+=int(any(p['current_quality']=='unverified_phase' for p in phase))
             stats['missing_current_phase_samples']+=sum(p['actual_grid_a'] is None for p in phase)
-            stats['measured_current_basis']='all fresh numeric current reports; P/UI validation quality shown separately'
+            stats['measured_current_basis']='all fresh numeric current reports plus 1s collector window maxima; never a hardware trip signal'
+            if peak_window is not None:
+                stats.setdefault('collector_peak_exceedance_intervals',0)
+                stats.setdefault('collector_peak_unverified_intervals',0)
+                stats['collector_peak_exceedance_intervals']+=int(bool(peak_window.get('over_limit_phases')))
+                stats['collector_peak_unverified_intervals']+=int(peak_window.get('status')!='ok')
+                for key,value in peak_window.get('maxima',{}).items():
+                    if key in ('L1','L2','L3') and isinstance(value.get('a'),(int,float)):
+                        stats['measured_phase_max_a'][key]=max(stats['measured_phase_max_a'].get(key,0),value['a'])
             if amps is not None:
                 stats['current_min_a']=min(stats['current_min_a'],amps) if stats['current_min_a'] is not None else amps
                 stats['current_max_a']=max(stats['current_max_a'],amps) if stats['current_max_a'] is not None else amps
             for prefix,key in [('model','planned_grid_a'),('measured','actual_grid_a')]:
-                vals=[abs(p[key]) for p in phase if p[key] is not None];stats[prefix+'_exceedance_samples']+=int(any(v>25+1e-7 for v in vals))
+                vals=[abs(p[key]) for p in phase if p[key] is not None];stats[prefix+'_exceedance_samples']+=int(any(v>BREAKER_A+1e-7 for v in vals))
                 for p in phase:
                     v=p[key]
                     if v is not None:stats[prefix+'_phase_max_a']['L'+str(p['phase'])]=max(stats[prefix+'_phase_max_a'].get('L'+str(p['phase']),0),abs(v))

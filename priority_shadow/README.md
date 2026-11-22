@@ -1,3 +1,9 @@
+# 0.6.37 – PEAK-01: 1s maxima proudu z kolektoru do 5s stínové smyčky
+
+[Implementace a důkazní omezení](../docs/PHASE_PEAK_CAPTURE_0637_20261122.md). Ověřený AC limit je 25 A na fázi. Samostatný 8s RAM-only highwater přenáší peak L1/L2/L3, čas a kvalitu; při >25 A nebo nedoložených datech jen virtuálně zabrání zvýšení. SolaX rychlý Modbus 1 s, původní HW/EV/HA Recorder a veškeré fyzické řízení beze změny. První reálná noční regresní kontrola je nutná po nasazení.
+
+---
+
 # 0.6.36 – DB-OPT-01, zmenšení stínové SQLite bez ztráty historie
 
 [Metodika, kontrolní součty a hranice](../docs/DB_OPT_0636_20261117.md). Jen se souhlasem operátora po specifickém `REQUEST.json` a pouze před startem pracovníků. Plná záchranná SQLite kopie /share a nativní HA partial backup, 47 tabulek/289 566 záznamů izolované zkoušky shodných. `VACUUM INTO` bez změny obsahu, ACK, SOC hash, původní 14d/90d retenční politiky; žádný recorder purge nebo hardware.

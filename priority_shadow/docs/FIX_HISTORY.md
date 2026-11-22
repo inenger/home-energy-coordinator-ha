@@ -1,3 +1,10 @@
+## 0.6.37 – PEAK-01 / MODBUS-01 (22.11.2026)
+
+[Technický kontrakt a přijímací test](../../docs/PHASE_PEAK_CAPTURE_0637_20261122.md). Předchozí 1s kolektor přepisoval meziproudové změny před 5s rozhodnutím. Nový 8s RAM highwater s exact source timestamps přenášen atomicky, při nestandardní kvalitě/incomplete fail-closed a >25 A virtual stop. Nezaměňovat limit baterie (DC) s 3×25 A AC. Neprovádět fyzické Modbus/EV změny. Dlouhodobý 1s Modbus overrun bez prokázaných timeoutů zůstává otevřená diagnostika, ne opravený incident.
+
+
+---
+
 ## 0.6.36 – DB-OPT-01 (17. 11. 2026)
 
 [Reálná read-only auditovaná kopie, bezztrátová metoda a zdokumentované meze](../../docs/DB_OPT_0636_20261117.md). V 0.6.35 přenosná kopie 429,36 MB, SQLite freelist 19,37 MB. `VACUUM INTO` na této kopii → 409,53 MB; všech 47 tabulek a 289 566 řádků bitově/logicky identických včetně rowid a transportních BLOBů. Zavedeno opt-in `offline_repack`, originální snapshot, úplná kontrola před atomickým swapem, rollback při neúspěchu; RET-05 a VIN-01 beze změny.

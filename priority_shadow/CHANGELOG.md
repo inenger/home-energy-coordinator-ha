@@ -1,3 +1,12 @@
+## 0.6.37 – PEAK-01 (22. 11. 2026)
+
+- RAM-only `PhasePeakWindow` pro každý nový 1s report proudu fáze L1/L2/L3; přesný `last_reported`, unikátní source timestamp, nedostupná/chybná a stará data nejsou nula.
+- Atomický collector → 5s RAM → durable session/sample evidence, rozšířené `measured_phase_max_a` a počitadla kvality/over-limit. Výhradně logický stop nad 25 A nebo při nedoloženém intervalu; žádná HW akce.
+- Modbus 1 s ponechán, kumulativní `overrun_count` vyhodnocen odděleně od úspěšnosti a timeoutů. [PEAK-01 / MODBUS-01](../docs/PHASE_PEAK_CAPTURE_0637_20261122.md).
+
+
+---
+
 ## 0.6.36 – DB-OPT-01 (17. 11. 2026)
 
 - Operátorem potvrzené offline bezztrátové SQLite přebalení *pouze* addon `evidence.sqlite`, s originální snapshot zálohou, úplnou bitovou porovnávací regresí a fail-closed obnovou. Bez automatického spuštění, pouze s `REQUEST.json`.

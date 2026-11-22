@@ -1,3 +1,13 @@
+# 22. 11. 2026 – PEAK-01 / Modbus 1s, zdroj 0.6.37
+
+- Uživatel opravil předchozí překlep: **limit hlavního jističe je 3×25 A**, žádných 30 A AC; BMS baterie má samostatný DC limit, tyto veličiny nemíchat. Požadavek: zachytit krátké proudové špičky mezi 5s kroky a analyzovat přetížení 1s Modbusu.
+- [Implementace a hranice](docs/PHASE_PEAK_CAPTURE_0637_20261122.md): RAM-only okno 8s nad novými `last_reported` třemi fázemi ze sekundového `SnapshotCollector`; bez diskových zápisů v collector vlákně, bez aktuačních adaptérů. Sběr → atomický snapshot → `MemoryControl.step` → `ram_control.observe` → záznam `phase_peak_window`; maximum všech fází aktualizuje `measured_phase_max_a`, >25 A nebo chybějící validační snímek virtuálně stop, nikoliv fyzický příkaz. Syntetika včetně spike mezi kroky, stale, duplicate, unavailable, reset a 25A guard.
+- Read-only HA ukázal, že `overrun_count` je počet cyklů delších než jejich interval; není sám o sobě důkazem ztráty reportů. Při 1s rychlé skupině diagnostika `Healthy`, úspěšnost 100 %, 0 karanténovaných registrů; pomalejší běhy přes 1s existují. **Konfiguraci SolaXu neměnit** v tomto releasu, případný test 2s zvlášť.
+- Nejnovější audit 21.–22.11. ukázal několik krátkých proudových špiček nezahrnutých v 5s highwater; privátní časové řady se do Gitu neexportují. První celá noc na reálné nové verzi potřebuje test proti historickému 1s Recorderu; předtím se nesmí tvrdit potvrzená produkční funkce.
+
+
+---
+
 # 17.11.2026 – DB-OPT-01 produkční cutover na RPi dokončen
 
 - [Provozní evidence](docs/DEPLOYMENT_DB_OPT_0636_20261117.md): GitHub PR #55 merge `39ed0c2`, PR CI i main CI PASS; nativní partial Supervisor backup addonu v0.6.35, testovací portable preview a druhý původní snapshot /share.
