@@ -1,3 +1,7 @@
+**0.6.38 – PEAK-02 / MODBUS-02:** [3s čerstvost fáze při zachování 8s maxim a měření SolaX 1s/5s skupin](docs/PHASE_FRESHNESS_MODBUS_0638_20261122.md). Limit 25 A/fázi, stínové řízení 5s, Modbus 1s beze změny, fyzické povely 0. **Reálná kontrola po instalaci je samostatná.**
+
+---
+
 **0.6.37 – PEAK-01 (nasazeno 22. 11. na RPi):** [zachytávání 1s proudových maxim L1/L2/L3](docs/PHASE_PEAK_CAPTURE_0637_20261122.md) pro 5s stínovou řídicí smyčku; potvrzený AC jistič **3×25 A**, Modbus **1 s beze změny**, HEC LIVE stále vypnuté. Synteticky potvrzena krátká špička v 1s snímku mezi dvěma výpočty, guard >25 A a neověřených měření. Provozní reálná noc po nasazení vyžaduje samostatné porovnání s historií.
 
 ---
@@ -29,7 +33,7 @@
 | Doplněk | Adresář | Verze |
 |---|---|---|
 | Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.4 |
-| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.37 |
+| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.38 |
 | **Skutečné řízení baterie a Tesly 03–05** | [HA package](ha_packages/night_live_coordinator.yaml) | LIVE v1 · 13.11.2026 |
 
 Oba balíčky mají vlastní Docker build context. Nový stínový doplněk nemění

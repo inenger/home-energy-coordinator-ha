@@ -1,3 +1,10 @@
+## 0.6.38 – PEAK-02 / MODBUS-02 (22.11.2026)
+- Nový fail-closed 3s source freshness L1/L2/L3 vedle nezávislého 8s highwater, quality fresh/held/stale/missing, časové mezery a inferred misses se správnou 1s/2,5s collector periodou.
+- Připojený read-only SolaX communication health monitor, kumulativní overruns, delta/minute a volitelný grouped P95/P99/avg/overruns diagnostický atribut z lokálního custom Modbus instrumentačního modulu. 1s FAST, 5s MEDIUM+DEFAULT unchanged.
+- Pětisekundové RAM noční řízení, limity 25 A, fyzické povely 0, audit a retence beze změny. [Kontrakt](../docs/PHASE_FRESHNESS_MODBUS_0638_20261122.md).
+
+---
+
 ## 0.6.37 – PEAK-01 (22. 11. 2026)
 
 - RAM-only `PhasePeakWindow` pro každý nový 1s report proudu fáze L1/L2/L3; přesný `last_reported`, unikátní source timestamp, nedostupná/chybná a stará data nejsou nula.

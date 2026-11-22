@@ -397,6 +397,7 @@ def observe(store,states,result):
                 'input_valid_until':valid_until.isoformat() if valid_until else None,
                 'collection_snapshot':result.get('collection_snapshot'),
                 'phase_peak_window':result.get('collection_phase_peaks'),
+                'modbus_poll_diagnostics':result.get('collection_modbus_diagnostics'),
                 'ac_breaker_per_phase_a':BREAKER_A,
                 'input_reports':{k:points[k]for k in (*FAST_KEYS,'ev_w','battery_v','battery_a','battery_limit_a','battery_soc','priority',*(f'grid_l{i}_a_reported'for i in (1,2,3)))},
                 'manual_control':mode_context,

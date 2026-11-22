@@ -1,3 +1,8 @@
+## 22. 11. 2026 – PEAK-02/MODBUS-02, verze 0.6.38
+Baseline merge 90d0491. Audit 0.6.37 prokázal chybné green status při výpadku jedné fáze (historické max 8s maskovalo současnou stale fázi). Přidána 3s monotonic/source freshness, hlášení posledního výpadku a inferred missed reports; přímé 1s/2,5s sběrové periody. Modbus původně globální overrun; instrumentace po intervalových bucket FAST 1s a MEDIUM+DEFAULT 5s bez fyzického ovládání. [Podrobnosti](../PHASE_FRESHNESS_MODBUS_0638_20261122.md).
+
+---
+
 ## 22. 11. 2026 – PEAK-01 produkční nasazení 0.6.37
 
 PR #56 merge `9ad944945ee30c6518dc5a11e171b2b97d744be1`, CI PASS pro Python 3.14 i standardní validaci. Před skutečnou instalací nativní backup předchozí 0.6.36 a záloha zdroje; nainstalována 0.6.37 na RPi. [Readback](../DEPLOYMENT_PEAK_0637_20261122.md): `started/observe_only`, nové 8s RAM highwater potvrzeno z aktuálních reportů L1/L2/L3; digest a pipeline OK, nulové fyzické povely. První nová úplná noc pending. Modbus frekvence nezměněna; bez ovládacího adaptéru.

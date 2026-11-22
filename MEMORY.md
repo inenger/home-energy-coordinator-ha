@@ -1,3 +1,10 @@
+# 22. 11. 2026 – 0.6.38 PEAK-02 / MODBUS-02
+- [Kontrakt a testy](docs/PHASE_FRESHNESS_MODBUS_0638_20261122.md): 8s proudové highwater oddělené od 3s freshness, phase_quality, inferred missing report/gap, fail-closed pro stale / >25A. HEC LIVE stále disabled, Noční sběr 1s, RAM tick 5s.
+- SolaX custom Modbus 2026.11.04 má cykly sdružené podle numerické periody, tedy FAST=1s a MEDIUM+DEFAULT=5s. Volitelný diagnostický lokální patch opravuje pouze publikaci P95/P99/průměru/overrun/úspěšnosti; nemění Modbus request, scan_interval ani hardware. Zdroj portable monitoru v ops/solax_modbus/poll_interval_monitor.py a kontrakt v docs. Originál integrace nutno zachovat při instalaci; upstream aktualizace může patch odstranit.
+- První reálná noc po 0.6.38 bude potřebovat potvrzení fází, hlášení stale a P95/P99; syntetika není ověření hard real-time ochrany.
+
+---
+
 # 22. 11. 2026 – PEAK-01 0.6.37 instalace na RPi potvrzena
 - [Provozní přejímka](docs/DEPLOYMENT_PEAK_0637_20261122.md): merge PR #56 `9ad944945ee30c6518dc5a11e171b2b97d744be1`, PR CI oba joby PASS, 654 lokálních testů PASS, nativní Supervisor partial backup 0.6.36 před upgrade vytvořen a ověřen, předchozí zdroj zvlášť archivován.
 - ARM image 0.6.37 postaven Supervisor, `started 0.6.37 observe_only`. `sensor.nocni_stinovy_plan` SHA PASS, health=ok, evidence_pipeline=ok, device_actions=0; `fast_loop.collection_worker.phase_peaks` reálný readback: `status=ok`, `breaker_a=25`, 3 čerstvé reporty L1/L2/L3 a správné timestampy v 8s okně, outside-window cadence 2,5s. Historie nočního nového `measured_phase_max_a` zatím neověřena, první noc 03–05 bude další validační bod; žádné HW povely.

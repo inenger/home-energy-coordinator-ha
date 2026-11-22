@@ -1,3 +1,8 @@
+## 0.6.38 – PEAK-02 / MODBUS-02
+[Kontrakt a scénáře](../../docs/PHASE_FRESHNESS_MODBUS_0638_20261122.md). Dřívější výpadek L2 během osmivteřinového maxima nesprávně zobrazoval status ok. Nyní last_report_age_s monotonic 3s, quality a gaps, přesná 8s maxima zachována. Read-only Modbus interval diagnostics. Nezměněné hard safety limit a nezávislý HEC LIVE. Syntetické testy a runtime staging zvlášť.
+
+---
+
 ## 0.6.37 – PEAK-01 / MODBUS-01 (22.11.2026)
 
 [Technický kontrakt a přijímací test](../../docs/PHASE_PEAK_CAPTURE_0637_20261122.md). Předchozí 1s kolektor přepisoval meziproudové změny před 5s rozhodnutím. Nový 8s RAM highwater s exact source timestamps přenášen atomicky, při nestandardní kvalitě/incomplete fail-closed a >25 A virtual stop. Nezaměňovat limit baterie (DC) s 3×25 A AC. Neprovádět fyzické Modbus/EV změny. Dlouhodobý 1s Modbus overrun bez prokázaných timeoutů zůstává otevřená diagnostika, ne opravený incident.

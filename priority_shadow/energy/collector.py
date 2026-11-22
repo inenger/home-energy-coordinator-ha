@@ -103,9 +103,11 @@ class ReadOnlyHA:
         from . import night,priority,automation_context,soc_runtime,control_journal,ram_control
         all_states=self.priority_context()
         weather_ids={s['entity_id']for s in all_states if s['entity_id'].startswith('weather.')}
-        ids=sorted(set(night.IDS.values())|set(priority.EXTRA.values())|set(automation_context.ENTITY_IDS)|set(soc_runtime.IDS.values())|set(control_journal.ENTITY_IDS)|set(ram_control.ENTITY_IDS)|weather_ids)
+        ids=sorted(set(night.IDS.values())|set(priority.EXTRA.values())|set(automation_context.ENTITY_IDS)|set(soc_runtime.IDS.values())|set(control_journal.ENTITY_IDS)|set(ram_control.ENTITY_IDS)|{'sensor.solax_inverter_communication_health'}|weather_ids)
         complex_ids=weather_ids|{night.IDS['forecast_today'],priority.EXTRA['forecast_tomorrow'],soc_runtime.IDS['forecast_day3'],soc_runtime.IDS['tariff']}
-        fields=('unit_of_measurement','friendly_name','min','max','step','options')
+        fields=('unit_of_measurement','friendly_name','min','max','step','options',
+                'success_rate','overrun_count','average_poll_duration_ms','max_poll_duration_ms',
+                'quarantined_registers','poll_interval_diagnostics')
         attrs=','.join(k+"=s.attributes.get('"+k+"')"for k in fields)
         template="{% set ids = "+json.dumps(ids)+" %}{% set ns=namespace(rows=[]) %}{% for e in ids %}{% set s=states[e] %}{% if s is not none and s is defined %}{% set ns.rows=ns.rows+[dict(entity_id=e,state=s.state,attributes=dict("+attrs+"),context=dict(id=s.context.id,parent_id=s.context.parent_id,user_id=s.context.user_id),last_reported=s.last_reported.isoformat(),last_updated=s.last_updated.isoformat(),last_changed=s.last_changed.isoformat(),report_source='ha_live_state_template')] %}{% endif %}{% endfor %}{{ ns.rows | to_json }}"
         for attempt in range(2):
