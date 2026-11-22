@@ -1,3 +1,8 @@
+# 0.6.38 – PEAK-02 / MODBUS-02
+[Čerstvost fází a Modbus monitoring](../docs/PHASE_FRESHNESS_MODBUS_0638_20261122.md). HA source timestamp + monotonic 3s stale guard; 8s maxima beze změny, 25 A/fázi a read-only rychlé 1s/5s metriky. Bez aktuačních povelů.
+
+---
+
 # 0.6.37 – PEAK-01: 1s maxima proudu z kolektoru do 5s stínové smyčky
 
 [Implementace a důkazní omezení](../docs/PHASE_PEAK_CAPTURE_0637_20261122.md). Ověřený AC limit je 25 A na fázi. Samostatný 8s RAM-only highwater přenáší peak L1/L2/L3, čas a kvalitu; při >25 A nebo nedoložených datech jen virtuálně zabrání zvýšení. SolaX rychlý Modbus 1 s, původní HW/EV/HA Recorder a veškeré fyzické řízení beze změny. První reálná noční regresní kontrola je nutná po nasazení.

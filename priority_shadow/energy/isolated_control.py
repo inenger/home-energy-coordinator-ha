@@ -91,7 +91,8 @@ class MemoryControl:
             session={'allocation_policy':'instant-max-fill-v1'}
         current={'at':at,'session':session,'priority':priority.LABELS.get(priority.value(points,'priority')),
                  'actual':{k:priority.value(points,k)for k in ('battery_a','battery_v','battery_soc','ev_w')},
-                 'collection_snapshot':{**(states[0].get('collection_snapshot',{})if states else {}),'read_at':at},'collection_phase_peaks':states[0].get('collection_phase_peaks') if states else None}
+                 'collection_snapshot':{**(states[0].get('collection_snapshot',{})if states else {}),'read_at':at},'collection_phase_peaks':states[0].get('collection_phase_peaks') if states else None,
+                 'collection_modbus_diagnostics':states[0].get('collection_modbus_diagnostics') if states else None}
         if night.startup_preflight_window(at):
             # This preflight is a report only; RAM's active 03:00–05:00
             # state machine is unchanged and never accepts pre-window frames.

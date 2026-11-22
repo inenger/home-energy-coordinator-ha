@@ -134,3 +134,6 @@ preflight noc 13.11. se zatím neověřila.
 
 | PEAK-01 / 0.6.37: mezikroková maxima fáze L1/L2/L3 | [5× syntetická E2E regrese](../priority_shadow/tests/test_phase_peaks_0637.py), [kontrakt](PHASE_PEAK_CAPTURE_0637_20261122.md) | 1s fresh unique reports → bounded 8s peak L2, 5s RAM highwater, >25 A / chybějící report virtual stop, neřešit chybějící fázi jako nulu; žádný HW action ani zápis do HA. Reálná kontrola po nasazení PENDING. |
 | MODBUS-01 / FAST 1s | [Read-only diagnostický postup](PHASE_PEAK_CAPTURE_0637_20261122.md) | Rozlišovat výskyt `overrun_count` od timeoutů a stale reportů, nevyvozovat fyzickou bezpečnost ze 100% software success; 1s konfiguraci bez nové volby neměnit. |
+
+| PEAK-02 / 0.6.38 | [6 syntetických kontrol čerstvosti](../priority_shadow/tests/test_phase_freshness_0638.py), [kontrakt](PHASE_FRESHNESS_MODBUS_0638_20261122.md) | 3s stale při 8s highwater, 1f výpadek a recovery, duplicitní zdrojový timestamp, 2,5s daytime, 5s RAM virtual stop >25A |
+| MODBUS-02 / 0.6.38 | [3 synthetic monitor testy](../priority_shadow/tests/test_modbus_observability_0638.py), [kontrakt](PHASE_FRESHNESS_MODBUS_0638_20261122.md) | Rolling actual interval 1s FAST / 5s MEDIUM+DEFAULT, P95/P99/avg, delta overruns, counter reset, unavailable health. Core restart a následný readback jako samostatné přejímky |

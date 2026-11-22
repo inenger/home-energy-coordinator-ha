@@ -1,3 +1,8 @@
+## 22.11.2026 – PEAK-02/MODBUS-02, zdrojová 0.6.38
+[Implementační kontrakt](PHASE_FRESHNESS_MODBUS_0638_20261122.md). 3s čerstvost posledního skutečného reportu L1/L2/L3 je nezávislá na 8s max. Doplňkové monitorování SolaX Modbus podle numerické periody (1s FAST, 5s MEDIUM+DEFAULT) v RAM. Původní HA Recorder/retence/baterie/EV nedotčeny. Real-world nasazení a následující noc vyhodnotit samostatně.
+
+---
+
 ## 22. 11. 2026 – PEAK-01 0.6.37 na Raspberry Pi NASAZENO / první noční regresi ověřit
 
 [Provozní readback, bezpečnost a záloha](DEPLOYMENT_PEAK_0637_20261122.md): GitHub PR #56 merged, CI obě úlohy PASS, 654 testů PASS. Supervisor v0.6.37 `started`, `observe_only`, hash publikace PASS, `collection_health=ok`, `evidence_pipeline=ok`, `device_actions=0`. Reálná nová `phase_peaks` data mají status ok a čerstvé hodnoty+časy všech tří fází s omezením 25 A/fázi. SolaX FAST interval 1s beze změny. První celá noc s 5s kontrolním souhrnem je PENDING, není to schválení LIVE.
@@ -84,7 +89,7 @@ Noc 13.–14.11. pouze pozorovací, bez automatické opětovné aktivace.
 
 # Aktuální stav a rozcestník projektu
 
-<!-- shadow-version: 0.6.37 -->
+<!-- shadow-version: 0.6.38 -->
 
 Stav zdrojového kandidáta k 12. 11. 2026. Historické poznámky v MEMORY a starších
 auditech popisují tehdejší stav; pro současné otevřené položky použijte tento

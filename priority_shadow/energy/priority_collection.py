@@ -5,6 +5,7 @@ from pathlib import Path
 from .collector import atomic_json
 from . import night
 from .phase_peaks import PhasePeakWindow
+from .modbus_observability import ModbusHealthMonitor
 
 class CollectionFailure(RuntimeError):
     def __init__(self, failure):
@@ -20,6 +21,7 @@ class SnapshotCollector:
         self.condition=threading.Condition();self.stop=threading.Event()
         self.states=None;self.received=None;self.error=None;self.duration=None;self.thread=None
         self.phase_peaks=PhasePeakWindow()
+        self.modbus_diagnostics=ModbusHealthMonitor()
         self.request_started=None;self.thread_failed=False;self.watcher=None
         self.restart_attempts=[];self.restart_count=0;self.restart_limit=3;self.restart_window=300.
         self.thread_problem=None
@@ -123,7 +125,8 @@ class SnapshotCollector:
                 states=self.client.priority_states()
                 received_at=datetime.now(timezone.utc).isoformat()
                 with self.condition:
-                    self.phase_peaks.observe(states,received_at,time.monotonic())
+                    self.phase_peaks.observe(states,received_at,time.monotonic(),expected_period_s=period)
+                    self.modbus_diagnostics.observe(states,received_at,time.monotonic())
                     self.states=states;self.received=time.monotonic();self.error=None
                     self.duration=self.received-start;self.sequence+=1
                     self.receipt={'sequence':self.sequence,'request_started_at':started_at,
@@ -187,6 +190,7 @@ class SnapshotCollector:
                 # jinému requestu. Jde o čas získání HA stavu, nikoli heartbeat.
                 states[0]['collection_snapshot']=dict(self.receipt)
                 states[0]['collection_phase_peaks']=self.phase_peaks.snapshot(time.monotonic())
+                states[0]['collection_modbus_diagnostics']=self.modbus_diagnostics.snapshot()
             return states
 
     def snapshot(self):
@@ -199,7 +203,8 @@ class SnapshotCollector:
                  'thread_restart_count':self.restart_count,'thread_restart_limit':self.restart_limit,
                  'thread_restart_budget_exhausted':len(self.restart_attempts)>=self.restart_limit,
                  'request_in_progress_s':time.monotonic()-self.request_started if self.request_started is not None else None,
-                 'phase_peaks':self.phase_peaks.snapshot(time.monotonic())}
+                 'phase_peaks':self.phase_peaks.snapshot(time.monotonic()),
+                 'modbus_diagnostics':self.modbus_diagnostics.snapshot()}
 
     def close(self):
         self.stop.set();self.ack_wake.set()
