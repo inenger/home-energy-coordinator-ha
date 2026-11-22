@@ -1,4 +1,4 @@
-**0.6.37 – PEAK-01:** [zachytávání 1s proudových maxim L1/L2/L3](docs/PHASE_PEAK_CAPTURE_0637_20261122.md) pro 5s stínovou řídicí smyčku; potvrzený AC jistič **3×25 A**, Modbus **1 s beze změny**, HEC LIVE stále vypnuté. Synteticky potvrzena krátká špička v 1s snímku mezi dvěma výpočty, guard >25 A a neověřených měření. Provozní reálná noc po nasazení vyžaduje samostatné porovnání s historií.
+**0.6.37 – PEAK-01 (nasazeno 22. 11. na RPi):** [zachytávání 1s proudových maxim L1/L2/L3](docs/PHASE_PEAK_CAPTURE_0637_20261122.md) pro 5s stínovou řídicí smyčku; potvrzený AC jistič **3×25 A**, Modbus **1 s beze změny**, HEC LIVE stále vypnuté. Synteticky potvrzena krátká špička v 1s snímku mezi dvěma výpočty, guard >25 A a neověřených měření. Provozní reálná noc po nasazení vyžaduje samostatné porovnání s historií.
 
 ---
 

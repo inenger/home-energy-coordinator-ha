@@ -1,3 +1,10 @@
+## 22. 11. 2026 – PEAK-01 0.6.37 na Raspberry Pi NASAZENO / první noční regresi ověřit
+
+[Provozní readback, bezpečnost a záloha](DEPLOYMENT_PEAK_0637_20261122.md): GitHub PR #56 merged, CI obě úlohy PASS, 654 testů PASS. Supervisor v0.6.37 `started`, `observe_only`, hash publikace PASS, `collection_health=ok`, `evidence_pipeline=ok`, `device_actions=0`. Reálná nová `phase_peaks` data mají status ok a čerstvé hodnoty+časy všech tří fází s omezením 25 A/fázi. SolaX FAST interval 1s beze změny. První celá noc s 5s kontrolním souhrnem je PENDING, není to schválení LIVE.
+
+
+---
+
 ## 22. 11. 2026 – nový zdroj 0.6.37 / PEAK-01
 
 [Kontrakt, důkaz selhání před opravou, syntetické testy a MODBUS-01](PHASE_PEAK_CAPTURE_0637_20261122.md). Přímé proudy L1/L2/L3 se sbírají každou 1s v noci, ale dosud se do 5s souhrnu předával jen poslední snímek; návrh zpracovává každou novou časově platnou HA zprávu a předává 8s highwater. Potvrzený hlavní jistič **25 A/fázi**, nad25 nebo unverified fail-closed v simulaci; žádné zařízení neovládá, původní SOC/retence beze změny. Cumulative SolaX overrun není sám důkazem timeoutu, perioda rychlého Modbusu zůstává 1 s. **GitHub, CI a nasazení rozlišovat; v tomto statusu jde o zdrojovou implementaci, nikoli již potvrzenou následující noc.**

@@ -1,3 +1,11 @@
+# 22. 11. 2026 – PEAK-01 0.6.37 instalace na RPi potvrzena
+- [Provozní přejímka](docs/DEPLOYMENT_PEAK_0637_20261122.md): merge PR #56 `9ad944945ee30c6518dc5a11e171b2b97d744be1`, PR CI oba joby PASS, 654 lokálních testů PASS, nativní Supervisor partial backup 0.6.36 před upgrade vytvořen a ověřen, předchozí zdroj zvlášť archivován.
+- ARM image 0.6.37 postaven Supervisor, `started 0.6.37 observe_only`. `sensor.nocni_stinovy_plan` SHA PASS, health=ok, evidence_pipeline=ok, device_actions=0; `fast_loop.collection_worker.phase_peaks` reálný readback: `status=ok`, `breaker_a=25`, 3 čerstvé reporty L1/L2/L3 a správné timestampy v 8s okně, outside-window cadence 2,5s. Historie nočního nového `measured_phase_max_a` zatím neověřena, první noc 03–05 bude další validační bod; žádné HW povely.
+- SolaX Modbus FAST1/MEDIUM5/DEFAULT5 ponechán. Kumulativní overrun není ekvivalentem ztráty reportu. Bez fyzického řízení.
+
+
+---
+
 # 22. 11. 2026 – PEAK-01 / Modbus 1s, zdroj 0.6.37
 
 - Uživatel opravil předchozí překlep: **limit hlavního jističe je 3×25 A**, žádných 30 A AC; BMS baterie má samostatný DC limit, tyto veličiny nemíchat. Požadavek: zachytit krátké proudové špičky mezi 5s kroky a analyzovat přetížení 1s Modbusu.

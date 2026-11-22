@@ -1,3 +1,10 @@
+## 22. 11. 2026 – PEAK-01 produkční nasazení 0.6.37
+
+PR #56 merge `9ad944945ee30c6518dc5a11e171b2b97d744be1`, CI PASS pro Python 3.14 i standardní validaci. Před skutečnou instalací nativní backup předchozí 0.6.36 a záloha zdroje; nainstalována 0.6.37 na RPi. [Readback](../DEPLOYMENT_PEAK_0637_20261122.md): `started/observe_only`, nové 8s RAM highwater potvrzeno z aktuálních reportů L1/L2/L3; digest a pipeline OK, nulové fyzické povely. První nová úplná noc pending. Modbus frekvence nezměněna; bez ovládacího adaptéru.
+
+
+---
+
 ## 22. 11. 2026 – PEAK-01 / MODBUS-01, zdroj 0.6.37
 
 **Baseline**: `a9068abc4d264ff800c3e580340622d3ac873569` (v0.6.36). Skutečný read-only noční audit odhalil několik krátkých špiček v HA 1s Recorderu, které se nevešly do pětisekundového maxima stínového deníku. Rozlišeny dvě hypotézy: (a) SolaX nehlásí 1s data (vyvráceno konkrétním 1s Recorder záznamem), (b) kolektor přepisuje 1s cache, kontrola `priority_collection.py` (potvrzeno). Nová `PhasePeakWindow` drží jen časově validní 1s hodnoty a virtual guard >25 A; žádné fyzické povely. První syntetická regrese omylem vyžadovala vypršení celé 8s cache po pouhých 6s od posledního reportu; opraveno očekávání (pouze test, algoritmus nezměněn). MODBUS-01: `overrun_count` se navyšuje při dokončení přes periodu, není to automatická chyba cyklu; při úspěšnosti 100 % ponecháno 1s, případný 2s test je samostatná schvalovaná změna. [Podrobnosti](../PHASE_PEAK_CAPTURE_0637_20261122.md).
