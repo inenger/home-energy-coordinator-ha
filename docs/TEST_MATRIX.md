@@ -118,7 +118,7 @@ preflight noc 13.11. se zatím neověřila.
 
 
 | HEC LIVE: fyzický write/readback i rollback | [Fyzický pilot a source](LIVE_BATTERY_RESERVE_20261113.md) | Na RPi 20→25→20, 20→100→20 % reserve, EV 16→15→16 A; živý automatický recovery 25/15→20/16, owner off, restoration automation on – PASS. |
-| HEC LIVE: HA package acceptance | [Package](../ha_packages/night_live_coordinator.yaml) | Core full configuration check PASS, restart PASS, všechny tři automations ON, HEC Live status idle, starý stínový doplněk unchanged; [statický stdlib test](../scripts/test_live_package_contract.py). |
+| HEC LIVE: HA package acceptance | [Package](history/retired_live_v1_20261113.yaml.txt) | Core full configuration check PASS, restart PASS, všechny tři automations ON, HEC Live status idle, starý stínový doplněk unchanged; [statický stdlib test](../scripts/test_live_package_contract.py). |
 | HEC LIVE: další noc 14.11. | [Otevřená zkouška](LIVE_BATTERY_RESERVE_20261113.md) | 02:59 preflight, fyzické battery reserve, EV current/readback, peak L1/L2/L3, 05:00 restore, účetní a energetické výsledky – PENDING, netvrdit hotové. |
 
 
@@ -137,3 +137,13 @@ preflight noc 13.11. se zatím neověřila.
 
 | PEAK-02 / 0.6.38 | [6 syntetických kontrol čerstvosti](../priority_shadow/tests/test_phase_freshness_0638.py), [kontrakt](PHASE_FRESHNESS_MODBUS_0638_20261122.md) | 3s stale při 8s highwater, 1f výpadek a recovery, duplicitní zdrojový timestamp, 2,5s daytime, 5s RAM virtual stop >25A |
 | MODBUS-02 / 0.6.38 | [3 synthetic monitor testy](../priority_shadow/tests/test_modbus_observability_0638.py), [kontrakt](PHASE_FRESHNESS_MODBUS_0638_20261122.md) | Rolling actual interval 1s FAST / 5s MEDIUM+DEFAULT, P95/P99/avg, delta overruns, counter reset, unavailable health. Core restart a následný readback jako samostatné přejímky |
+
+## 0.6.39 – PEAK-03 / archived LIVE / SolaX patch and documentation consistency
+
+| Nález | Reprodukce a implementace | Regrese / akceptace |
+|---|---|---|
+| PEAK-03 | [Protipříklad 0.6.38 a fail-closed 0.6.39](PEAK_03_REPO_FIX_0639.md) | [Test](../priority_shadow/tests/test_phase_freshness_0638.py): absent, None, status-only, partial, over-25 falsified flag, two coherent recovery, [archived replay](../priority_shadow/tests/test_archived_replay.py) exact-window provenance and missing-proof zero, 0 physical commands; hardware LIVE remains NO-GO |
+| LIVE-ARCH-01 | Retired physical YAML is no longer deployable | [Test](../scripts/test_live_package_contract.py) requires 0 active YAML in ha_packages, preserves historic semantics in a .yaml.txt |
+| MODBUS-PATCH-01 | [Version-locked original-vs-patched SHA](../ops/solax_modbus/README.md) | [Static 4-hunk test](../scripts/test_solax_patch_contract.py) and on-RPi dry-run of patch against exact vendor original |
+| DOC-DRIFT-02 | [Canonical current source/deployment status](PROJECT_STATUS.md) | [Documentation CI gate](../scripts/verify_documentation.py) and [counterexample test](../scripts/test_documentation_contract.py) |
+| QA-01 | cs-CZ ICU absent on some RPi Node builds | [JS test](../scripts/test_deep_fixes_0613.mjs): strict 2,5 when cs-CZ supported; transparent 2.5 branch otherwise |

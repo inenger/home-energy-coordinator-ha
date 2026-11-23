@@ -19,6 +19,13 @@ def replay(database,history,day,out):
    assert instant(session['model_available_at'])<=instant(x['at'])
    points={k:{z:p.get(z)for z in ('entity_id','value','unit','last_reported','last_updated')}for k,p in x['inputs'].items()}
    frames.append((instant(x['at']),points,session))
+  # Reuse only *recorded* high-water snapshots at their original decision
+  # time. Historic HA Recorder states cannot reconstruct unseen 1s peaks.
+  recorded_peaks={}
+  for peak_at,blob in db.execute('SELECT at,payload FROM ram_control_samples WHERE day=? ORDER BY at',(day,)):
+   peak=unpack(blob).get('phase_peak_window')
+   if isinstance(peak,dict):
+    recorded_peaks[peak_at]=peak
   failures=[unpack(p)for p, in db.execute('SELECT payload FROM ram_control_events WHERE day=? ORDER BY id',(day,))if unpack(p)['kind']=='collection_failure']
  finally:db.close()
  times=[x[0]for x in frames];end=instant(old['window_end'])
@@ -74,9 +81,13 @@ def replay(database,history,day,out):
     fail=failures[failure_index];c.record_failure(store,fail['at'],fail['reason']);failure_index+=1
    outage=any(instant(f['at'])<=at<times[bisect.bisect_right(times,instant(f['at']))]for f in failures)
    stamp=at.isoformat()
+   # No extrapolation from an earlier peak snapshot (no proof of all
+   # short current spikes after its recorded decision point).
    if not outage:
     points=priority.checked_points(states,stamp)
-    journal=c.observe(store,states,{'at':stamp,'session':session,'priority':priority.LABELS.get(priority.value(points,'priority'))})
+    journal=c.observe(store,states,{'at':stamp,'session':session,
+        'priority':priority.LABELS.get(priority.value(points,'priority')),
+        'collection_phase_peaks':copy.deepcopy(recorded_peaks.get(stamp))})
    else:journal=c.view(store,stamp,states)
    if at>=end:break
    delay=priority_observer.next_wait(stamp,0.,journal);waits.append(delay)
@@ -93,7 +104,10 @@ def replay(database,history,day,out):
    'original_capture_availability_only':scenario!='report_time_owner_assumed',
    'scheduler':'production_next_wait_zero_work_duration','collection_failure_preserved':True,
    'live_heartbeat_verified':False,'physical_control_ready':False,
+   'source_phase_peak_snapshots':len(recorded_peaks),
+   'phase_peak_reconstruction':'exact_recorded_at_only_no_interpolation',
    'limitations':[
+    'PEAK-03: virtuální výkon je blokován bez originálního 1s maxima všech fází v přesném čase rozhodnutí. Historický HA stav není důkaz chybějících špiček.',
     f'Zpětný model {VERSION}; původní živý deník zůstává samostatně zachovaný.',
     'Přesný čas převzetí reportů workerem ani délku práce v nových krocích nelze zpětně doložit. Smyčka používá next_wait a nulovou délku práce.',
     'Strict kontrola nepředpokládá čerstvost vzdáleného vlastníka. Obě podmíněné varianty ji předpokládají podle původního run-mode reportu.',

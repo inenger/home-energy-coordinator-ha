@@ -6,7 +6,7 @@ zůstává zablokován, dokud není ověřena hranice AC/DC a vypršení povelu.
 from datetime import datetime,time,timedelta,timezone
 import math
 from . import control_journal as legacy,priority,night
-from .phase_peaks import BREAKER_A
+from .phase_peaks import BREAKER_A, FRESHNESS_LIMIT_S, LOOKBACK_S
 from .core import TZ,VERSION,instant,digest
 from .store import pack,unpack
 
@@ -32,6 +32,42 @@ MANUAL_SUBMODES=('Stop Charge and Discharge','Force Charge','Force Discharge')
 MAX_REPORT_SKEW_S=2
 RAMP_UP_AC_W_S=100
 POWER_STEP_W=100
+
+
+def peak_window_errors(window):
+    """Fail closed when the collector cannot prove all three phase high-water reports.
+
+    This validates the *handoff* contract, not just its status field. The
+    source HA reports are still checked separately in inputs(). No hardware
+    action may be inferred from a valid window.
+    """
+    if not isinstance(window,dict) or window.get('status') != 'ok':
+        return ['fast_phase_peak_window_unverified']
+    quality=window.get('phase_quality')
+    maxima=window.get('maxima')
+    ages=window.get('last_report_age_s')
+    if (not isinstance(quality,dict) or not isinstance(maxima,dict)
+            or not isinstance(ages,dict) or window.get('breaker_a')!=BREAKER_A
+            or window.get('lookback_s')!=LOOKBACK_S
+            or window.get('freshness_limit_s')!=FRESHNESS_LIMIT_S):
+        return ['fast_phase_peak_window_unverified']
+    for phase in ('L1','L2','L3'):
+        q=quality.get(phase)
+        x=maxima.get(phase)
+        age=ages.get(phase)
+        if (not isinstance(q,dict) or q.get('quality')not in ('fresh','held_fresh_prior')
+                or not isinstance(x,dict) or not isinstance(x.get('at'),str)
+                or not isinstance(x.get('a'),(float,int)) or isinstance(x['a'],bool)
+                or not math.isfinite(x['a']) or x['a']<0
+                or not isinstance(age,(float,int)) or isinstance(age,bool)
+                or not math.isfinite(age) or not 0<=age<=FRESHNESS_LIMIT_S
+                or q.get('last_report_age_s')!=age
+                or not isinstance(q.get('last_reported'),str)):
+            return ['fast_phase_peak_window_unverified']
+    if not isinstance(window.get('over_limit_phases'),list):
+        return ['fast_phase_peak_window_unverified']
+    return ['observed_phase_current_above_25a'] if (
+        window['over_limit_phases'] or any(maxima[p]['a']>BREAKER_A for p in ('L1','L2','L3'))) else []
 
 
 def schema(db):
@@ -310,11 +346,7 @@ def observe(store,states,result):
             # confirmed phase overrun must inhibit virtual power increases;
             # missing/aged phase reports cannot be treated as zero amperes.
             peak_window=result.get('collection_phase_peaks')
-            if peak_window is not None:
-                if peak_window.get('status')!='ok':
-                    errors.append('fast_phase_peak_window_unverified')
-                if peak_window.get('over_limit_phases'):
-                    errors.append('observed_phase_current_above_25a')
+            errors.extend(peak_window_errors(peak_window))
             errors=sorted(set(errors))
             reports=diagnostic['solax_reports'];accepted=run.get('accepted_solax_reports')
             if accepted:

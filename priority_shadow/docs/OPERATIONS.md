@@ -1,6 +1,10 @@
 # Provoz, aktualizace a obnova
 
-Tento postup popisuje runtime 0.6.4 na RPi/HA OS. Žádný zdejší krok se
+Tento dokument obsahuje historický provozní postup pro runtime 0.6.4,
+**nikoliv instalační příkaz pro současnou 0.6.39**.
+Aktuální autoritativní vydání a postup pro rollback jsou
+[PROJECT_STATUS](../../docs/PROJECT_STATUS.md) a
+[RELEASE_RUNBOOK](../../docs/RELEASE_RUNBOOK.md). Žádný zdejší krok se
 neprovádí automaticky publikací do GitHubu. Pro aktuální identitu doplňků
 a poslední ověření čti [projektovou paměť](../../MEMORY.md).
 

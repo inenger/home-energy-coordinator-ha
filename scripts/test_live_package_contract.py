@@ -4,7 +4,8 @@ from pathlib import Path
 import math,re,unittest
 
 ROOT=Path(__file__).resolve().parents[1]
-SOURCE=(ROOT/'ha_packages/night_live_coordinator.yaml').read_text()
+ARCHIVE=ROOT/'docs/history/retired_live_v1_20261113.yaml.txt'
+SOURCE=ARCHIVE.read_text()
 
 def reserve(pv):
     if pv is None or pv<=15:return 100
@@ -12,6 +13,13 @@ def reserve(pv):
     return math.ceil(100-(pv-15)*75/35)
 
 class LiveHAContract(unittest.TestCase):
+    def test_no_deployable_physical_package_in_distribution(self):
+        self.assertFalse((ROOT/'ha_packages/night_live_coordinator.yaml').exists())
+        self.assertFalse(list((ROOT/'ha_packages').glob('*.yaml')))
+        self.assertFalse(list((ROOT/'ha_packages').glob('*.yml')))
+        self.assertIn('NOT ACTIVE',SOURCE)
+        self.assertIn('observe_only',(ROOT/'ha_packages/README.md').read_text())
+
     def test_forecast_policy_edges(self):
         for pv,want in [(None,100),(0,100),(15,100),(25,79),(35,58),(50,25),(60,25)]:
             self.assertEqual(reserve(pv),want)

@@ -1,5 +1,11 @@
 # Noční nabíjení · stínové priority
 
+**GitHub zdroj 0.6.39 / RPi stále 0.6.38 / `observe_only`**.
+Aktuální stav, ověřené noci a otevřené limity:
+[PROJECT_STATUS](../docs/PROJECT_STATUS.md).
+Historický popis základních funkcí verze 0.6.4 níže
+nepředstavuje dnešní nasazené vydání.
+
 Verze 0.6.4 počítá návrh nabití SolaX pro levné okno 03:00–05:00,
 porovnává preference EV/baterie a uchovává důkazy na Raspberry Pi.
 Používá časový profil FVE, spotřebu domu, SOC, sezónu a již vypočtený tarif.

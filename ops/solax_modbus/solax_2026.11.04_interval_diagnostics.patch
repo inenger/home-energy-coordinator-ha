@@ -1,0 +1,35 @@
+--- a/__init__.py
++++ b/__init__.py
+@@ -47,6 +47,8 @@
+ from pymodbus.client import AsyncModbusTcpClient
+ from pymodbus.exceptions import ConnectionException, ModbusException, ModbusIOException
+ from pymodbus.framer import FramerType
++
++from .poll_interval_monitor import PollIntervalMonitor
+ 
+ from .connection import (
+     describe_modbus_connection,
+@@ -807,6 +809,7 @@
+         self._comm_last_quarantined_register: str | None = None
+         self._comm_last_recovered_register: str | None = None
+         self._comm_overrun_count = 0
++        self._comm_interval_monitor = PollIntervalMonitor()
+         self._comm_recovery_active = False
+ 
+         # Polling is no longer blocked by a startup bisect. Bad registers are
+@@ -3591,6 +3594,7 @@
+         self._comm_poll_durations = self._comm_poll_durations[-COMM_HISTORY_LIMIT:]
+         if interval and elapsed >= interval:
+             self._comm_overrun_count += 1
++        self._comm_interval_monitor.record(interval, elapsed, outcome.communication_succeeded)
+         self._update_communication_data()
+         self._publish_communication_diagnostics()
+ 
+@@ -3640,6 +3644,7 @@
+             "average_poll_duration_ms": avg_duration,
+             "max_poll_duration_ms": max_duration,
+             "overrun_count": self._comm_overrun_count,
++            "poll_interval_diagnostics": self._comm_interval_monitor.snapshot(self.config),
+             "quarantined_registers": self.data.get("communication_quarantined_registers", 0),
+             "recovering": self._comm_recovery_active,
+             "last_quarantined_register": self._comm_last_quarantined_register,

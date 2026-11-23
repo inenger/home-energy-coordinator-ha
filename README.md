@@ -1,40 +1,17 @@
-**0.6.38 – PEAK-02 / MODBUS-02 (nasazeno 22. 11. na RPi):** [3s čerstvost fáze při zachování 8s maxim a měření SolaX 1s/5s skupin](docs/PHASE_FRESHNESS_MODBUS_0638_20261122.md). Limit 25 A/fázi, stínové řízení 5s, Modbus 1s beze změny, fyzické povely 0. **Reálná kontrola po instalaci je samostatná.**
-
----
-
-**0.6.37 – PEAK-01 (nasazeno 22. 11. na RPi):** [zachytávání 1s proudových maxim L1/L2/L3](docs/PHASE_PEAK_CAPTURE_0637_20261122.md) pro 5s stínovou řídicí smyčku; potvrzený AC jistič **3×25 A**, Modbus **1 s beze změny**, HEC LIVE stále vypnuté. Synteticky potvrzena krátká špička v 1s snímku mezi dvěma výpočty, guard >25 A a neověřených měření. Provozní reálná noc po nasazení vyžaduje samostatné porovnání s historií.
-
----
-
-**Produkční potvrzení DB-OPT-01 (17.11.2026):** addon 0.6.36 byl nasazen na RPi a jeho skutečná interní SQLite prošla bezztrátovým přebalením 429,36 → 410,03 MB (−19,33 MB). Před výměnou porovnáno všech 47 tabulek a 290 119 záznamů včetně rowid a původních BLOBů; addon po přebalení opět publikuje zdravotní data. [Provozní protokol](docs/DEPLOYMENT_DB_OPT_0636_20261117.md).
-
-**Nová verze zdroje 0.6.36 (DB-OPT-01):** [bezztrátové přebalení databáze pouze stínového doplňku](docs/DB_OPT_0636_20261117.md). Na izolované přenosné kopii ověřena úspora 19,83 MB bez změny kterýchkoliv 289 566 záznamů. Provozní migrace aktuální live DB je samostatný, výslovně vyžadovaný restart addonu. Hlavní databáze HA a fyzické řízení nedotčeny.
-
----
-
-**Nasazení 0.6.35 (17.11.2026):** RPi Supervisor started/observe_only. Nová WIN-01 politika publikuje výsledky, HEC LIVE odpojeno. [Provozní evidence](docs/DEPLOYMENT_0635_20261117.md).
-
-**Vývojové vydání 0.6.35:** [WIN-01: vysoký energetický deficit bez mrazové podmínky](docs/WIN01_ENERGY_ADEQUACY_0635.md). Zdrojová verze, CI a instalace v Home Assistantu jsou samostatně ověřované kroky. Historická instalace 0.6.34 je uvedena níže a nesmí být zaměňována za aktuální zdroj. `observe_only` a HEC LIVE odpojené zůstávají závazné.
-
----
-
-**Nasazení:** 0.6.34 je od 15.11.2026 instalována na RPi v režimu `started / observe_only`; fyzické HEC LIVE zůstává odpojené. [Provozní ověření a limity](docs/DEPLOYMENT_0634_20261115.md).
-
-## Aktuální stav – 15. 11. 2026
-
-**Verze 0.6.34:** [WIN-01 + RET-05](docs/WIN_RET_RELEASE_0634.md) sjednocuje poradní zimní SOC potřebu s ekonomickým modelem a doplňuje ověřené uzavírání nočních souhrnů. Stínový doplněk i nadále používá `observe_only` a nevydává fyzické povely. HEC LIVE zůstává odpojený od HA a nesmí se samočinně aktivovat.
-
-[Zimní požadavky](docs/WINTER_OPERATION_POLICY_20261115.md) · [Otevřené provozní hranice](docs/KNOWN_ISSUES.md) · [Regrese](docs/TEST_MATRIX.md). Starší verze uvedené níže jsou historické záznamy, nikoli aktuální nastavení zařízení.
-
----
-
 # Home Energy Coordinator · Home Assistant
+
+**Platný GitHub zdroj:** `priority_shadow 0.6.39` (23.11.2026),
+bezpečnostní fail-closed oprava PEAK-03; fyzické zásahy = 0.
+**Běžící Raspberry Pi:** poslední ověřený doplněk `0.6.38` v
+`observe_only`; GitHub commit sám nemění instalaci.
+Hlavní vstup pro AI a vývoj: [aktuální stav](docs/PROJECT_STATUS.md),
+[pravidla](AGENTS.md), [známé limity](docs/KNOWN_ISSUES.md).
 
 | Doplněk | Adresář | Verze |
 |---|---|---|
 | Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.4 |
-| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.38 |
-| **Skutečné řízení baterie a Tesly 03–05** | [HA package](ha_packages/night_live_coordinator.yaml) | LIVE v1 · 13.11.2026 |
+| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.39 |
+| Historický LIVE v1 (neaktivní, neinstalovat) | [Archiv](docs/history/retired_live_v1_20261113.yaml.txt) | 13.11.2026 · RETIRED |
 
 Oba balíčky mají vlastní Docker build context. Nový stínový doplněk nemění
 verzi ani provoz původního koordinátoru. Veřejné balíčky neobsahují soukromou
@@ -45,9 +22,19 @@ Paměť obsahuje aktuální stav, důvody rozhodnutí, poučení z auditů, regr
 případy a dosud neověřené předpoklady. Další podrobnosti jsou v README
 jednotlivých doplňků. Provoz a soukromé analýzy patří na RPi.
 
-**Aktuální stav 13.11. v 09:10:** Ostrý HEC LIVE je odpojen od HA a deaktivován. Noc 13.–14.11. je pouze pozorovací; další reaktivace vyžaduje výslovné rozhodnutí. [Doklad o bezpečném pozastavení](docs/LIVE_BATTERY_RESERVE_20261113.md).
+**Nasazení:** Na Raspberry Pi stále běží `0.6.38 / started / observe_only`.
+Zdrojová `0.6.39` je bezpečnostní oprava virtuálního regulátoru v GitHubu;
+**není tím automaticky nainstalována do HA**. Modbus FAST 1s / MEDIUM+DEFAULT 5s
+a hlavní jistič **3×25 A** zůstávají beze změny.
+Fyzické HEC LIVE je deaktivováno; archivní konfigurace není určená k nasazení.
+Po první noci 22.–23.11. je ověřeno 1 440 kontrolních cyklů a bezpečný stop
+při jednom překročení čerstvosti proudů:
+[audit noci](docs/NIGHT_AUDIT_0638_20261123.md).
 
-- [0.6.33 datová optimalizace: zpětná kompakce, diferencovaná retence, zachování historie](docs/DB_OPTIMIZATION_RELEASE_0633.md).
+**Nejbližší akce:** cílený deploy/test 0.6.39 až na samostatný pokyn,
+nikoliv automaticky. Ostré řízení nadále NO-GO; podmínky [LIVE-01/02](docs/KNOWN_ISSUES.md).
+Historické verze a pokusy: [changelog](priority_shadow/CHANGELOG.md),
+[vývojové dějiny](docs/history/DEVELOPMENT_HISTORY.md).
 
 ## Dokumentace
 

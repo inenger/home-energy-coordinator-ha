@@ -1,3 +1,18 @@
+## 0.6.39 – PEAK-03 + repo consistency (23.11.2026)
+
+- Fail closed when phase peak metadata are absent, malformed or partial;
+  require current age/status and maxima for every L1/L2/L3, enforce 25A
+  independently of possibly falsified over_limit_phases.
+- Archivovaný offline replay zachovává přesně uložené phase windows
+  bez interpolace a u starých neúplných archivů logický výkon blokuje.
+- Regression covers null, status-only, partial, missing data and recovery.
+  Test fixtures explicitly carry synthetic peak evidence; no runtime fallback.
+- Archived historical physical LIVE v1 outside installable HA YAML;
+  reproducible SolaX Modbus diagnostic patch, portable Node locale test,
+  source/deployment state clarified for AI.
+- **Only source code and docs**; RPi continues 0.6.38 observe_only, no
+  physical commands, no Modbus period changes.
+
 ## 0.6.38 – PEAK-02 / MODBUS-02 (22.11.2026)
 - Nový fail-closed 3s source freshness L1/L2/L3 vedle nezávislého 8s highwater, quality fresh/held/stale/missing, časové mezery a inferred misses se správnou 1s/2,5s collector periodou.
 - Připojený read-only SolaX communication health monitor, kumulativní overruns, delta/minute a volitelný grouped P95/P99/avg/overruns diagnostický atribut z lokálního custom Modbus instrumentačního modulu. 1s FAST, 5s MEDIUM+DEFAULT unchanged.
