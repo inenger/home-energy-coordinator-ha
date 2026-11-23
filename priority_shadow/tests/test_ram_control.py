@@ -20,7 +20,13 @@ def data(at=AT):
  peak.observe(ss,at,0.0)
  ss[0]['collection_phase_peaks']=peak.snapshot(0.0)
  return ss
-def result(at=AT):return {'at':at,'session':{**SESSION,'day':at[:10]},'priority':'ev','actual':{'battery_a':0,'battery_v':230,'ev_w':11040}}
+def result(at=AT):
+ # Direct ram_control.observe() tests (without MemoryControl) need the same
+ # explicit test-only peak evidence that SnapshotCollector provides in prod.
+ # Runtime never invents missing collector proof.
+ return {'at':at,'session':{**SESSION,'day':at[:10]},'priority':'ev',
+         'actual':{'battery_a':0,'battery_v':230,'ev_w':11040},
+         'collection_phase_peaks':data(at)[0]['collection_phase_peaks']}
 class RamControlTests(unittest.TestCase):
  def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.path=Path(self.tmp.name)/'e.sqlite';self.store=Store(self.path)
  def tearDown(self):self.store.close();self.tmp.cleanup()
