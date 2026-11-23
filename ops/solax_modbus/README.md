@@ -1,22 +1,48 @@
-# SolaX Modbus per-interval observabilita – lokální instrumentace
+# SolaX 2026.11.04 – reprodukovatelná read-only diagnostika 1s / 5s
 
-Autoritativní čistý kód výpočtu statistik je poll_interval_monitor.py; původní integrační knihovna je vendor soubor na RPi, NEPŘIDÁVAT 186kB vendor soubor do tohoto GitHub repozitáře.
+Proprietární/custom zdroj integrace *nepatří* do tohoto repozitáře;
+GitHub uchovává pouze náš vlastní malý monitor a čtyřhunkový delta patch.
 
-Testovaná lokální instalace: custom_components/solax_modbus, verze 2026.11.04, upstream init.py SHA-256:
-376ba1abf0d85f18f444e2521426812344c67d169d8b1870790948124781b53c
+- [Čistý Python monitor](poll_interval_monitor.py)
+- [Přesný patch pro custom `__init__.py`](solax_2026.11.04_interval_diagnostics.patch)
+- CI kontrola: `python scripts/test_solax_patch_contract.py`
 
-Modifikovaný init.py SHA-256:
-9507d55ef4226eea8ca00007cdc17a9e8031f0cebd195fc73a1aa976f249c7a0
+**Vstupní SHA-256 (pouze původní `__init__.py`):**
+`376ba1abf0d85f18f444e2521426812344c67d169d8b1870790948124781b53c`
 
-Změny ve čtyřech přesných bodech na oddělené kopii:
+**Výstupní SHA-256 (po patchi):**
+`9507d55ef4226eea8ca00007cdc17a9e8031f0cebd195fc73a1aa976f249c7a0`
 
-1. Před importem .connection přidat import PollIntervalMonitor z .poll_interval_monitor.
-2. Při inicializaci hubu po self._comm_overrun_count = 0 přidat self._comm_interval_monitor = PollIntervalMonitor().
-3. V _record_poll_cycle, po existujícím počítání overrunů a před self._update_communication_data() přidat self._comm_interval_monitor.record(interval, elapsed, outcome.communication_succeeded).
-4. V communication_health_attributes() hned za atribut overrun_count přidat poll_interval_diagnostics: self._comm_interval_monitor.snapshot(self.config).
+## Reprodukce / ověření na izolované kopii
 
-Nezasahuje do žádného Modbus requestu, timeoutu, retry či scheduleru. Vzorek je délka dokončeného cyklu, nikoliv jednotlivého Modbus registru. Interval FAST=1 a sloučená MEDIUM+DEFAULT=5 se měří odděleně. Bounded rolling 64 položek a 30s obnovování publikovaného snapshotu.
+Předpoklad: odpovídající originální soubor z *téže*
+integrace `solax_modbus 2026.11.04` a běžný program `patch`.
 
-Po update vendor integrace se lokální změny mohou ztratit. Návrat: z originálního copy-on-disk zálohovaného init.py obnovit původní soubor, odstranit novou poll_interval_monitor.py, restartovat HA Core. Nikdy neupravovat zdroj bez diff/code review a explicitní zálohy.
+1. Zkopíruj celou integraci do izolovaného adresáře,
+   nikdy do aktivního `/homeassistant/custom_components`.
+2. Ověř SHA vstupního `__init__.py` přes `sha256sum`.
+   Pokud nesouhlasí, **neaplikuj**; zkontroluj upstream změny.
+3. V kořeni izolované kopie integrace spusť
+   `patch --dry-run -p1 < /PATH/solax_2026.11.04_interval_diagnostics.patch`
+   a teprve pak `patch -p1 < /PATH/solax_2026.11.04_interval_diagnostics.patch`.
+4. Vedle `__init__.py` zkopíruj `poll_interval_monitor.py`.
+5. Ověř uvedený výstupní SHA a `python3 -m compileall -q .`.
+   Před nasazením prověř kompatibilitu s konkrétní verzí Home Assistantu,
+   zálohování původního kódu, rollback a možný dopad do Recorderu.
 
-Původní soubor, nativní Supervisor backup a neveřejné výsledky výkonu zůstávají na RPi. HEC pokračuje v observe_only; HA Recorder/retence, SolaX registry a EV aktuační příkazy beze změny.
+Patch pouze přidává import `PollIntervalMonitor`, bounded rolling
+instanci, jeden `record(interval, elapsed, outcome.communication_succeeded)`
+po dokončeném cyklu a `poll_interval_diagnostics` do existujících
+health atributů. **Nemění žádný Modbus request, registr, timeout,
+překryv ani rychlost měření.** FAST interval je 1 s, sloučené
+MEDIUM+DEFAULT 5 s. Snapshot jednou za 30 s,
+nejvýše 64 dokončených cyklů v paměti na skupinu.
+
+Aktuální RPi instalace již obsahuje tuto změnu z 22.11.2026.
+Zachovaná originální lokální kopie pro rollback:
+`/share/hec-upgrades/20261122-0638/solax_modbus_original/`.
+Při aktualizaci upstream integrace může být patch přepsán;
+**neaplikovat bez hash/diff kontroly** a nevracet vendor
+soubor do GitHubu. Při rollbacku obnovit původní `__init__.py`,
+odstranit `poll_interval_monitor.py` a podle běžného postupu
+restartovat pouze HA Core.

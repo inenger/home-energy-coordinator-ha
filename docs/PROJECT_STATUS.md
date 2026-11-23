@@ -1,116 +1,53 @@
-## 22.11.2026 – PEAK-02/MODBUS-02 verze 0.6.38 PRODUKČNÍ READBACK PASS
-[Provozní přejímka a otevřená noční validace](DEPLOYMENT_PEAK_0638_20261122.md). 0.6.38 skutečně installed+started observe_only na RPi; 663 testů, CI PASS; SolaX health Healthy/100%/0 quarantine. Nové phase_quality L1–L3 (3s freshness) a oddělená 8s maxima funkční na fyzických reportech; nový Modbus FAST a společný MEDIUM+DEFAULT P95/P99 čten z HA. Po startu jedna monitor payload overflow bez ztráty evidence, zdraví se vrátilo na ok. Další kompletní noc vyžaduje vyhodnocení; ostrý LIVE nadále vypnutý.
+# Aktuální stav projektu – 23.11.2026
 
----
+<!-- shadow-version: 0.6.39 -->
 
-## 22.11.2026 – PEAK-02/MODBUS-02, zdrojová 0.6.38
-[Implementační kontrakt](PHASE_FRESHNESS_MODBUS_0638_20261122.md). 3s čerstvost posledního skutečného reportu L1/L2/L3 je nezávislá na 8s max. Doplňkové monitorování SolaX Modbus podle numerické periody (1s FAST, 5s MEDIUM+DEFAULT) v RAM. Původní HA Recorder/retence/baterie/EV nedotčeny. Real-world nasazení a následující noc vyhodnotit samostatně.
+**Zdroj na GitHubu:** `priority_shadow 0.6.39` – PEAK-03 fail-closed
+ověření předaného 1s fázového highwater i při chybějících metadatech.
+**Na Raspberry Pi stále běží 0.6.38 `observe_only`**. Nový zdroj
+není nasazen, žádný hardware nebyl změněn. Původní
+`energy_coordinator 0.5.4` je samostatný balíček.
 
----
+**Provozní konfigurace:** jistič 3×25 A, SolaX FAST 1 s,
+MEDIUM+DEFAULT 5 s, HEC v 03–05 modeluje 5s logické řízení
+bez fyzických povelů. LIVE je vypnuté a původní experiment
+[archivován jako nenasaditelný text](history/retired_live_v1_20261113.yaml.txt).
+Před LIVE zůstávají blokátory LIVE-01/LIVE-02.
 
-## 22. 11. 2026 – PEAK-01 0.6.37 na Raspberry Pi NASAZENO / první noční regresi ověřit
+**Poslední úplná ověřená noc:** 22.–23.11. v 03–05 SEČ,
+1 440/1 440 logických cyklů, 1 441/1 441 transportních bloků,
+žádná ztráta evidence a žádné fyzické povely.
+Jednou `PEAK-02` zablokovalo virtuální výkon při 3,562s stáří
+fázových reportů. Modbus FAST vykazoval 806/6417 nadperiodových cyklů,
+ale nejsou to automaticky neúspěšná čtení; bez důvodu
+neměnit periodu. [Audit a meze důkazu](NIGHT_AUDIT_0638_20261123.md).
 
-[Provozní readback, bezpečnost a záloha](DEPLOYMENT_PEAK_0637_20261122.md): GitHub PR #56 merged, CI obě úlohy PASS, 654 testů PASS. Supervisor v0.6.37 `started`, `observe_only`, hash publikace PASS, `collection_health=ok`, `evidence_pipeline=ok`, `device_actions=0`. Reálná nová `phase_peaks` data mají status ok a čerstvé hodnoty+časy všech tří fází s omezením 25 A/fázi. SolaX FAST interval 1s beze změny. První celá noc s 5s kontrolním souhrnem je PENDING, není to schválení LIVE.
+**Audit repozitáře 23.11.:** PEAK-03 opraveno v 0.6.39 ve zdroji
+a cílených regresích, historický LIVE přemístěn mimo instalační YAML,
+doložen reprodukovatelný SolaX patch pro custom integraci
+2026.11.04; lokalizační test Node je portable bez oslabení na plném ICU.
+GitHub CI a případné nasazení 0.6.39 je samostatný krok.
 
+## Rozcestník pro AI
 
----
-
-## 22. 11. 2026 – nový zdroj 0.6.37 / PEAK-01
-
-[Kontrakt, důkaz selhání před opravou, syntetické testy a MODBUS-01](PHASE_PEAK_CAPTURE_0637_20261122.md). Přímé proudy L1/L2/L3 se sbírají každou 1s v noci, ale dosud se do 5s souhrnu předával jen poslední snímek; návrh zpracovává každou novou časově platnou HA zprávu a předává 8s highwater. Potvrzený hlavní jistič **25 A/fázi**, nad25 nebo unverified fail-closed v simulaci; žádné zařízení neovládá, původní SOC/retence beze změny. Cumulative SolaX overrun není sám důkazem timeoutu, perioda rychlého Modbusu zůstává 1 s. **GitHub, CI a nasazení rozlišovat; v tomto statusu jde o zdrojovou implementaci, nikoli již potvrzenou následující noc.**
-
----
-
-## 17.11.2026 – DB-OPT-01 PROVOZNĚ DOKONČENO (0.6.36)
-
-[Protokol skutečného cutoveru a rollback](DEPLOYMENT_DB_OPT_0636_20261117.md): Přesná interní SQLite databáze addon `priority_shadow` zmenšena **429 359 104 → 410 025 984 B** (−19 333 120 B / 4,50 %). 47 tabulek a 290 119 řádků beze změny včetně rowid/BLOB/ACK. Originální úplná záloha /share a nativní Supervisor backup předchozí verze na RPi zachovány. Addon po výměně `started 0.6.36 observe_only`; čerstvá monitorovací data, integrity SHA, evidence pipeline OK, 0 fyzických akcí. Žádné SQL DELETE nebo změna 14/90denní politiky ani hlavního HA Recorderu.
-
----
-
-## Zdrojová verze 0.6.36 — DB-OPT-01 (17. 11. 2026)
-
-[Bezpečné bezztrátové přebalení databáze doplňku](DB_OPT_0636_20261117.md). Uložení více než 14denní historie, hash a ACK brány a nastavení `observe_only` beze změny. 429,36 MB přenosná kopie → 409,53 MB na validovaném izolovaném `VACUUM INTO`, 47/47 tabulek a 289 566/289 566 řádků plně shodných. Hlavní `home-assistant_v2.db` se nesmí měnit. Nasazení a výsledek live interní DB jsou samostatné provozní důkazy.
-
----
-
-## 17.11.2026 – 0.6.35 nainstalována na RPi
-
-[Deploy, CI a readback](DEPLOYMENT_0635_20261117.md). Merge 4a9195c; CI PR i main PASS; RPi Supervisor ARM build PASS, nový doplněk started/observe_only, žádné fyzické akce. Politika energy-adequacy-v2 publikována a ověřena SHA. Baterie/EV settings nedotčeny, HEC LIVE unavailable. Pro 18.11. předpovědní horizont neúplný; celá nová noc 0.6.35 teprve bude potřeba ověřit.
-
----
-
-# Aktuální stav zdrojového projektu – 0.6.35 (17. 11. 2026)
-
-[WIN-01 energetická korekce](WIN01_ENERGY_ADEQUACY_0635.md). Zůstává explicitní `observe_only`; HEC LIVE vypnuto. Zimní politika vyhodnocuje dvě samostatné větve: **velký energetický deficit i nad 2 °C** a mírnější konzervativní deficit při chladu. Cíle fyzického nabíjení zůstávají `None`, noční EV okno 03–05 a priorita beze změny. Historický replay posledních šesti nocí podporuje požadavek 100 %, ale není to doklad skutečného fyzického dobití.
-
-Zveřejnění v main, CI a reálné nasazení se sledují odděleně; doklad jejich dokončení se přidá po ověření. Níže jsou chronologické záznamy předchozí 0.6.34, které se nesmí považovat za aktuální požadavky.
-
----
-
-## 15.11.2026 – 0.6.34 na RPi potvrzena, retence běží ve fázích
-
-[Deploy a reálné ověření](DEPLOYMENT_0634_20261115.md). GitHub PR #53 a CI merge PASS; lokální Home Assistant Supervisor: 0.6.34 `started/observe_only`, fyzické akce 0. Po restartu skutečně vznikly 3 uzavřené `night_summaries` pro 23.–25.10. s úplným SHA-256 ověřením. Automatický purge zůstává omezen 12h intervalem, takže zatím neproběhl; úplná nová noc neověřená. HEC LIVE je stále odpojený.
-
----
-
-# Aktuální zdrojový stav – 0.6.34 (15. 11. 2026)
-
-**WIN-01 + RET-05 opraveny ve zdrojovém kódu, [vydání 0.6.34](WIN_RET_RELEASE_0634.md).** Zimní poradní SOC cíl pracuje s čerstvou venkovní teplotou, konzervativní hodinovou energetickou bilancí FVE/domu včetně tepelného čerpadla a odděluje ekonomické optimum od nedosažitelného požadavku 100 %. `night_summaries` se v aktivní maintenance cestě doplňují po uzavření noci s SHA-256 proveniencí a retence vyžaduje plnou shodu původních vzorků. Historická rozhodnutí nejsou přepsána.
-
-Zimní práh je stále konzervativní neověřený model pro stínovou analýzu, **nikoli fyzické řízení**. Původní 3×25A / live validace zůstává otevřená. HEC LIVE je odpojen, pouze `observe_only`, 0 fyzických akcí. Stav zdroje, CI a RPi instalace musí být ověřovány samostatně.
-
-Následující oddíly zachovávají chronologii starších verzí a v minulosti známé stavy; nevyvozovat z nich současný runtime.
-
----
-
-## 15.11.2026 — WIN-01: zimní SOC politika, dokumentační specifikace
-
-[Požadavek a oprava interpretace auditu](WINTER_OPERATION_POLICY_20261115.md); [Issue #52](https://github.com/inenger/home-energy-coordinator-ha/issues/52). Při mrazu a ~15 kWh predikci PV s vysokou spotřebou TČ má být požadovaný SOC baterie **100 %**. Odlišit od dosažitelného SOC a fyzického nabíjecího limitu. `Back Up Mode` / 20 % minimální rezerva jsou správné; EV 03–05 nemusí dosáhnout 80 %. Požadavek zatím **není implementován**, runtime 0.6.33 a HEC LIVE nejsou změněny.
-
----
-
-## 13.11.2026 – databázová optimalizace 0.6.33
-
-[Specifikace a retence](DB_OPTIMIZATION_RELEASE_0633.md).
-Bezztrátový jednorázový cutover SOC a priority session
-dedup, 14/90denní retenční politika, trvalé důležité
-výsledky, ACK/FIFO bezpečnostní brány.
-HEC LIVE zůstává vypnutý pro noc 13.–14.11.2026.
-Před označením reálně nasazeno je třeba ověřit RPi
-runtime, integritu, evidence backlog a skutečný objem DB.
-
----
-
-## 13.11.2026 09:10 – LIVE v1 stažen z aktivního HA
-
-Na výslovný pokyn nové fyzické automations vypnuty a jejich
-HA package odpojena z konfigurace. Core check a restart PASS.
-Původní SOC rezerva 20 % / wallbox 16 A; shadow addon 0.6.32
-started observe_only. Tři nové automations po restartu unavailable.
-Noc 13.–14.11. pouze pozorovací, bez automatické opětovné aktivace.
-[Podrobný stav](LIVE_BATTERY_RESERVE_20261113.md).
-
----
-
-# Aktuální stav a rozcestník projektu
-
-<!-- shadow-version: 0.6.38 -->
-
-Stav zdrojového kandidáta k 12. 11. 2026. Historické poznámky v MEMORY a starších
-auditech popisují tehdejší stav; pro současné otevřené položky použijte tento
-rozcestník a [registr nálezů](KNOWN_ISSUES.md).
-
-| Oblast | Autoritativní zdroj |
+| Potřeba | Autoritativní zdroj |
 |---|---|
-| Stínový doplněk 0.6.34, pouze observe_only | [config](../priority_shadow/config.yaml), [runtime](../priority_shadow/energy/core.py), [metadata](../priority_shadow/pyproject.toml) |
-| Původní koordinátor, samostatný balíček | [config](../energy_coordinator/config.yaml) |
-| Známé chyby, nejistoty a podmínky uzavření | [KNOWN_ISSUES](KNOWN_ISSUES.md) |
-| Chyba → regresní test → rozsah důkazu | [TEST_MATRIX](TEST_MATRIX.md) |
-| Vydání, diagnostika, záloha a obnova | [RELEASE_RUNBOOK](RELEASE_RUNBOOK.md) |
-| Chronologie pokusů včetně FAIL a slepých cest | [DEVELOPMENT_HISTORY](history/DEVELOPMENT_HISTORY.md) |
-| Doplnění veřejné historie a dokumentace | [Uzávěrka dokumentace](history/DOCUMENTATION_CLOSEOUT_20261106.md) |
-| Dřívější regresní mapování | [FIX_HISTORY](../priority_shadow/docs/FIX_HISTORY.md) |
-| Architektura a energetické principy | [ARCHITECTURE](../priority_shadow/docs/ARCHITECTURE.md), [ALGORITHM](../priority_shadow/docs/ALGORITHM.md), [DATA](../priority_shadow/docs/DATA.md) |
+| Vstupní pravidla a aktuální stav | [AGENTS](../AGENTS.md), [MEMORY](../MEMORY.md), tento dokument |
+| Funkční zdroj a konfigurace | [priority_shadow](../priority_shadow/), [config 0.6.39](../priority_shadow/config.yaml) |
+| Otevřené problémy a bezpečnostní omezení | [KNOWN_ISSUES](KNOWN_ISSUES.md) |
+| Protipříklad a regresní test | [TEST_MATRIX](TEST_MATRIX.md) |
+| Nasazení, zálohy, rollback | [RELEASE_RUNBOOK](RELEASE_RUNBOOK.md) |
+| Úplná historická chronologie | [DEVELOPMENT_HISTORY](history/DEVELOPMENT_HISTORY.md) |
+| Architektura a algoritmus | [ARCHITECTURE](../priority_shadow/docs/ARCHITECTURE.md), [ALGORITHM](../priority_shadow/docs/ALGORITHM.md) |
+| SolaX lokální instrumentace | [patch a hash kontrola](../ops/solax_modbus/README.md) |
+
+Stará dokumentace je historické svědectví příslušného vydání.
+Nečíst slovní obraty „aktuální stav 0.6.XX“ ve starých auditech
+jako stav dnešního zařízení.
+
+---
+
+## Chronologie starších vydání – pouze historická evidence
 
 ## Zveřejněné opravy a důkazy
 

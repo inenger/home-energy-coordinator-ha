@@ -16,7 +16,7 @@ Zbývající text této stránky popisuje historickou implementaci a reálné kr
 
 **Nasazení:** 13.11.2026, Raspberry Pi / Home Assistant Core 2026.11.1.  
 **Aktivní doba:** od 02:59:40 příprava, 03:00–05:00 Europe/Prague fyzické řízení, po 05:00 vrácení převzatých limitů.  
-**Zdroj:** `ha_packages/night_live_coordinator.yaml`, v HA `/config/hec_live_energy.yaml`, include `homeassistant.packages.hec_live_energy`.  
+**Zdroj:** `history/retired_live_v1_20261113.yaml.txt`, v HA `/config/hec_live_energy.yaml`, include `homeassistant.packages.hec_live_energy`.  
 **Stávající doplněk** `local_energy_priority_shadow 0.6.32` nadále nezapisuje do zařízení; není vydáván za fyzický aktuační modul. Novou skutečnou akční vrstvu vykonává **Home Assistant automation engine** a zveřejňuje `sensor.hec_live_skutecne_rizeni`. Obě vrstvy jsou záměrně oddělené, takže lze zpětně hodnotit chyby fyzických změn proti stínovým výpočtům.
 
 ## Schválená funkce

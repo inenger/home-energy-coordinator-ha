@@ -1,3 +1,7 @@
+# RETIRED HISTORICAL COPY: NOT ACTIVE, NOT FOR HA INSTALLATION.
+# Archive of the 13 November 2026 physical LIVE experiment.
+# Do not copy to /config or restore without a new design and safety review.
+
 # HEC LIVE v1. Active HA package, not shadow. 02:59:40–05:00 Prague.
 # Never modify inverter working mode, force charge, breaker setting or EEPROM power registers.
 # All physical writes use HA-number services with compare-and-swap restoration.

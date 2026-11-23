@@ -1,3 +1,13 @@
+# Aktuální zdroj 0.6.39 · 23.11.2026
+
+**RPi stále 0.6.38 v `observe_only`.** Nové PEAK-03 blokuje
+logický výkon i při chybějícím nebo neúplném předání proudových
+maxim. Jistič 3×25 A, Modbus 1s/5s, 5s stínová smyčka a fyzické povely 0.
+[Zdrojový kontrakt](../docs/PEAK_03_REPO_FIX_0639.md),
+[provozní stav](../docs/PROJECT_STATUS.md). LIVE zůstává NO-GO.
+
+---
+
 # 0.6.38 – PEAK-02 / MODBUS-02
 [Čerstvost fází a Modbus monitoring](../docs/PHASE_FRESHNESS_MODBUS_0638_20261122.md). HA source timestamp + monotonic 3s stale guard; 8s maxima beze změny, 25 A/fázi a read-only rychlé 1s/5s metriky. Bez aktuačních povelů.
 

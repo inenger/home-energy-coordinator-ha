@@ -139,7 +139,7 @@ decision hash. Žádná změna data retence, ACK, tarifu či aktuace.
 
 ## 13.11.2026 – živý akční modul jako nezávislý HA package
 
-[Source](../../ha_packages/night_live_coordinator.yaml),
+[Source](../../docs/history/retired_live_v1_20261113.yaml.txt),
 [kontrakt](../../docs/LIVE_BATTERY_RESERVE_20261113.md).
 Skutečné HA povely nejsou součástí tohoto stínového add-onu,
 který zůstává 0.6.32 observe_only. Fyzické rezervy SolaX

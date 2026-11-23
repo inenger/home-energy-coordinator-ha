@@ -3,7 +3,12 @@ let Card;const ctx={HTMLElement:class{attachShadow(){this.shadowRoot={innerHTML:
 vm.createContext(ctx);vm.runInContext(fs.readFileSync(new URL('../priority_shadow/dashboard/night-priority-card.js',import.meta.url),'utf8'),ctx);
 const card=new Card();card.setConfig({});const state=v=>({state:String(v),attributes:{unit_of_measurement:'A'}});card._hass={states:{'sensor.solax_run_mode':{state:'Normal Mode',attributes:{}},'number.solax_api_max_charge_current_setting':state(16),'number.tesla_model_y_juniper_nabijeci_proud':state(13),'number.solax_battery_charge_max_current':state(30),'sensor.solax_battery_current_charge':state(2.5)}};card.lastEntity={attributes:{at:new Date().toISOString(),collection_health:{status:'ok'}}};card.render();
 const values=Object.fromEntries([...card.shadowRoot.innerHTML.matchAll(/<label>([^<]+)<\/label><b>([^<]+)</g)].map(m=>[m[1],m[2].trim()]));
-assert.equal(values['Wallbox · nastavený limit'],'16');assert.equal(values['Tesla · nastavený limit'],'13');assert.equal(values['Max. nabíjecí proud · nastavení'],'30');assert.equal(values['Naměřený proud baterie'],'2,5');
+assert.equal(values['Wallbox · nastavený limit'],'16');assert.equal(values['Tesla · nastavený limit'],'13');assert.equal(values['Max. nabíjecí proud · nastavení'],'30');if (Intl.NumberFormat.supportedLocalesOf('cs-CZ').length) {
+  assert.equal(values['Naměřený proud baterie'],'2,5');
+} else {
+  assert.equal(values['Naměřený proud baterie'],'2.5');
+  console.log('INFO: host Node has no cs-CZ ICU; browser cs-CZ assertion remains required in CI');
+}
 const day='2026-01-15',run={day,status:'closed',event_count:1,statistics:{sample_count:1},provenance:{kind:'retrospective_held_recorder_states',software_version:'0.6.12',limitations:[]}},event={id:1,day,at:day+'T02:00:00Z',kind:'would_set',before:0,after:100},sample={day,at:event.at,virtual_limit_dc_a:1};
 const manifest={day,archive_id:'a'.repeat(64),recorded_from:day+'T10:00:00Z',recorded_to:day+'T10:01:00Z',event_count:1,sample_count:1,chunk_count:2};
 const part=(index,extra)=>({attributes:{day,archive_id:manifest.archive_id,kind:'retrospective_held_recorder_states',chunk_index:index,chunk_count:2,...extra}});

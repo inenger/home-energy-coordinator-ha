@@ -1,3 +1,26 @@
+# Aktuální stav – 23.11.2026
+
+- GitHub **zdroj 0.6.39**: PEAK-03 fail-closed ochrana při chybějícím,
+  malformovaném nebo interně neúplném 1s fázovém highwater. Syntetické
+  testy a archivovaný replay potvrzují ochranu bez fyzických povelů, ale zdrojové testy nejsou
+  důkazem hardwarové bezpečnosti. [Kontrakt](docs/PEAK_03_REPO_FIX_0639.md).
+- **RPi produkčně stále 0.6.38 / observe_only**. Nezaměňovat publikaci
+  GitHub kódu za instalaci, restart nebo bezpečnostní certifikaci.
+- Fyzické LIVE v1 odpojeno 13.11.2026; nyní je v GitHubu pouze archivní
+  text [history](docs/history/retired_live_v1_20261113.yaml.txt),
+  `ha_packages/` nemá nasaditelný YAML.
+- Custom SolaX 2026.11.04 má diagnostiku na RPi a v GitHubu nyní přesný
+  [4-hunk verzovaný patch](ops/solax_modbus/solax_2026.11.04_interval_diagnostics.patch)
+  s hash checkem; 1s/5s Modbus se nenastavoval jinak.
+- První noc 0.6.38 22.–23.11. má [souhrn auditu](docs/NIGHT_AUDIT_0638_20261123.md).
+  Zachyceno jedno 5s unverified peak okno (age 3.562 s), 0 fyzických
+  povelů a žádné ztracené dávky. Pro ostrý režim stále LIVE-01/LIVE-02.
+- Předchozí audity, neúspěšné cesty a slepé pokusy zůstávají níže jako
+  historická evidence. Neotevírat Modbus optimalizaci bez nových
+  provozních důkazů, nejbližší krok je bezpečné CI 0.6.39.
+
+---
+
 # 22.11.2026 – PEAK-02/MODBUS-02 v0.6.38 provozně nasazeno
 - [Ověřená přejímka a latence](docs/DEPLOYMENT_PEAK_0638_20261122.md): 663 testů PASS a GitHub CI oba joby PASS, hotfix Docker vendor-only test path commit 3072f8e (3 tests skip jen v izolovaném obrazu). Supervisor po upgrade started 0.6.38 observe_only, 0 fyzických povelů, HA health/pipeline/monitor = ok; reálná phase_peak freshness 1.129s všechny fáze, jistič 25A/fázi a modbus group stats přítomné.
 - Modbus 1s FAST bez změny, reálné FAST rolling p95 1.2–1.5s, p99 1.6–3.5s a 15–17% overruns, všechny dokončené poll cykly úspěšné. MEDIUM+DEFAULT 5s P99 1.6–4.1s, žádný overrun. Originální SolaX vendor __init__.py zálohován na RPi.
@@ -119,7 +142,7 @@ Po výslovném požadavku uživatele všechny tři nové HA automation OFF a odp
 
 # 13.11.2026 – HEC LIVE v1, skutečné noční řízení HA
 
-- [Živý HA package](ha_packages/night_live_coordinator.yaml) + [bezpečnost, rollback a testy](docs/LIVE_BATTERY_RESERVE_20261113.md): od 13.11. jsou tři nové HA automations ON; fyzické povely jdou přes HA, ne přes původní `priority_shadow 0.6.32`, který dál běží `observe_only`.
+- [Živý HA package](docs/history/retired_live_v1_20261113.yaml.txt) + [bezpečnost, rollback a testy](docs/LIVE_BATTERY_RESERVE_20261113.md): od 13.11. jsou tři nové HA automations ON; fyzické povely jdou přes HA, ne přes původní `priority_shadow 0.6.32`, který dál běží `observe_only`.
 - 02:59:40 uložit původní `number.solax_backup_discharge_min_soc` a `number.solax_api_max_charge_current_setting` do perzistentních helperů; při FVE<=15 kWh reserve 100 %, >=50 kWh 25 %, mezihodnoty lineární. EV nejprve max12 A, 03–05 regulovat 6–16 A podle reálných L1/L2/L3; nad24,5 A emergency Stop. Změny cizího vlastníka nepřepisovat.
 - 05:00 nezávislá obnovovací automatizace, retrigger každou minutu mimo okno. HA core config check a restart PASS, tři automations ON, `sensor.hec_live_skutecne_rizeni=idle` mimo noc, owner off. Přesné kontrolní limity 20 % a 16 A jsou obnovené.
 - Reálné fyzické piloty 20→25→20 %; 16→15→16 A; 20→100→20 % – all readback PASS. E2E vlastní snapshot + fyzická změna 25/15 → nezávislá automatika vrací 20/16 a owner off PASS. Záloha HA config nativní `492373aa` + tar/sha v `/share/hec-live-deploy-20261113/`.

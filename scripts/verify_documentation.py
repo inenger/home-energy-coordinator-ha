@@ -8,6 +8,12 @@ readme = (ROOT / "README.md").read_text()
 row = next(line for line in readme.splitlines() if "| Samostatné noční stínové" in line)
 assert row.rstrip().endswith("| " + version + " |"), ("README version drift", version, row)
 status = (ROOT / "docs/PROJECT_STATUS.md").read_text()
+assert status.lstrip().startswith("# Aktuální stav projektu"), "No canonical project status"
+assert "Zdroj na GitHubu:" in status.split("## Rozcestník pro AI")[0], "Current source state missing"
+assert "stále běží" in status.split("## Rozcestník pro AI")[0], "RPi deployment is not distinguished from GitHub source"
+assert not list((ROOT/"ha_packages").glob("*.yaml")), "Retired physical package is deployable"
+assert not list((ROOT/"ha_packages").glob("*.yml")), "Retired physical package is deployable"
+assert (ROOT/"docs/history/retired_live_v1_20261113.yaml.txt").exists(), "Missing retirement evidence"
 assert "<!-- shadow-version: " + version + " -->" in status, "Status version drift"
 documents = [
     "README.md", "docs/PROJECT_STATUS.md", "docs/KNOWN_ISSUES.md",

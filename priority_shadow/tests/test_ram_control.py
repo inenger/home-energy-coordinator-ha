@@ -15,6 +15,10 @@ def data(at=AT):
   if k in mapping and mapping[k] not in already:ss.append(state(mapping[k],p['value'],at))
  ss.append(state(priority.EXTRA['priority'],'Elektromobil',at))
  ss.extend([state(c.RUN_MODE,'Normal Mode',at),state(c.REMOTE_MODE,'Disabled',at),state(c.READBACKS[0],'Disabled',at)])
+ from energy.phase_peaks import PhasePeakWindow
+ peak=PhasePeakWindow()
+ peak.observe(ss,at,0.0)
+ ss[0]['collection_phase_peaks']=peak.snapshot(0.0)
  return ss
 def result(at=AT):return {'at':at,'session':{**SESSION,'day':at[:10]},'priority':'ev','actual':{'battery_a':0,'battery_v':230,'ev_w':11040}}
 class RamControlTests(unittest.TestCase):

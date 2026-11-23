@@ -93,6 +93,57 @@ class FreshnessTests(unittest.TestCase):
         self.assertEqual(p['missed_reports_inferred'],{'L1':0,'L2':0,'L3':0})
         self.assertEqual(p['max_report_gap_s'],{'L1':2.5,'L2':2.5,'L3':2.5})
 
+    def test_missing_phase_window_cannot_raise_virtual_power(self):
+        ram=MemoryControl()
+        try:
+            for t in (0,5):
+                states=self.sample(t)
+                states[0].pop('collection_phase_peaks',None)
+                _,journal=ram.step(states,result(stamp(t)),stamp(t))
+                self.assertEqual(journal['session']['target_ac_w'],0)
+                self.assertIn('fast_phase_peak_window_unverified',journal['recent_samples'][0]['input_errors'])
+                self.assertEqual(journal['device_actions'],0)
+            for t in (10,15):
+                from test_ram_control import data
+                states=data(stamp(t))
+                _,journal=ram.step(states,result(stamp(t)),stamp(t))
+            self.assertGreater(journal['session']['target_ac_w'],0)
+        finally:
+            ram.close()
+
+    def test_partial_and_forged_ok_windows_fail_closed_then_recover(self):
+        for bad in (
+            None, {}, {'status':'ok'},
+            {'status':'ok','phase_quality':{},'maxima':{},'last_report_age_s':{},
+             'over_limit_phases':[],'breaker_a':25.0,'lookback_s':8.0,'freshness_limit_s':3.0},
+        ):
+            ram=MemoryControl()
+            try:
+                for t in (0,5,10):
+                    states=self.sample(t)
+                    if t==10:
+                        states[0]['collection_phase_peaks']=bad
+                    _,journal=ram.step(states,result(stamp(t)),stamp(t))
+                self.assertEqual(journal['session']['target_ac_w'],0)
+                self.assertIn('fast_phase_peak_window_unverified',journal['recent_samples'][0]['input_errors'])
+                self.assertEqual(journal['device_actions'],0)
+            finally:
+                ram.close()
+
+    def test_over_25a_detected_even_when_untrusted_flag_empty(self):
+        ram=MemoryControl()
+        try:
+            for t in (0,5,10):
+                states=self.sample(t)
+                if t==10:
+                    states[0]['collection_phase_peaks']['maxima']['L2']['a']=25.5
+                    states[0]['collection_phase_peaks']['over_limit_phases']=[]
+                _,journal=ram.step(states,result(stamp(t)),stamp(t))
+            self.assertEqual(journal['session']['target_ac_w'],0)
+            self.assertIn('observed_phase_current_above_25a',journal['recent_samples'][0]['input_errors'])
+        finally:
+            ram.close()
+
     def test_ram_guard_uses_freshness_not_old_8s_maximum(self):
         w=PhasePeakWindow()
         ram=MemoryControl()

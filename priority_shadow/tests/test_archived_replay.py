@@ -16,7 +16,7 @@ class ArchivedReplayTests(unittest.TestCase):
    start=datetime.fromisoformat('2026-01-15T03:59:40+00:00');history=[]
    for sec in range(0,21,5):
     at=(start+timedelta(seconds=sec)).isoformat();states=data(at);r=result(at);r['session']={**r['session'],'model_available_at':(start-timedelta(seconds=1)).isoformat()}
-    c.observe(s,states,r)
+    c.observe(s,states,{**r,'collection_phase_peaks':states[0]['collection_phase_peaks']})
     if sec<20:
      points=priority.checked_points(states,at)
      with s.db:s.db.execute('INSERT INTO priority_samples VALUES(?,?,?)',(at,'2026-01-15',pack({'at':at,'inputs':points,'session':r['session']})))
@@ -45,6 +45,22 @@ class ArchivedReplayTests(unittest.TestCase):
       energy+=a['ram_target_ac_w']*max(0,(finish-datetime.fromisoformat(a['at'])).total_seconds())/3600000
     self.assertAlmostEqual(energy,run['shadow_model']['battery_kwh_ac'])
     self.assertTrue(all(e['device_actions']==e['persistent_writes']==0 for e in archive['events']))
+   # Legacy evidence without archived 1s phase windows must not replay as
+   # positive charging under PEAK-03. Do not infer highwater from HA 5s history.
+   no_peak=root/'without-peak.sqlite';no_peak.write_bytes(path.read_bytes())
+   db=sqlite3.connect(no_peak)
+   for ts,blob in db.execute('SELECT at,payload FROM ram_control_samples ORDER BY at').fetchall():
+    row=unpack(blob);row.pop('phase_peak_window',None)
+    with db:db.execute('UPDATE ram_control_samples SET payload=? WHERE at=?',(pack(row),ts))
+   db.close()
+   with contextlib.redirect_stdout(io.StringIO()):
+    no_peak_results=replay(no_peak,root/'history.gz','2026-01-15',root/'without-peak-replay')
+   self.assertEqual(no_peak_results['captured_owner_assumed']['model']['battery_kwh_ac'],0)
+   self.assertGreater(no_peak_results['captured_owner_assumed']['invalid_samples'],0)
+   self.assertEqual(no_peak_results['report_time_owner_assumed']['model']['battery_kwh_ac'],0)
+   missing=json.loads((root/'without-peak-replay/captured_owner_assumed-archive.json').read_text())
+   self.assertEqual(missing['session']['provenance']['source_phase_peak_snapshots'],0)
+   self.assertTrue(all(e['device_actions']==e['persistent_writes']==0 for e in missing['samples']))
    self.assertFalse(json.loads((root/'out/captured_owner_assumed-archive.json').read_text())['provenance']['report_delivery_at_last_reported_assumed'])
    self.assertTrue(json.loads((root/'out/report_time_owner_assumed-archive.json').read_text())['provenance']['report_delivery_at_last_reported_assumed'])
 if __name__=='__main__':unittest.main()
