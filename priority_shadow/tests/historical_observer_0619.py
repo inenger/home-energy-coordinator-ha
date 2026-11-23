@@ -91,7 +91,13 @@ def observe_control(store,states,result,at,client=None):
         current={'at':at,'session':result.get('session'),
             'priority':priority.LABELS.get(priority.value(points,'priority')),
             'actual':{k:priority.value(points,k)for k in ('battery_a','battery_v','battery_soc','ev_w')},
-            'collection_snapshot':{**(states[0].get('collection_snapshot',{})if states else {}),'read_at':at}}
+            'collection_snapshot':{**(states[0].get('collection_snapshot',{})if states else {}),'read_at':at},
+            # Historical 0.6.19 *test fixture*, not a runtime entrypoint:
+            # carry explicitly synthetic peak provenance through the old
+            # pre-RAM control handoff. No production missing-data fallback.
+            'collection_phase_peaks':(result.get('collection_phase_peaks')
+                if isinstance(result.get('collection_phase_peaks'),dict)
+                else states[0].get('collection_phase_peaks') if states else None)}
         return control_journal.observe(store,states,current)
 
 

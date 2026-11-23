@@ -65,3 +65,20 @@ replay neodvozuje bezpečnost z řidších HA stavů, neimputuje nulu
 proudu a kladný výkon je **výslovně zablokovaný**.
 Pouze syntetická fixtures mají kontrolovaně generovanou evidenci.
 Regrese: [archivovaný replay](../priority_shadow/tests/test_archived_replay.py).
+
+## AI dokumentace
+
+Staré texty `priority_shadow/docs/ARCHITECTURE.md`,
+`OPERATIONS.md` a `DOCS.md` byly označeny jako
+historické s odkazem na jediný aktuální PROJECT_STATUS.
+Není potřeba mazat původní diagramy ani protokoly.
+
+## Historická integrační testovací cesta
+
+Test-only `priority_shadow/tests/historical_observer_0619.py`
+není vstupním bodem produkčního doplňku; přenáší explicitní
+syntetické PEAK-03 metadata z testované analytické odpovědi
+nebo z fixture state. Staré scénáře chyb SQLite, ACK, obnovy,
+lease a 5s periodicity mohou tak nadále kontrolovat původní
+kontrakt, aniž by implementace reálného RAM regulátoru
+kdykoliv doplnila chybějící proudové důkazy.

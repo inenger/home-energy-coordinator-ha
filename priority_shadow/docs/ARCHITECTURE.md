@@ -1,6 +1,22 @@
-# Aktuální architektura 0.6.29
+# Architektura stínového doplňku – zdroj 0.6.39
 
-Aktuální autoritativní runtime je samostatný priority_shadow, pouze observe_only.
+Aktuálním zdrojem je `priority_shadow 0.6.39`, instalovaný RPi
+zůstává `0.6.38 / observe_only`. Vstupní cesta:
+`SnapshotCollector` (1s noc / 2,5s den) → validovaná 8s maxima
+L1/L2/L3 a 3s freshness → 5s RAM virtuální regulace →
+oddělený důkazní SQLite worker a HA monitoring.
+PEAK-03 odmítá chybějící i malformovaná fázová metadata;
+žádné fyzické povely, žádný akční adaptér.
+Platné blokátory a provozní kontrakt:
+[aktuální stav](../../docs/PROJECT_STATUS.md),
+[PEAK-03](../../docs/PEAK_03_REPO_FIX_0639.md),
+[aktuální issues](../../docs/KNOWN_ISSUES.md).
+
+---
+
+# Historická architektura 0.6.29 (neaktuální popis)
+
+Popis tehdejší verze: samostatný priority_shadow, pouze observe_only.
 [Audit připravenosti a blokátory LIVE](../../docs/READINESS_AUDIT_0629.md).
 
 Docker CMD spouští energy.priority_observer. Ten vytvoří SnapshotCollector,
