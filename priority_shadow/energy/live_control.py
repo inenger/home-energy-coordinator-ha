@@ -8,13 +8,13 @@ from .collector import NoRedirect, read_token, DATA
 from .core import instant
 from .ram_control import peak_window_errors, validate_intent
 
-MAPPING = 'mode8-a6-duration-a7-next-motion-candidate-v1'
+MAPPING = 'mode8-a6-wait-timeout-a7-next-motion-v00102-candidate-v2'
 SERVICE = '/api/services/solax_modbus/hec_mode8_pilot?return_response'
 READBACK = 'sensor.solax_inverter_solax_remotecontrol_readback_mode'
 TARGET = 'sensor.solax_inverter_solax_remotecontrol_mode_8_battery_power_target_readback'
-DURATION = 'sensor.solax_inverter_solax_remotecontrol_mode_8_timeout_readback'
+WAIT_TIMEOUT = 'sensor.solax_inverter_solax_remotecontrol_mode_8_timeout_readback'
 NEXT_MOTION = 'sensor.solax_inverter_solax_remotecontrol_mode_8_next_motion_readback'
-MEASUREMENTS = (READBACK, TARGET, DURATION, NEXT_MOTION, 'sensor.solax_battery_power_charge',
+MEASUREMENTS = (READBACK, TARGET, WAIT_TIMEOUT, NEXT_MOTION, 'sensor.solax_battery_power_charge',
                 'sensor.solax_battery_voltage_charge', 'sensor.solax_battery_current_charge',
                 'sensor.solax_battery_capacity', 'sensor.solax_api_charge_power_total',
                 'sensor.solax_pv_power_total', 'sensor.solax_inverter_communication_health',
@@ -64,13 +64,28 @@ class PilotHA:
         if len(data)>2*1024*1024:raise ValueError('response_too_large')
         return json.loads(data)
     def snapshot(self):
-        return {eid:self._request('/api/states/'+eid) for eid in MEASUREMENTS}
+        # One HA template snapshot, not a series of 24 HTTP reads with unrelated receipt times.
+        # This does not create a fresh hardware report or claim atomic device measurement.
+        template=("{% set ids = "+json.dumps(MEASUREMENTS)+" %}{% set ns=namespace(rows=[]) %}"
+                  "{% for e in ids %}{% set s=states[e] %}{% if s is not none and s is defined %}"
+                  "{% set ns.rows=ns.rows+[dict(entity_id=e,state=s.state,last_reported=s.last_reported.isoformat(),"
+                  "last_updated=s.last_updated.isoformat(),last_changed=s.last_changed.isoformat(),"
+                  "attributes=dict(unit_of_measurement=s.attributes.get('unit_of_measurement')))] %}"
+                  "{% endif %}{% endfor %}{{ ns.rows | to_json }}")
+        rows=self._request('/api/template','POST',{'template':template})
+        if (not isinstance(rows,list) or any(not isinstance(x,dict) or
+             x.get('entity_id') not in MEASUREMENTS or
+             not all(k in x for k in ('state','last_reported','last_updated','last_changed','attributes'))
+             for x in rows) or len(rows)!=len(MEASUREMENTS) or
+             len({x['entity_id'] for x in rows})!=len(MEASUREMENTS)):
+            raise ValueError('Incomplete pilot measurement snapshot')
+        return {x['entity_id']:x for x in rows}
     def send(self,request):
         return self._request(SERVICE,'POST',request)
 
 def request_for(approval, now):
     """No defaults, no unbounded duration and no arbitrary register values."""
-    if set(approval)!= {'request_id','hub_name','mapping','charge_dc_w','duration_s','expires_at','operator_confirmed','ev_disconnected_confirmed'}:
+    if set(approval)!= {'request_id','hub_name','mapping','charge_dc_w','wait_timeout_s','expires_at','operator_confirmed','ev_disconnected_confirmed'}:
         raise ValueError('invalid approval fields')
     if approval['operator_confirmed'] is not True or approval['ev_disconnected_confirmed'] is not True or approval['mapping']!=MAPPING:
         raise ValueError('explicit mapping review and operator approval required')
@@ -80,8 +95,8 @@ def request_for(approval, now):
         raise ValueError('invalid hub')
     if type(approval['charge_dc_w']) is not int or approval['charge_dc_w'] not in (100,200,300):
         raise ValueError('pilot power outside 100/200/300W DC')
-    if type(approval['duration_s']) is not int or approval['duration_s']!=10:
-        raise ValueError('pilot duration must be 10s')
+    if type(approval['wait_timeout_s']) is not int or approval['wait_timeout_s']!=10:
+        raise ValueError('pilot wait timeout must be 10s')
     expires=instant(approval['expires_at'])
     if not 0<(expires-now).total_seconds()<=60:
         raise ValueError('approval expired or too long')

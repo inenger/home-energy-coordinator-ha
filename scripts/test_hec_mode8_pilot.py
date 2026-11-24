@@ -16,7 +16,7 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.now=datetime.now(timezone.utc)
         a=self.approved=dict(request_id=str(uuid.uuid4()),hub_name='test',mapping=m.MAPPING,
-                             charge_dc_w=300,duration_s=10,operator_confirmed=True,ev_disconnected_confirmed=True,
+                             charge_dc_w=300,wait_timeout_s=10,operator_confirmed=True,ev_disconnected_confirmed=True,
                              expires_at=(self.now+timedelta(seconds=30)).isoformat())
         self.req={**a,'send_before':(self.now+timedelta(seconds=5)).isoformat()}
         self.states={}
@@ -44,7 +44,7 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
                   async_read_input_registers=AsyncMock(side_effect=input_read),
                   async_read_holding_registers=AsyncMock(side_effect=holding_read),
                   _core_recovery_transport=Mock(return_value=self.transport),
-                  _encode_multi_write_payload=Mock(return_value=[8,1,0,15000,0xffff,0xfed4,10,0xa0]))
+                  _encode_multi_write_payload=Mock(return_value=[8,1,15000,0,0xfed4,0xffff,10,0xa0]))
         self.consume=AsyncMock()
         self.current=self.now
     async def advance(self,delay):
@@ -57,10 +57,23 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
         r=await self.execute()
         self.hub._encode_multi_write_payload.assert_called_once_with(
             [('_uint16',8),('_uint16',1),('_uint32',15000),('_int32',-300),('_uint16',10),('_uint16',160)])
-        self.client.write_registers.assert_awaited_once_with(0xa0,[8,1,0,15000,65535,65236,10,160])
+        self.client.write_registers.assert_awaited_once_with(0xa0,[8,1,15000,0,65236,65535,10,160])
         self.consume.assert_awaited_once()
         self.assertEqual(r['status'],'modbus_call_returned')
         self.assertFalse(r['physical_response_verified'])
+    async def test_reject_big_endian_word_order_before_dispatch(self):
+        self.hub._encode_multi_write_payload.return_value=[8,1,0,15000,65535,65236,10,160]
+        with self.assertRaisesRegex(ValueError,'wire words'):
+            await self.execute()
+        self.consume.assert_not_awaited()
+        self.client.write_registers.assert_not_awaited()
+    def test_documented_candidate_words_and_hardware_lock(self):
+        self.assertIs(m.HARDWARE_DISPATCH_QUALIFIED,False)
+        for w in (100,200,300):
+            words=m.expected_words(w)
+            self.assertEqual(words[2:4],[15000,0])
+            self.assertEqual((words[5]<<16|words[4])-2**32,-w)
+            self.assertEqual(words[6:],[10,160])
     async def test_reject_partial_phase_or_high_current_or_stale(self):
         e=m.PHASES[1];old=self.states[e]
         for s in (None,SimpleNamespace(state='18.1',attributes={'unit_of_measurement':'A'},last_reported=self.now),

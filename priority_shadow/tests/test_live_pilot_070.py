@@ -2,14 +2,14 @@ import json, tempfile, unittest, uuid
 from datetime import datetime,timezone,timedelta
 from pathlib import Path
 from unittest.mock import Mock
-from energy.live_control import MAPPING, preview, request_for, pilot
+from energy.live_control import MAPPING, MEASUREMENTS, PilotHA, preview, request_for, pilot
 from energy.isolated_control import MemoryControl
 from test_ram_control import data, stamp, result
 
 class LivePilotTests(unittest.TestCase):
     def approval(self,now):
         return dict(request_id=str(uuid.uuid4()),hub_name='test',mapping=MAPPING,charge_dc_w=300,
-                    duration_s=10,ev_disconnected_confirmed=True,expires_at=(now+timedelta(seconds=50)).isoformat(),operator_confirmed=True)
+                    wait_timeout_s=10,ev_disconnected_confirmed=True,expires_at=(now+timedelta(seconds=50)).isoformat(),operator_confirmed=True)
     def test_default_and_live_test_never_write(self):
         ram=MemoryControl()
         try:
@@ -28,7 +28,7 @@ class LivePilotTests(unittest.TestCase):
         now=datetime.now(timezone.utc)
         a=self.approval(now)
         self.assertEqual(request_for(a,now)['charge_dc_w'],300)
-        for bad in ({'mapping':'unknown'},{'charge_dc_w':5000},{'charge_dc_w':True},{'duration_s':60},
+        for bad in ({'mapping':'unknown'},{'charge_dc_w':5000},{'charge_dc_w':True},{'wait_timeout_s':60},
                     {'operator_confirmed':False},{'ev_disconnected_confirmed':False},{'expires_at':now.isoformat()},{'register':160}):
             with self.subTest(bad=bad),self.assertRaises(ValueError):request_for({**a,**bad},now)
     def test_one_shot_uncertain_no_retry_or_replay(self):
@@ -45,6 +45,16 @@ class LivePilotTests(unittest.TestCase):
             self.assertEqual(records[-1]['kind'],'operator_review_required')
             with self.assertRaises(FileExistsError):pilot({'mode':'live_test'},a,root/'audit',client,lambda:now,lambda _:None)
             self.assertEqual(client.send.call_count,1)
+    def test_snapshot_one_request_and_missing_entities_fail_closed(self):
+        client=PilotHA()
+        rows=[dict(entity_id=e,state='0',last_reported=stamp(0),last_updated=stamp(0),
+                   last_changed=stamp(0),attributes={}) for e in MEASUREMENTS]
+        client._request=Mock(return_value=rows)
+        self.assertEqual(set(client.snapshot()),set(MEASUREMENTS))
+        self.assertEqual(client._request.call_count,1)
+        self.assertEqual(client._request.call_args.args[:2],('/api/template','POST'))
+        client._request.return_value=rows[:-1]+rows[:1]
+        with self.assertRaises(ValueError):client.snapshot()
     def test_before_snapshot_failure_does_not_write(self):
         now=datetime.now(timezone.utc);client=Mock();client.snapshot.side_effect=OSError
         with tempfile.TemporaryDirectory() as d:

@@ -10,7 +10,7 @@ import math
 from pathlib import Path
 import uuid
 
-MAPPING = 'mode8-a6-duration-a7-next-motion-candidate-v1'
+MAPPING = 'mode8-a6-wait-timeout-a7-next-motion-v00102-candidate-v2'
 ARM_FILE = Path('/config/.hec-mode8-pilot-approval.json')
 PHASES = tuple('sensor.solax_inverter_solax_grid_current_l'+str(i) for i in (1,2,3))
 MODE = 'sensor.solax_inverter_solax_remotecontrol_readback_mode'
@@ -31,6 +31,9 @@ BREAKER = 'number.solax_main_breaker_current_limit'
 FIRMWARE = 'sensor.solax_inverter_solax_software_version'
 HARDWARE = 'sensor.solax_inverter_solax_hardware_version'
 QUALIFICATION_FIRMWARE = 'DSP 1.62 ARM 1.60-1.09'
+# A documented candidate is not proof for this firmware. Do not arm real HA service
+# until the manufacturer-confirmed mapping/recovery and separate hardware review.
+HARDWARE_DISPATCH_QUALIFIED = False
 PILOT_PV_LIMIT_W = 15000  # fixed candidate; no PV curtailment intended
 
 def utcnow():
@@ -42,7 +45,7 @@ def timestamp(value):
     return out
 
 def validate_request(request, approved, now):
-    fields={'request_id','hub_name','mapping','charge_dc_w','duration_s','expires_at','operator_confirmed','ev_disconnected_confirmed'}
+    fields={'request_id','hub_name','mapping','charge_dc_w','wait_timeout_s','expires_at','operator_confirmed','ev_disconnected_confirmed'}
     if set(approved)!=fields or set(request)!=fields|{'send_before'}:
         raise ValueError('wrong request fields')
     if any(request[k]!=approved[k] for k in fields):
@@ -55,8 +58,8 @@ def validate_request(request, approved, now):
         raise ValueError('invalid hub')
     if type(approved['charge_dc_w']) is not int or approved['charge_dc_w'] not in (100,200,300):
         raise ValueError('invalid pilot power')
-    if type(approved['duration_s']) is not int or approved['duration_s']!=10:
-        raise ValueError('invalid pilot duration')
+    if type(approved['wait_timeout_s']) is not int or approved['wait_timeout_s']!=10:
+        raise ValueError('invalid pilot wait timeout')
     remaining=(timestamp(request['send_before'])-now).total_seconds()
     approval_remaining=(timestamp(approved['expires_at'])-now).total_seconds()
     if not 0<remaining<=5 or not remaining<=approval_remaining<=60:
@@ -69,6 +72,13 @@ def candidate_payload(charge_dc_w):
         raise ValueError('invalid pilot power')
     return [('_uint16',8),('_uint16',1),('_uint32',PILOT_PV_LIMIT_W),
             ('_int32',-charge_dc_w),('_uint16',10),('_uint16',0xA0)]
+
+def expected_words(charge_dc_w):
+    """Independent V001.02 LSW-first encoding contract, not device qualification."""
+    candidate_payload(charge_dc_w)
+    unsigned = (-charge_dc_w) & 0xffffffff
+    return [8,1,PILOT_PV_LIMIT_W & 0xffff,PILOT_PV_LIMIT_W >> 16,
+            unsigned & 0xffff,unsigned >> 16,10,0xA0]
 
 def check_states(get_state, now):
     def state(eid, max_age=None):
@@ -164,7 +174,8 @@ async def one_shot(hub, request, approved, get_state, consume, clock=utcnow, pau
             transport=hub._core_recovery_transport()
             if transport is None:raise ValueError('Core transport not available')
             values=hub._encode_multi_write_payload(candidate_payload(request['charge_dc_w']))
-            if len(values)!=8:raise ValueError('wrong packet length')
+            if values!=expected_words(request['charge_dc_w']):
+                raise ValueError('wire words differ from documented LSW-first candidate')
             async with hub._lock:
                 async with transport._request_lock:
                     if not transport.is_connected() or transport.backoff_remaining:
@@ -189,6 +200,8 @@ def register(hass, domain):
     from homeassistant.exceptions import HomeAssistantError
     lock=asyncio.Lock()
     async def service(call):
+        if not HARDWARE_DISPATCH_QUALIFIED:
+            raise HomeAssistantError('Hardware dispatch locked: firmware-specific confirmation and recovery review pending')
         request=dict(call.data)
         async with lock:
             try:
