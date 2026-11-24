@@ -1,3 +1,10 @@
+# Kandidát 0.7.0 · 24.11.2026
+
+RPi 0.6.39 observe_only. 0.7.0 připravuje ruční single-shot pilot, nikoli
+automatické fyzické řízení. [Kontrakt a podmínky](../docs/LIVE_PILOT_070_20261124.md).
+
+---
+
 # Aktuální zdroj 0.6.39 · 23.11.2026
 
 **RPi stále 0.6.38 v `observe_only`.** Nové PEAK-03 blokuje

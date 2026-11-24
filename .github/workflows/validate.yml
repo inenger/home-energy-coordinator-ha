@@ -27,6 +27,7 @@ jobs:
           python scripts/validate_versions.py
           python scripts/test_solax_patch_contract.py
           python scripts/test_live_package_contract.py
+          python scripts/test_hec_mode8_pilot.py
           python scripts/verify_documentation.py
           python scripts/test_documentation_contract.py
           grep -Fxq 'slug: energy_coordinator' energy_coordinator/config.yaml

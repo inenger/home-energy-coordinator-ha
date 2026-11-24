@@ -1,3 +1,9 @@
+## 24.11.2026 – 0.6.39 deployment and 0.7.0 candidate
+0.6.39 deployed observe_only, health/ACK verified. Night carrier loss 65.54s; polling unchanged.
+0.7.0 manual single-shot test candidate, no deployment. [Contract](../LIVE_PILOT_070_20261124.md).
+
+---
+
 ## 22. 11. 2026 – PEAK-02/MODBUS-02, verze 0.6.38
 Baseline merge 90d0491. Audit 0.6.37 prokázal chybné green status při výpadku jedné fáze (historické max 8s maskovalo současnou stale fázi). Přidána 3s monotonic/source freshness, hlášení posledního výpadku a inferred missed reports; přímé 1s/2,5s sběrové periody. Modbus původně globální overrun; instrumentace po intervalových bucket FAST 1s a MEDIUM+DEFAULT 5s bez fyzického ovládání. [Podrobnosti](../PHASE_FRESHNESS_MODBUS_0638_20261122.md).
 

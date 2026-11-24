@@ -1,3 +1,12 @@
+# Aktuální stav – 24.11.2026
+
+- RPi běží 0.6.39 observe_only, nasazení potvrzeno 24.11. 08:37.
+- Noční výpadek Modbus způsoben ztrátou Ethernet carrier, ne důkazem přetížení polling. 1s/5s beze změny.
+- Kandidát 0.7.0 pouze jednorázový ruční test přes stávající HA; automatický live zakázán.
+- [LIVE pilot](docs/LIVE_PILOT_070_20261124.md), LIVE-01/02 neuzavřeno. Žádný nový hardware; nenainstalováno, žádný fyzický povel.
+
+---
+
 # Aktuální stav – 23.11.2026
 
 - GitHub **zdroj 0.6.39**: PEAK-03 fail-closed ochrana při chybějícím,

@@ -1,5 +1,5 @@
 name: "Noční nabíjení · stínové priority"
-version: "0.6.39"
+version: "0.7.0"
 slug: energy_priority_shadow
 description: "Porovnává priority elektromobil / baterie, fáze a noční statistiky. Pouze nanečisto, bez ovládání zařízení."
 arch:
@@ -32,7 +32,7 @@ options:
   storage_limit_mb: 2048
   portable_backup_interval_s: 21600
 schema:
-  mode: list(observe_only)
+  mode: list(observe_only|live_test)
   planner_enabled: bool?
   planner_approved_reserve_soc: str?
   planner_inverter_ac_limit_kw: str?

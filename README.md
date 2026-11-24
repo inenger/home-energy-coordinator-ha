@@ -1,16 +1,14 @@
 # Home Energy Coordinator · Home Assistant
 
-**Platný GitHub zdroj:** `priority_shadow 0.6.39` (23.11.2026),
-bezpečnostní fail-closed oprava PEAK-03; fyzické zásahy = 0.
-**Běžící Raspberry Pi:** poslední ověřený doplněk `0.6.38` v
-`observe_only`; GitHub commit sám nemění instalaci.
+**Kandidátní zdroj:** `priority_shadow 0.7.0` – ruční LIVE pilot, bez automatického řízení.
+**Běžící Raspberry Pi:** `0.6.39 / observe_only`; main 0.6.39.
 Hlavní vstup pro AI a vývoj: [aktuální stav](docs/PROJECT_STATUS.md),
 [pravidla](AGENTS.md), [známé limity](docs/KNOWN_ISSUES.md).
 
 | Doplněk | Adresář | Verze |
 |---|---|---|
 | Původní energetický koordinátor | [`energy_coordinator`](energy_coordinator/) | 0.5.4 |
-| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.6.39 |
+| Samostatné noční stínové priority a SOC | [`priority_shadow`](priority_shadow/) | 0.7.0 |
 | Historický LIVE v1 (neaktivní, neinstalovat) | [Archiv](docs/history/retired_live_v1_20261113.yaml.txt) | 13.11.2026 · RETIRED |
 
 Oba balíčky mají vlastní Docker build context. Nový stínový doplněk nemění
@@ -22,17 +20,10 @@ Paměť obsahuje aktuální stav, důvody rozhodnutí, poučení z auditů, regr
 případy a dosud neověřené předpoklady. Další podrobnosti jsou v README
 jednotlivých doplňků. Provoz a soukromé analýzy patří na RPi.
 
-**Nasazení:** Na Raspberry Pi stále běží `0.6.38 / started / observe_only`.
-Zdrojová `0.6.39` je bezpečnostní oprava virtuálního regulátoru v GitHubu;
-**není tím automaticky nainstalována do HA**. Modbus FAST 1s / MEDIUM+DEFAULT 5s
-a hlavní jistič **3×25 A** zůstávají beze změny.
-Fyzické HEC LIVE je deaktivováno; archivní konfigurace není určená k nasazení.
-Po první noci 22.–23.11. je ověřeno 1 440 kontrolních cyklů a bezpečný stop
-při jednom překročení čerstvosti proudů:
-[audit noci](docs/NIGHT_AUDIT_0638_20261123.md).
-
-**Nejbližší akce:** cílený deploy/test 0.6.39 až na samostatný pokyn,
-nikoliv automaticky. Ostré řízení nadále NO-GO; podmínky [LIVE-01/02](docs/KNOWN_ISSUES.md).
+**Nasazení:** RPi 0.6.39 started/observe_only, kandidát 0.7.0 není nasazen.
+Modbus FAST 1s / MEDIUM+DEFAULT 5s a hlavní jistič **3×25 A** beze změny.
+Fyzické HEC LIVE je deaktivováno. [Pilot a podmínky přejímky](docs/LIVE_PILOT_070_20261124.md).
+Ostré řízení NO-GO do potvrzení LIVE-01/02.
 Historické verze a pokusy: [changelog](priority_shadow/CHANGELOG.md),
 [vývojové dějiny](docs/history/DEVELOPMENT_HISTORY.md).
 
