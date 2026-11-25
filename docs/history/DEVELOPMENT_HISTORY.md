@@ -1,3 +1,8 @@
+## 25.11.2026 – ACT-01 / EEPROM-01 / EVC-01
+Baseline 519376b. Mode6 recovery nasazen 13:52 se zámkem. Návrh dynamické změny DC limitu odmítnut podle explicitní EEPROM značky V001.00; EVC HTTP 0x668 rovněž zakázán. Mode1 A0 primární kandidát, nikoli fyzicky ověřená implementace. Vendor KB HTTP500 a EVC PDF screenshot cache miss; textové důkazy a instalovaný zdroj zachovány. [Audit](../ACTUATOR_AUDIT_20261125.md). První kandidát měnil i workflow; GitHub update_ref 2x vrátil interní chybu, větev zůstala na baseline. Změna workflow odstraněna, test je součástí existujícího CI vstupu test_hec_mode8_pilot.py. Dokumentace a CI regrese pouze, runtime beze změny.
+
+---
+
 ## 24.11.2026 – 0.6.39 deployment and 0.7.0 candidate
 0.6.39 deployed observe_only, health/ACK verified. Night carrier loss 65.54s; polling unchanged.
 0.7.0 manual single-shot test candidate, no deployment. [Contract](../LIVE_PILOT_070_20261124.md).

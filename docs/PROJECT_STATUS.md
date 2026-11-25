@@ -4,7 +4,7 @@
 
 **Zdroj na GitHubu:** kandidát 0.7.0 v oddělené větvi; main 0.6.39.
 **Na Raspberry Pi stále běží 0.7.0 `observe_only`** od 25.11. 08:15; pilotní služba instalována a tvrdě blokována. PV limit pilotu 1000 W načten 09:50; 09:58 sběr, SOC plán a monitoring OK, 102/102 dávek, bez ztrát a fyzických povelů. Původní energy_coordinator 0.5.4 je samostatný balíček.
-LIVE-01/07: busy retry v tmodbus prokázán localhost testem; single-frame oprava ad556a1 nasazena 10:47, CI PASS; explicitní stop 17af0a1 nasazen 11:28, CI PASS; Mode6 recovery kandidát 36/36 service a 12/12 loopback PASS, nenasazen; odlišná dokumentovaná disable cesta A0 a integrační 7C; nezávislá lokální obnova a expirace nejsou ověřeny. Fyzický test NO-GO.
+LIVE-01/07: busy retry v tmodbus prokázán localhost testem; single-frame oprava ad556a1 nasazena 10:47, CI PASS; explicitní stop 17af0a1 nasazen 11:28, CI PASS; Mode6 recovery 519376b nasazen 13:52, CI PASS, 36/36 service a 12/12 loopback PASS; odlišná dokumentovaná disable cesta A0 a integrační 7C; nezávislá lokální obnova a expirace nejsou ověřeny. Fyzický test NO-GO.
 0.6.39 nasazena 24.11., ověřeny health, ACK a nulové akce.
 03–05 audit: 1440 cyklů, 1441/1441 transportních bloků, 18 neověřených
 fázových oken bezpečně nulových. Výpadek Ethernet carrier 65,54s,
@@ -12,6 +12,7 @@ obnova Modbus později; neměnit FAST 1s / MEDIUM+DEFAULT 5s.
 Jistič 3×25 A, 5s logická smyčka, bez nového HW.
 [0.7.0 pilot a blokátory LIVE-01/02](LIVE_PILOT_070_20261124.md).
 Starý LIVE v1 zůstává pouze archiv.
+ACT-01/EEPROM-01/EVC-01: [audit a závazné rozhodnutí](ACTUATOR_AUDIT_20261125.md). Mode1 primární kandidát, Mode8 uzamčený fallback návrh. Zákaz dynamických EEPROM/NVM/unknown zápisů; EVC 0x668 zakázán, 0x628 nekvalifikován. Fyzické řízení stále NO-GO.
 
 ## Rozcestník pro AI
 

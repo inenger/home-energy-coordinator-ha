@@ -327,4 +327,7 @@ class ReadbackTests(unittest.IsolatedAsyncioTestCase):
         for mode,words,after in ((6,[8,10,160],6),(6,[6,10,160],0)):
             with self.assertRaisesRegex(ValueError,'transitioning'):await self.check(mode,words,after)
 
+# Existing CI entry point includes the device-write policy regression.
+from test_no_eeprom_contract import NoEEPROMContract
+
 if __name__=='__main__':unittest.main()

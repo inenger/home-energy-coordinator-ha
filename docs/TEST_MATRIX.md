@@ -148,3 +148,10 @@ preflight noc 13.11. se zatím neověřila.
 | MODBUS-PATCH-01 | [Version-locked original-vs-patched SHA](../ops/solax_modbus/README.md) | [Static 4-hunk test](../scripts/test_solax_patch_contract.py) and on-RPi dry-run of patch against exact vendor original |
 | DOC-DRIFT-02 | [Canonical current source/deployment status](PROJECT_STATUS.md) | [Documentation CI gate](../scripts/verify_documentation.py) and [counterexample test](../scripts/test_documentation_contract.py) |
 | QA-01 | cs-CZ ICU absent on some RPi Node builds | [JS test](../scripts/test_deep_fixes_0613.mjs): strict 2,5 when cs-CZ supported; transparent 2.5 branch otherwise |
+
+## 25.11.2026 – EEPROM a volba aktuátoru
+
+| Nález | Regrese | Akceptace |
+|---|---|---|
+| EEPROM-01 | [CI tripwire](../scripts/test_no_eeprom_contract.py), [TCP loopback](../scripts/test_mode8_transport_loopback.py) | Pouze reviewované call sites; nový nebo neznámý zápis fail, A0 FC16 fixed, hardware lock false. Nejde o důkaz všech vendor zápisů. |
+| ACT-01/EVC-01 | [Audit a kritéria](ACTUATOR_AUDIT_20261125.md) | Fyzická kvalifikace pending; žádný Mode1 ani EVC povel. |
