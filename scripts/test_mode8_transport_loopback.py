@@ -108,6 +108,20 @@ class TransportLoopback(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError,'payload'):
             await m.single_frame_write(self.unit,[0],lambda:None)
         self.assertEqual(self.frames,[])
+    async def test_disable_exact_frame(self):
+        await m.single_frame_write(self.unit,[0],lambda:None,disable=True)
+        self.assertEqual(len(self.frames),1)
+        self.assertEqual(self.frames[0][:2],(1,struct.pack('>BHHBH',16,0xA0,1,2,0)))
+    async def test_disable_busy_no_retry(self):
+        self.responses=['busy']
+        with self.assertRaises(ServerDeviceBusyError):
+            await m.single_frame_write(self.unit,[0],lambda:None,disable=True)
+        await asyncio.sleep(.15)
+        self.assertEqual(len(self.frames),1)
+    async def test_disable_payload_not_arbitrary(self):
+        with self.assertRaises(ValueError):
+            await m.single_frame_write(self.unit,self.words,lambda:None,disable=True)
+        self.assertEqual(self.frames,[])
     async def test_other_unit_serialized_and_gap_preserved(self):
         other=self.conn.for_unit(2)
         await asyncio.gather(self.send(),other.read_holding_registers(1,1))

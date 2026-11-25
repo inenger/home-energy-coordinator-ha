@@ -4,7 +4,7 @@
 
 **Zdroj na GitHubu:** kandidát 0.7.0 v oddělené větvi; main 0.6.39.
 **Na Raspberry Pi stále běží 0.7.0 `observe_only`** od 25.11. 08:15; pilotní služba instalována a tvrdě blokována. PV limit pilotu 1000 W načten 09:50; 09:58 sběr, SOC plán a monitoring OK, 102/102 dávek, bez ztrát a fyzických povelů. Původní energy_coordinator 0.5.4 je samostatný balíček.
-LIVE-01/07: busy retry v tmodbus prokázán localhost testem; cílená single-frame oprava ve zdroji, 9/9 reálných loopback testů PASS, v HA zatím nenasazena; odlišná dokumentovaná disable cesta A0 a integrační 7C; nezávislá lokální obnova a expirace nejsou ověřeny. Fyzický test NO-GO.
+LIVE-01/07: busy retry v tmodbus prokázán localhost testem; single-frame oprava ad556a1 nasazena 10:47, CI PASS; explicitní stop kandidát ve zdroji, 29/29 service a 12/12 loopback PASS; odlišná dokumentovaná disable cesta A0 a integrační 7C; nezávislá lokální obnova a expirace nejsou ověřeny. Fyzický test NO-GO.
 0.6.39 nasazena 24.11., ověřeny health, ACK a nulové akce.
 03–05 audit: 1440 cyklů, 1441/1441 transportních bloků, 18 neověřených
 fázových oken bezpečně nulových. Výpadek Ethernet carrier 65,54s,

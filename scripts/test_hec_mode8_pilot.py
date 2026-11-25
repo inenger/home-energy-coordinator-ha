@@ -171,4 +171,99 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
         self.transport.is_connected.return_value=False
         with self.assertRaises(ValueError):await self.execute()
         self.client.write_registers.assert_not_awaited()
+class StopTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.now=datetime.now(timezone.utc)
+        self.used=dict(request_id=str(uuid.uuid4()),hub_name='test',mapping=m.MAPPING,
+                       charge_dc_w=100,wait_timeout_s=10,operator_confirmed=True,
+                       ev_disconnected_confirmed=True,expires_at=(self.now+timedelta(seconds=20)).isoformat())
+        self.req=dict(request_id=self.used['request_id'],hub_name='test',operator_confirmed=True,
+                      send_before=(self.now+timedelta(seconds=5)).isoformat())
+        self.current=self.now
+        self.active=dict(protocol=100,vpp_mode=8,words=m.expected_words(100),work_mode=2,battery_w_raw_signed=-100)
+        self.disabled=dict(protocol=100,vpp_mode=0,words=[0]*8,work_mode=2,battery_w_raw_signed=0)
+        self.client=Mock()
+        self.transport=SimpleNamespace(_request_lock=asyncio.Lock(),_unit=Mock(return_value=self.client),
+                                        is_connected=Mock(return_value=True),backoff_remaining=0)
+        self.hub=SimpleNamespace(_poll_data_lock=asyncio.Lock(),_lock=asyncio.Lock(),_stopping=False,
+                                 data={'_repeatUntil':{}},_modbus_addr=1,_core_recovery_transport=Mock(return_value=self.transport))
+        self.states={e:SimpleNamespace(state=v) for e,v in ((m.FIRMWARE,m.QUALIFICATION_FIRMWARE),(m.HARDWARE,'Gen4'),(m.PROTOCOL,'100'))}
+        self.read=AsyncMock(side_effect=[self.active,self.disabled])
+        self.log=AsyncMock()
+        self.send=AsyncMock(side_effect=lambda u,v,g,**kw:g())
+        for n,v in [('recovery_readback',self.read),('single_frame_write',self.send)]:
+            patcher=patch.object(m,n,v);patcher.start();self.addCleanup(patcher.stop)
+    async def execute(self):
+        return await m.stop_pilot(self.hub,self.req,self.used,self.states.get,self.log,lambda:self.current)
+    async def test_owned_disable_verified(self):
+        r=await self.execute()
+        self.assertEqual(r['status'],'disabled_verified')
+        self.assertTrue(r['ack'])
+        self.assertTrue(r['physical_response_verified'])
+        self.assertEqual(self.send.call_count,1)
+        self.assertEqual(self.send.call_args.args[1],[0])
+        self.assertEqual(self.send.call_args.kwargs,{'disable':True})
+        self.assertEqual([x.args[0] for x in self.log.call_args_list],['before_stop','disable_requested','disable_ack','stop_result'])
+    async def test_already_disabled_no_write(self):
+        self.read.side_effect=[self.disabled]
+        self.assertEqual((await self.execute())['status'],'already_disabled')
+        self.send.assert_not_called()
+    async def test_ack_alone_not_success(self):
+        self.read.side_effect=[self.active,self.active]
+        r=await self.execute()
+        self.assertEqual(r['status'],'recovery_unverified')
+        self.assertTrue(r['ack'])
+        self.assertFalse(r['physical_response_verified'])
+    async def test_lost_ack_readback_verified_without_resending(self):
+        self.send.side_effect=TimeoutError
+        r=await self.execute()
+        self.assertFalse(r['ack'])
+        self.assertTrue(r['physical_response_verified'])
+        self.send.assert_awaited_once()
+    async def test_outer_deadline_after_dispatch_still_reads_back(self):
+        self.req['send_before']=(self.now+timedelta(seconds=.05)).isoformat()
+        async def slow(*args,**kwargs):await asyncio.sleep(.2)
+        self.send.side_effect=slow
+        r=await self.execute()
+        self.assertFalse(r['ack'])
+        self.assertTrue(r['physical_response_verified'])
+        self.send.assert_awaited_once()
+    async def test_readback_failure_not_verified(self):
+        self.read.side_effect=[self.active,OSError('read failed')]
+        r=await self.execute()
+        self.assertEqual(r['status'],'recovery_unverified')
+        self.assertEqual(r['readback_error'],'OSError')
+        self.send.assert_awaited_once()
+    async def test_foreign_or_mode6_rejected(self):
+        for bad in ({'vpp_mode':6},{'words':m.expected_words(200)},{'protocol':102},{'work_mode':1}):
+            self.read.side_effect=[{**self.active,**bad}]
+            with self.assertRaisesRegex(ValueError,'does not match'):
+                await self.execute()
+        self.send.assert_not_called()
+    async def test_no_ownership_or_stale_deadline(self):
+        self.req['request_id']=str(uuid.uuid4())
+        with self.assertRaises(ValueError):await self.execute()
+        self.req['request_id']=self.used['request_id']
+        self.current+=timedelta(seconds=6)
+        with self.assertRaises(ValueError):await self.execute()
+        self.read.assert_not_awaited()
+        self.send.assert_not_called()
+    async def test_competing_repeat_blocks(self):
+        self.hub.data['_repeatUntil']={'other':1}
+        with self.assertRaises(ValueError):await self.execute()
+        self.send.assert_not_called()
+    async def test_log_failure_prevents_write(self):
+        self.log.side_effect=[None,OSError('disk')]
+        with self.assertRaises(OSError):await self.execute()
+        self.send.assert_not_called()
+    def test_journal_single_use_private(self):
+        import tempfile, json
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'private'/'test.jsonl'
+            m.create_stop_journal(p)
+            m.append_stop_journal(p,'before_stop',{'test':True})
+            self.assertEqual(json.loads(p.read_text())['kind'],'before_stop')
+            self.assertEqual(p.stat().st_mode&0o777,0o600)
+            with self.assertRaises(FileExistsError):m.create_stop_journal(p)
+
 if __name__=='__main__':unittest.main()

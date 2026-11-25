@@ -7,6 +7,7 @@ import asyncio
 from datetime import datetime, timezone
 import json
 import math
+import os
 import time
 from importlib.metadata import version
 from pathlib import Path
@@ -159,7 +160,7 @@ async def physical_preflight(hub):
     if registers(await hub.async_read_holding_registers(unit=unit,address=0x1A0,count=1),1)!=[0]:
         raise ValueError('physical Mode8 readback not confirmed disabled')
 
-async def single_frame_write(unit, values, guard):
+async def single_frame_write(unit, values, guard, *, disable=False):
     """Pinned shared TCP transport; one FC16, no retry/reconnect or policy mutation.
 
     Private upstream APIs are deliberately version-gated. Unknown transports fail
@@ -175,7 +176,7 @@ async def single_frame_write(unit, values, guard):
         raise ValueError('unreviewed Modbus dependency versions')
     if type(unit) is not TmodbusUnit or type(unit._conn) is not ModbusConnection:
         raise ValueError('unreviewed Core Modbus unit')
-    if values not in [expected_words(w) for w in (100,200,300)]:
+    if (disable and values != [0]) or (not disable and values not in [expected_words(w) for w in (100,200,300)]):
         raise ValueError('unexpected pilot payload')
     conn=unit._conn
     unit_id=unit._unit_id
@@ -260,6 +261,122 @@ async def one_shot(hub, request, approved, get_state, consume, clock=utcnow, pau
             'address':0xA0,'register_count':8,'requested_dc_w':request['charge_dc_w'],
             'automatic_retry':False,'physical_response_verified':False}
 
+def validate_stop(request, used, now):
+    if set(request)!={'request_id','hub_name','send_before','operator_confirmed'}:
+        raise ValueError('wrong stop fields')
+    if (request['operator_confirmed'] is not True
+            or request['request_id']!=used['request_id']
+            or request['hub_name']!=used['hub_name']
+            or used['mapping']!=MAPPING
+            or used['operator_confirmed'] is not True
+            or used['ev_disconnected_confirmed'] is not True
+            or str(uuid.UUID(request['request_id']))!=request['request_id']):
+        raise ValueError('stop requires matching consumed pilot approval')
+    expected_words(used['charge_dc_w'])
+    expiry=timestamp(used['expires_at'])
+    remaining=(timestamp(request['send_before'])-now).total_seconds()
+    # Bound ownership to the immediate supervised pilot session. No takeover
+    # of a later command, including a different user's identical setpoint.
+    if not -60<=(now-expiry).total_seconds()<=120 or not 0<remaining<=5:
+        raise ValueError('expired stop/session')
+    return remaining
+
+async def recovery_readback(hub):
+    unit=hub._modbus_addr
+    protocol=registers(await hub.async_read_holding_registers(unit=unit,address=0x82,count=1),1)[0]
+    mode=registers(await hub.async_read_input_registers(unit=unit,address=0x100,count=1),1)[0]
+    words=registers(await hub.async_read_holding_registers(unit=unit,address=0x1A0,count=8),8)
+    work=registers(await hub.async_read_holding_registers(unit=unit,address=0x1F,count=1),1)[0]
+    power=signed16(registers(await hub.async_read_input_registers(unit=unit,address=0x16,count=1),1)[0])
+    return {'protocol':protocol,'vpp_mode':mode,'words':words,'work_mode':work,'battery_w_raw_signed':power}
+
+def recovery_disabled(x):
+    return x['protocol']==QUALIFICATION_PROTOCOL and x['vpp_mode']==0 and x['words'][0]==0 and x['work_mode']==2
+
+async def stop_pilot(hub, request, used, get_state, log, clock=utcnow):
+    """Explicit manual recovery only. Verify ownership, one disable, direct readback.
+
+    No startup hook, auto-stop, reconnect-write, fallback address or retry.
+    A stop ACK is not proof that VPP has exited. No claim of independent recovery.
+    """
+    remaining=validate_stop(request,used,clock())
+    def guard():
+        validate_stop(request,used,clock())
+        repeat=hub.data.get('_repeatUntil')
+        if getattr(hub,'_stopping',True) or not isinstance(repeat,dict) or any(x!=0 for x in repeat.values()):
+            raise ValueError('hub stopping or competing repeat')
+        for eid,value in ((FIRMWARE,QUALIFICATION_FIRMWARE),(HARDWARE,'Gen4'),(PROTOCOL,'100')):
+            state=get_state(eid)
+            if state is None or state.state!=value:raise ValueError('stop mapping mismatch')
+    outcome={'request_id':request['request_id'],'automatic_retry':False,'physical_response_verified':False}
+    attempted=False
+    try:
+        async with asyncio.timeout(remaining):
+            async with hub._poll_data_lock:
+                guard()
+                before=await recovery_readback(hub)
+                await log('before_stop',readback=before)
+                if recovery_disabled(before):
+                    result={**outcome,'status':'already_disabled','physical_response_verified':True,'readback':before}
+                    await log('stop_result',**result)
+                    return result
+                if (before['protocol']!=QUALIFICATION_PROTOCOL or before['vpp_mode']!=8
+                        or before['words']!=expected_words(used['charge_dc_w']) or before['work_mode']!=2):
+                    raise ValueError('active mode does not match owned pilot; no stop write')
+                transport=hub._core_recovery_transport()
+                if transport is None:raise ValueError('Core transport unavailable')
+                async with hub._lock:
+                    async with transport._request_lock:
+                        def final_guard():
+                            guard()
+                            if not transport.is_connected() or transport.backoff_remaining:
+                                raise ValueError('transport unavailable')
+                        final_guard()
+                        # The service's exclusive journal is durable before any write.
+                        await log('disable_requested',address=0xA0,words=[0])
+                        attempted=True
+                        try:
+                            await single_frame_write(transport._unit(hub._modbus_addr),[0],final_guard,disable=True)
+                        except Exception as error:
+                            await log('disable_uncertain',error_code=type(error).__name__)
+                            outcome['ack']=False
+                        else:
+                            await log('disable_ack')
+                            outcome['ack']=True
+    except TimeoutError:
+        if not attempted:raise
+        outcome['ack']=False
+        await log('disable_uncertain',error_code='TimeoutError')
+    # Separate bounded read-only verification, never another write.
+    try:
+        async with asyncio.timeout(5):
+            async with hub._poll_data_lock:
+                after=await recovery_readback(hub)
+        outcome['readback']=after
+        outcome['physical_response_verified']=recovery_disabled(after)
+    except Exception as error:
+        outcome['readback_error']=type(error).__name__
+    outcome['status']='disabled_verified' if outcome['physical_response_verified'] else 'recovery_unverified'
+    await log('stop_result',**outcome)
+    return outcome
+
+def create_stop_journal(path):
+    # Exclusive durable record: no repeat of a stop with the same pilot ID.
+    path.parent.mkdir(mode=0o700,exist_ok=True)
+    if path.parent.is_symlink() or path.parent.stat().st_mode & 0o077:
+        raise ValueError('stop journal directory must be private')
+    fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+    os.close(fd)
+    fd=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+
+def append_stop_journal(path, kind, fields):
+    fd=os.open(path,os.O_WRONLY|os.O_APPEND|os.O_NOFOLLOW)
+    with os.fdopen(fd,'a',encoding='utf-8') as f:
+        f.write(json.dumps({'kind':kind,'at':utcnow().isoformat(),**fields})+'\n')
+        f.flush();os.fsync(f.fileno())
+
 def register(hass, domain):
     from homeassistant.core import SupportsResponse
     from homeassistant.exceptions import HomeAssistantError
@@ -286,4 +403,31 @@ def register(hass, domain):
                 return await one_shot(hub,request,approved,hass.states.get,consume)
             except Exception as error:
                 raise HomeAssistantError('HEC pilot rejected or dispatch uncertain; inspect readback, do not retry: '+type(error).__name__) from error
+    async def stop_service(call):
+        if not HARDWARE_DISPATCH_QUALIFIED:
+            raise HomeAssistantError('Hardware dispatch locked: recovery review pending')
+        request=dict(call.data)
+        async with lock:
+            try:
+                rid=str(uuid.UUID(request['request_id']))
+                if rid!=request['request_id']:raise ValueError('invalid request id')
+                used_path=ARM_FILE.with_name(ARM_FILE.name+'.used-'+rid)
+                used=await hass.async_add_executor_job(read_approval,used_path)
+                validate_stop(request,used,utcnow())
+                rec=hass.data[domain].get(used['hub_name'])
+                hub=rec.get('hub') if isinstance(rec,dict) else None
+                if hub is None:raise ValueError('approved hub not found')
+                path=ARM_FILE.parent/'.hec-mode8-stop-audit'/(rid+'.jsonl')
+                await hass.async_add_executor_job(create_stop_journal,path)
+                async def log(kind,**fields):
+                    await hass.async_add_executor_job(append_stop_journal,path,kind,fields)
+                await log('operator_stop_requested',request=request)
+                try:
+                    return await stop_pilot(hub,request,used,hass.states.get,log)
+                except (Exception,asyncio.CancelledError) as error:
+                    await log('stop_unverified',error_code=type(error).__name__)
+                    raise
+            except Exception as error:
+                raise HomeAssistantError('HEC stop rejected or unverified; inspect readback, do not retry: '+type(error).__name__) from error
     hass.services.async_register(domain,'hec_mode8_pilot',service,supports_response=SupportsResponse.ONLY)
+    hass.services.async_register(domain,'hec_mode8_stop',stop_service,supports_response=SupportsResponse.ONLY)
