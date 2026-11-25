@@ -1,4 +1,14 @@
-# Aktuální stav – 24.11.2026
+# Aktuální stav – 25.11.2026
+
+- RPi 0.7.0 observe_only, služba Mode8 nainstalována, fyzická blokace false; žádný fyzický povel. Main 0.6.39.
+- PV limit pilotu 1000 W nasazen 09:50; stabilní sběr a SOC plán potvrzeny 09:58.
+- Transport: tmodbus 1.1.0 při device busy opakuje FC16, ověřeno na izolovaném localhost serveru. Ztráta odpovědi bez opakování, ale výsledek neznámý.
+- V001.00 p.59 popisuje disable přes A0, zatímco instalovaná integrace používá 7C. Nezaměňovat; fyzicky neověřeno. LCD System ON/OFF dostupné, chování při VPP nepotvrzeno.
+- Další krok: jednorázový transport bez busy retry a ověřená lokální obnova, samostatná autorizace. [Pilot](docs/LIVE_PILOT_070_20261124.md).
+
+---
+
+# Historický stav – 24.11.2026
 
 - RPi běží 0.6.39 observe_only, nasazení potvrzeno 24.11. 08:37.
 - Noční výpadek Modbus způsoben ztrátou Ethernet carrier, ne důkazem přetížení polling. 1s/5s beze změny.

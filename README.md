@@ -1,7 +1,7 @@
 # Home Energy Coordinator · Home Assistant
 
 **Kandidátní zdroj:** `priority_shadow 0.7.0` – ruční LIVE pilot, bez automatického řízení.
-**Běžící Raspberry Pi:** `0.6.39 / observe_only`; main 0.6.39.
+**Běžící Raspberry Pi:** `0.7.0 / observe_only`; main 0.6.39. Pilotní služba instalována a tvrdě blokována.
 Hlavní vstup pro AI a vývoj: [aktuální stav](docs/PROJECT_STATUS.md),
 [pravidla](AGENTS.md), [známé limity](docs/KNOWN_ISSUES.md).
 
@@ -20,7 +20,7 @@ Paměť obsahuje aktuální stav, důvody rozhodnutí, poučení z auditů, regr
 případy a dosud neověřené předpoklady. Další podrobnosti jsou v README
 jednotlivých doplňků. Provoz a soukromé analýzy patří na RPi.
 
-**Nasazení:** RPi 0.6.39 started/observe_only, kandidát 0.7.0 není nasazen.
+**Nasazení:** RPi 0.7.0 started/observe_only od 25.11.2026; pilotní PV limit 1000 W načten v HA Core 09:50. Fyzické řízení zakázáno.
 Modbus FAST 1s / MEDIUM+DEFAULT 5s a hlavní jistič **3×25 A** beze změny.
 Fyzické HEC LIVE je deaktivováno. [Pilot a podmínky přejímky](docs/LIVE_PILOT_070_20261124.md).
 Ostré řízení NO-GO do potvrzení LIVE-01/02.
