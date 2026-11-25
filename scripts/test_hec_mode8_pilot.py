@@ -132,10 +132,24 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):await self.execute()
         self.client.write_registers.assert_not_awaited()
     async def test_invalid_pv_or_ev_blocks(self):
-        for eid in (m.PV,m.EV):
-            self.states[eid].state='500'
+        for eid, value in ((m.PV,'1000.1'),(m.EV,'100.1')):
+            self.states[eid].state=value
             with self.assertRaises(ValueError):await self.execute()
             self.states[eid].state='0'
+        self.client.write_registers.assert_not_awaited()
+    async def test_pv_at_new_limit_allows_only_synthetic_single_shot(self):
+        self.states[m.PV].state='1000'
+        await self.execute()
+        self.client.write_registers.assert_awaited_once()
+        self.assertIs(m.HARDWARE_DISPATCH_QUALIFIED,False)
+    async def test_invalid_pv_even_below_limit_blocks(self):
+        for value in ('-1','nan','inf','unknown'):
+            self.states[m.PV].state=value
+            with self.assertRaises(ValueError):await self.execute()
+        self.client.write_registers.assert_not_awaited()
+    async def test_stale_pv_blocks(self):
+        self.states[m.PV].last_reported=self.now-timedelta(seconds=4)
+        with self.assertRaises(ValueError):await self.execute()
         self.client.write_registers.assert_not_awaited()
     async def test_disconnected_blocks_without_reconnect(self):
         self.transport.is_connected.return_value=False

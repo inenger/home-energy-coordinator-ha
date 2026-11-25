@@ -111,7 +111,7 @@ def check_states(get_state, now):
     # These stable HA states are cross-checks only; read inverter registers live below.
     number(SOC,'%',15,90)
     number(POWER,'W',-100,100)
-    number(PV,'W',0,100,3)
+    number(PV,'W',0,1000,3)
     # EV physically unplugged is an explicit operator condition. Stale wallbox idle
     # values are only a cross-check, not proof of unplugging.
     number(EV,'W',0,100)
