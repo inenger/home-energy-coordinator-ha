@@ -1,5 +1,6 @@
-"""Candidate HA-side one-shot Mode 8 qualification service for SolaX 2026.11.04.
+"""Candidate HA-side one-shot Mode 1 qualification service for SolaX 2026.11.04.
 
+Legacy filename retained for the existing import patch; only Mode 1 is supported.
 Not installed automatically. No automatic renewal, arbitrary register writes,
 or normal operation. Requires private, short-lived, operator-approved arming.
 """
@@ -13,8 +14,8 @@ from importlib.metadata import version
 from pathlib import Path
 import uuid
 
-MAPPING = 'mode8-a6-wait-timeout-a7-next-motion-v00100-candidate-v3'
-ARM_FILE = Path('/config/.hec-mode8-pilot-approval.json')
+MAPPING = 'mode1-a6-exec-duration-a7-wait-timeout-v00100-candidate-v1'
+ARM_FILE = Path('/config/.hec-mode1-pilot-approval.json')
 PHASES = tuple('sensor.solax_inverter_solax_grid_current_l'+str(i) for i in (1,2,3))
 MODE = 'sensor.solax_inverter_solax_remotecontrol_readback_mode'
 REMOTE = 'sensor.solax_modbus_power_control'
@@ -39,7 +40,8 @@ QUALIFICATION_PROTOCOL = 100
 # A documented candidate is not proof for this firmware. Do not arm real HA service
 # until the manufacturer-confirmed mapping/recovery and separate hardware review.
 HARDWARE_DISPATCH_QUALIFIED = False
-PILOT_PV_LIMIT_W = 15000  # fixed candidate; no PV curtailment intended
+EXEC_DURATION_S = 10
+WAIT_TIMEOUT_S = 10  # documented execution + waiting; not verified hard expiry
 
 def utcnow():
     return datetime.now(timezone.utc)
@@ -50,7 +52,7 @@ def timestamp(value):
     return out
 
 def validate_request(request, approved, now):
-    fields={'request_id','hub_name','mapping','charge_dc_w','wait_timeout_s','expires_at','operator_confirmed','ev_disconnected_confirmed'}
+    fields={'request_id','hub_name','mapping','charge_ac_w','exec_duration_s','wait_timeout_s','expires_at','operator_confirmed','ev_disconnected_confirmed'}
     if set(approved)!=fields or set(request)!=fields|{'send_before'}:
         raise ValueError('wrong request fields')
     if any(request[k]!=approved[k] for k in fields):
@@ -61,9 +63,11 @@ def validate_request(request, approved, now):
         raise ValueError('invalid request id')
     if not isinstance(approved['hub_name'],str) or not approved['hub_name']:
         raise ValueError('invalid hub')
-    if type(approved['charge_dc_w']) is not int or approved['charge_dc_w'] not in (100,200,300):
+    if type(approved['charge_ac_w']) is not int or approved['charge_ac_w'] not in (100,200,300):
         raise ValueError('invalid pilot power')
-    if type(approved['wait_timeout_s']) is not int or approved['wait_timeout_s']!=10:
+    if type(approved['exec_duration_s']) is not int or approved['exec_duration_s']!=EXEC_DURATION_S:
+        raise ValueError('invalid pilot execution duration')
+    if type(approved['wait_timeout_s']) is not int or approved['wait_timeout_s']!=WAIT_TIMEOUT_S:
         raise ValueError('invalid pilot wait timeout')
     remaining=(timestamp(request['send_before'])-now).total_seconds()
     approval_remaining=(timestamp(approved['expires_at'])-now).total_seconds()
@@ -71,19 +75,18 @@ def validate_request(request, approved, now):
         raise ValueError('expired or overlong request')
     return remaining
 
-def candidate_payload(charge_dc_w):
+def candidate_payload(charge_ac_w):
     """Complete, typed FC16 block A0..A7; candidate protocol, not HW proof."""
-    if type(charge_dc_w) is not int or charge_dc_w not in (100,200,300):
+    if type(charge_ac_w) is not int or charge_ac_w not in (100,200,300):
         raise ValueError('invalid pilot power')
-    return [('_uint16',8),('_uint16',1),('_uint32',PILOT_PV_LIMIT_W),
-            ('_int32',-charge_dc_w),('_uint16',10),('_uint16',0xA0)]
+    return [('_uint16',1),('_uint16',1),('_int32',charge_ac_w),
+            ('_int32',0),('_uint16',EXEC_DURATION_S),('_uint16',WAIT_TIMEOUT_S)]
 
-def expected_words(charge_dc_w):
-    """Independent V001.00 LSW-first encoding contract, not device qualification."""
-    candidate_payload(charge_dc_w)
-    unsigned = (-charge_dc_w) & 0xffffffff
-    return [8,1,PILOT_PV_LIMIT_W & 0xffff,PILOT_PV_LIMIT_W >> 16,
-            unsigned & 0xffff,unsigned >> 16,10,0xA0]
+def expected_words(charge_ac_w):
+    """V001.00: positive AC absorption, zero reactive power, LSW-first."""
+    candidate_payload(charge_ac_w)
+    return [1,1,charge_ac_w & 0xffff,charge_ac_w >> 16,0,0,EXEC_DURATION_S,WAIT_TIMEOUT_S]
+
 
 def check_states(get_state, now):
     def state(eid, max_age=None):
@@ -114,7 +117,7 @@ def check_states(get_state, now):
     # These stable HA states are cross-checks only; read inverter registers live below.
     number(SOC,'%',15,90)
     number(POWER,'W',-100,100)
-    number(PV,'W',0,1000,3)
+    number(PV,'W',0,0,3)
     # EV physically unplugged is an explicit operator condition. Stale wallbox idle
     # values are only a cross-check, not proof of unplugging.
     number(EV,'W',0,100)
@@ -153,12 +156,15 @@ async def physical_preflight(hub):
     v=registers(response,20)
     if v[0]!=2 or not 1000<=signed16(v[0x14-0x09])<=5000 or abs(signed16(v[0x16-0x09]))>100 or not 15<=v[0x1C-0x09]<=90:
         raise ValueError('physical inverter or battery state not eligible')
+    # V001.00 PV total is U32 at input 0x32. A night-only Mode1 pilot must have zero PV.
+    if registers(await hub.async_read_input_registers(unit=unit,address=0x32,count=2),2)!=[0,0]:
+        raise ValueError('physical PV is not zero')
     if registers(await hub.async_read_holding_registers(unit=unit,address=0x1F,count=1),1)!=[2]:
         raise ValueError('physical work mode is not Back Up Mode')
     if registers(await hub.async_read_input_registers(unit=unit,address=0x100,count=1),1)!=[0]:
         raise ValueError('physical VPP mode is not confirmed disabled')
     if registers(await hub.async_read_holding_registers(unit=unit,address=0x1A0,count=1),1)!=[0]:
-        raise ValueError('physical Mode8 readback not confirmed disabled')
+        raise ValueError('physical VPP readback not confirmed disabled')
 
 async def single_frame_write(unit, values, guard, *, disable=False):
     """Pinned shared TCP transport; one FC16, no retry/reconnect or policy mutation.
@@ -176,7 +182,11 @@ async def single_frame_write(unit, values, guard, *, disable=False):
         raise ValueError('unreviewed Modbus dependency versions')
     if type(unit) is not TmodbusUnit or type(unit._conn) is not ModbusConnection:
         raise ValueError('unreviewed Core Modbus unit')
-    if (disable and values != [0]) or (not disable and values not in [expected_words(w) for w in (100,200,300)]):
+    # Exact volatile-command allowlist; no configurable address, unknown or NVM writes.
+    if (type(values) is not list or any(type(v) is not int for v in values)
+            or type(disable) is not bool
+            or (disable and values != [0])
+            or (not disable and values not in [expected_words(w) for w in (100,200,300)])):
         raise ValueError('unexpected pilot payload')
     conn=unit._conn
     unit_id=unit._unit_id
@@ -232,8 +242,8 @@ async def one_shot(hub, request, approved, get_state, consume, clock=utcnow, pau
             # No parallel TCP client, no ordinary write queue, no wrapper that retries writes.
             transport=hub._core_recovery_transport()
             if transport is None:raise ValueError('Core transport not available')
-            values=hub._encode_multi_write_payload(candidate_payload(request['charge_dc_w']))
-            if values!=expected_words(request['charge_dc_w']):
+            values=hub._encode_multi_write_payload(candidate_payload(request['charge_ac_w']))
+            if values!=expected_words(request['charge_ac_w']):
                 raise ValueError('wire words differ from documented LSW-first candidate')
             async with hub._lock:
                 async with transport._request_lock:
@@ -257,16 +267,28 @@ async def one_shot(hub, request, approved, get_state, consume, clock=utcnow, pau
                                 or any(x!=0 for x in hub.data.get('_repeatUntil',{'missing':1}).values())):
                             raise ValueError('hub stopped, disconnected or repeat state changed')
                     await single_frame_write(client,values,final_guard)
-    return {'request_id':request['request_id'],'status':'modbus_call_returned',
-            'address':0xA0,'register_count':8,'requested_dc_w':request['charge_dc_w'],
-            'automatic_retry':False,'physical_response_verified':False}
+    # ACK proves transport only. The exact new-layout readback is separate and read-only.
+    result={'request_id':request['request_id'],'status':'modbus_call_returned',
+            'address':0xA0,'register_count':8,'requested_ac_w':request['charge_ac_w'],
+            'automatic_retry':False,'physical_response_verified':False,
+            'command_readback_matches':False}
+    try:
+        async with asyncio.timeout(5):
+            async with hub._poll_data_lock:
+                after=await recovery_readback(hub)
+        result['readback']=after
+        result['command_readback_matches']=(after['protocol']==QUALIFICATION_PROTOCOL
+            and after['vpp_mode']==1 and after['work_mode']==2
+            and after['words']==expected_words(request['charge_ac_w']))
+    except Exception as error:
+        result['readback_error']=type(error).__name__
+    # Even matching words are not proof of power, expiry or independent recovery.
+    return result
 
 def validate_stop(request, used, now):
     fields={'request_id','hub_name','send_before','operator_confirmed'}
-    if set(request) not in (fields,fields|{'mode6_recovery_confirmed'}):
+    if set(request)!=fields:
         raise ValueError('wrong stop fields')
-    if 'mode6_recovery_confirmed' in request and request['mode6_recovery_confirmed'] is not True:
-        raise ValueError('explicit Mode6 recovery confirmation required')
     if (request['operator_confirmed'] is not True
             or request['request_id']!=used['request_id']
             or request['hub_name']!=used['hub_name']
@@ -275,7 +297,9 @@ def validate_stop(request, used, now):
             or used['ev_disconnected_confirmed'] is not True
             or str(uuid.UUID(request['request_id']))!=request['request_id']):
         raise ValueError('stop requires matching consumed pilot approval')
-    expected_words(used['charge_dc_w'])
+    expected_words(used['charge_ac_w'])
+    if type(used.get('exec_duration_s')) is not int or used['exec_duration_s']!=EXEC_DURATION_S or type(used.get('wait_timeout_s')) is not int or used['wait_timeout_s']!=WAIT_TIMEOUT_S:
+        raise ValueError('stop requires matching Mode1 timing')
     expiry=timestamp(used['expires_at'])
     remaining=(timestamp(request['send_before'])-now).total_seconds()
     # Bound ownership to the immediate supervised pilot session. No takeover
@@ -288,9 +312,9 @@ async def recovery_readback(hub):
     unit=hub._modbus_addr
     protocol=registers(await hub.async_read_holding_registers(unit=unit,address=0x82,count=1),1)[0]
     mode=registers(await hub.async_read_input_registers(unit=unit,address=0x100,count=1),1)[0]
-    # V001.00 defines different lengths: disabled=1, Mode6=3, Mode8=8.
-    # Never compare stale Mode8 target words after a transition to Mode6.
-    length={0:1,6:3,8:8}.get(mode,1)
+    # V001.00 defines different lengths: disabled=1, Mode1=8, Mode6=3, Mode8=8.
+    # Read unfamiliar modes for diagnosis only; never authorize their stop.
+    length={0:1,1:8,6:3,8:8}.get(mode,1)
     words=registers(await hub.async_read_holding_registers(unit=unit,address=0x1A0,count=length),length)
     work=registers(await hub.async_read_holding_registers(unit=unit,address=0x1F,count=1),1)[0]
     power=signed16(registers(await hub.async_read_input_registers(unit=unit,address=0x16,count=1),1)[0])
@@ -331,16 +355,10 @@ async def stop_pilot(hub, request, used, get_state, log, clock=utcnow):
                     return result
                 if before['protocol']!=QUALIFICATION_PROTOCOL or before['work_mode']!=2:
                     raise ValueError('active mode does not match qualified installation; no stop write')
-                if before['vpp_mode']==8 and before['words']==expected_words(used['charge_dc_w']):
-                    scope='matching_mode8'
-                elif (before['vpp_mode']==6 and len(before['words'])==3
-                      and before['words'][0]==6 and before['words'][2] in (0xA0,0xA1)
-                      and request.get('mode6_recovery_confirmed') is True):
-                    # Mode6 does not carry the original pilot's power or ID.
-                    # This is explicit operator-authorized recovery, NOT proven ownership.
-                    scope='operator_confirmed_mode6_recovery'
+                if before['vpp_mode']==1 and before['words']==expected_words(used['charge_ac_w']):
+                    scope='matching_mode1'
                 else:
-                    raise ValueError('active mode does not match owned pilot or confirmed Mode6; no stop write')
+                    raise ValueError('active mode does not match owned Mode1 pilot; no stop write')
                 outcome['recovery_scope']=scope
                 transport=hub._core_recovery_transport()
                 if transport is None:raise ValueError('Core transport unavailable')
@@ -436,7 +454,7 @@ def register(hass, domain):
                 rec=hass.data[domain].get(used['hub_name'])
                 hub=rec.get('hub') if isinstance(rec,dict) else None
                 if hub is None:raise ValueError('approved hub not found')
-                path=ARM_FILE.parent/'.hec-mode8-stop-audit'/(rid+'.jsonl')
+                path=ARM_FILE.parent/'.hec-mode1-stop-audit'/(rid+'.jsonl')
                 await hass.async_add_executor_job(create_stop_journal,path)
                 async def log(kind,**fields):
                     await hass.async_add_executor_job(append_stop_journal,path,kind,fields)
@@ -448,5 +466,5 @@ def register(hass, domain):
                     raise
             except Exception as error:
                 raise HomeAssistantError('HEC stop rejected or unverified; inspect readback, do not retry: '+type(error).__name__) from error
-    hass.services.async_register(domain,'hec_mode8_pilot',service,supports_response=SupportsResponse.ONLY)
-    hass.services.async_register(domain,'hec_mode8_stop',stop_service,supports_response=SupportsResponse.ONLY)
+    hass.services.async_register(domain,'hec_mode1_pilot',service,supports_response=SupportsResponse.ONLY)
+    hass.services.async_register(domain,'hec_mode1_stop',stop_service,supports_response=SupportsResponse.ONLY)

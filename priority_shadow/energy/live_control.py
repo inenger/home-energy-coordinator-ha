@@ -8,13 +8,10 @@ from .collector import NoRedirect, read_token, DATA
 from .core import instant
 from .ram_control import peak_window_errors, validate_intent
 
-MAPPING = 'mode8-a6-wait-timeout-a7-next-motion-v00100-candidate-v3'
-SERVICE = '/api/services/solax_modbus/hec_mode8_pilot?return_response'
+MAPPING = 'mode1-a6-exec-duration-a7-wait-timeout-v00100-candidate-v1'
+SERVICE = '/api/services/solax_modbus/hec_mode1_pilot?return_response'
 READBACK = 'sensor.solax_inverter_solax_remotecontrol_readback_mode'
-TARGET = 'sensor.solax_inverter_solax_remotecontrol_mode_8_battery_power_target_readback'
-WAIT_TIMEOUT = 'sensor.solax_inverter_solax_remotecontrol_mode_8_timeout_readback'
-NEXT_MOTION = 'sensor.solax_inverter_solax_remotecontrol_mode_8_next_motion_readback'
-MEASUREMENTS = (READBACK, TARGET, WAIT_TIMEOUT, NEXT_MOTION, 'sensor.solax_battery_power_charge',
+MEASUREMENTS = (READBACK, 'sensor.solax_inverter_power', 'sensor.solax_battery_power_charge',
                 'sensor.solax_battery_voltage_charge', 'sensor.solax_battery_current_charge',
                 'sensor.solax_battery_capacity', 'sensor.solax_api_charge_power_total',
                 'sensor.solax_pv_power_total', 'sensor.solax_inverter_communication_health',
@@ -89,7 +86,7 @@ class PilotHA:
 
 def request_for(approval, now):
     """No defaults, no unbounded duration and no arbitrary register values."""
-    if set(approval)!= {'request_id','hub_name','mapping','charge_dc_w','wait_timeout_s','expires_at','operator_confirmed','ev_disconnected_confirmed'}:
+    if set(approval)!= {'request_id','hub_name','mapping','charge_ac_w','exec_duration_s','wait_timeout_s','expires_at','operator_confirmed','ev_disconnected_confirmed'}:
         raise ValueError('invalid approval fields')
     if approval['operator_confirmed'] is not True or approval['ev_disconnected_confirmed'] is not True or approval['mapping']!=MAPPING:
         raise ValueError('explicit mapping review and operator approval required')
@@ -97,8 +94,10 @@ def request_for(approval, now):
         raise ValueError('invalid request id')
     if not isinstance(approval['hub_name'],str) or not approval['hub_name']:
         raise ValueError('invalid hub')
-    if type(approval['charge_dc_w']) is not int or approval['charge_dc_w'] not in (100,200,300):
-        raise ValueError('pilot power outside 100/200/300W DC')
+    if type(approval['charge_ac_w']) is not int or approval['charge_ac_w'] not in (100,200,300):
+        raise ValueError('pilot power outside 100/200/300W AC')
+    if type(approval['exec_duration_s']) is not int or approval['exec_duration_s']!=10:
+        raise ValueError('pilot execution duration must be 10s')
     if type(approval['wait_timeout_s']) is not int or approval['wait_timeout_s']!=10:
         raise ValueError('pilot wait timeout must be 10s')
     expires=instant(approval['expires_at'])
@@ -136,7 +135,7 @@ def pilot(options, approval_path, audit_dir, client, clock=lambda:datetime.now(t
             response=None
         # No re-send and no automatic disable during timeout qualification.
         # Operator remains at installation and uses independent recovery if needed.
-        for _ in range(21):
+        for _ in range(31):
             try:log('readback',states=client.snapshot())
             except Exception as error:log('readback_unavailable',error_code=type(error).__name__)
             sleep(1)
@@ -144,7 +143,7 @@ def pilot(options, approval_path, audit_dir, client, clock=lambda:datetime.now(t
     return path
 
 def main():
-    parser=argparse.ArgumentParser(description='Manual supervised Mode 8 single-shot pilot; no automated renewal')
+    parser=argparse.ArgumentParser(description='Manual supervised Mode 1 single-shot pilot; no automated renewal')
     parser.add_argument('--confirm',required=True,choices=['OPERATOR_PRESENT_MAPPING_REVIEWED_EV_DISCONNECTED'])
     args=parser.parse_args()
     options=json.loads(Path('/data/options.json').read_text())

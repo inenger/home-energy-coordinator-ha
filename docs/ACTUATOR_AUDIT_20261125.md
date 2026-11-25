@@ -2,7 +2,7 @@
 
 Baseline 519376b, RPi 0.7.0 observe_only. Scope approved: permanent EEPROM prohibition, source regression gate, Mode1 vs Mode8 and EVC audit. No actuator implementation, hardware write, configuration, restart or version bump. Main remains 0.6.39.
 
-## Binding policy
+## Binding policy (original audit; superseded by stricter policy below)
 Zero EEPROM/nonvolatile or unclassified device writes in the regulation loop, including inverter, EVC and other actuators. No generic write path, no fallback to persistent limits, including recovery. Infrequent configuration only by separately authorized procedure. Device persistence is distinct from local SQLite/HA evidence. Unknown storage or firmware mapping means deny. Never equate FC16 with volatile storage. Keep fixed breaker 25 A per phase, EV ceiling 16 A, no new hardware, existing night windows/algorithm. Approved policy does not authorize deployment or activation.
 
 ## Inverter source evidence
@@ -20,3 +20,10 @@ Actual installed solax_http entity max_charge_current_setting maps 0x668, plugin
 
 ## Regression
 CI source tripwire inventories known device-write/HA service call sites, fixes sole currently reviewed FC16 address A0, requires locked pilot and rejects generic writes and new service routes. This is a narrow static regression, not proof against arbitrary code, vendor internals or other HA automations. Actual pinned TCP loopback checks exact FC16 frame and rejects unauthorized payloads. No changes to runtime or physical service. A future reviewed adapter must update the allowlist with documented volatile semantics and transport tests. See [test](../scripts/test_no_eeprom_contract.py).
+
+
+## Mode1 source implementation — user approved, 25.11.2026
+
+Absolute prohibition supersedes the earlier infrequent-configuration exception: no EEPROM/NVM or unclassified device write at any time in this project, including initialization, shutdown, restore, one-off test and failure recovery. No wallbox 0x668, DC settings, work-mode writes or legacy fallback. This is a software allowlist based on documented storage semantics; internal firmware persistence cannot be proven by source tests. No physical command authorized.
+
+Baseline db661fc, CI run 45652223000 PASS. Replace only candidate actuator in existing legacy-named module/import and CLI, not the algorithm, monitor, evidence or installed service. Distinct Mode1 service names and approval mapping/fields; old Mode8 approval rejected. 100/200/300 W positive AC absorption, zero var, 10s execution + 10s waiting (nominal 20s, not a proven hard expiry). Only FC16 at A0 exact 8-word Mode1 allowlist or one zero for disable; all other payloads including bool, negative, legacy Mode8 rejected. No runtime renewal. PV must equal 0 at fresh HA check and direct U32 input 0x32; existing 18A entry, 25A breaker, idle battery and disconnected EV guards retained. Readback after ACK is separate, bounded and read-only; matching fields do not establish physical response. After uncertainty no retry. Stop only matching Mode1 words and recent consumed approval; no Mode6 override or automatic takeover, not proof of ownership. Readback of other modes diagnostic only. If timer fields change or VPP changes unexpectedly stop may refuse; independent recovery still unverified. CLI measures inverter AC, battery DC and phases for 31 read-only snapshots; observation timing not guaranteed hardware expiry proof. Source services remain hard locked; no installation, restart, approval creation, hardware access or configuration changes. Mode8 retained in prior commit 519376b and installed locked module, not a second executable adapter in candidate source. Existing filename/CI entry retained to avoid workflow/import churn. No version bump for unreleased 0.7.0 branch.

@@ -11,7 +11,7 @@ CLIENT = 'priority_shadow/energy/live_control.py'
 ALLOWED = Counter({
     (PILOT, 'WriteMultipleRegistersPDU(160, values)'): 1,
     (PILOT, 'base.send_and_receive(unit_id, pdu)'): 1,
-    (CLIENT, '/api/services/solax_modbus/hec_mode8_pilot?return_response'): 1,
+    (CLIENT, '/api/services/solax_modbus/hec_mode1_pilot?return_response'): 1,
     ('priority_shadow/energy/weather.py', '/api/services/weather/get_forecasts?return_response'): 1,
     ('energy_coordinator/energy/weather.py', '/api/services/weather/get_forecasts?return_response'): 1,
 })

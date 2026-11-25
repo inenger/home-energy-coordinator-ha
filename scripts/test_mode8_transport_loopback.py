@@ -108,6 +108,17 @@ class TransportLoopback(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError,'payload'):
             await m.single_frame_write(self.unit,[0],lambda:None)
         self.assertEqual(self.frames,[])
+    async def test_only_exact_mode1_payloads_and_disable_allowed(self):
+        for values in ([8,1,15000,0,65436,65535,10,160],
+                       [1,1,100,0,0,0,0,10],[1,1,100,0,0,0,10,0],
+                       [1,1,65436,65535,0,0,10,10],
+                       [1,1,100,0,1,0,10,10],[True,1,100,0,0,0,10,10],
+                       [1,1,400,0,0,0,10,10],[0],[0]*13):
+            with self.assertRaisesRegex(ValueError,'payload'):
+                await m.single_frame_write(self.unit,values,lambda:None)
+        with self.assertRaisesRegex(ValueError,'payload'):
+            await m.single_frame_write(self.unit,[False],lambda:None,disable=True)
+        self.assertEqual(self.frames,[])
     async def test_disable_exact_frame(self):
         await m.single_frame_write(self.unit,[0],lambda:None,disable=True)
         self.assertEqual(len(self.frames),1)

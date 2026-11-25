@@ -8,8 +8,8 @@ from test_ram_control import data, stamp, result
 
 class LivePilotTests(unittest.TestCase):
     def approval(self,now):
-        return dict(request_id=str(uuid.uuid4()),hub_name='test',mapping=MAPPING,charge_dc_w=300,
-                    wait_timeout_s=10,ev_disconnected_confirmed=True,expires_at=(now+timedelta(seconds=50)).isoformat(),operator_confirmed=True)
+        return dict(request_id=str(uuid.uuid4()),hub_name='test',mapping=MAPPING,charge_ac_w=300,
+                    exec_duration_s=10,wait_timeout_s=10,ev_disconnected_confirmed=True,expires_at=(now+timedelta(seconds=50)).isoformat(),operator_confirmed=True)
     def test_default_and_live_test_never_write(self):
         ram=MemoryControl()
         try:
@@ -27,8 +27,8 @@ class LivePilotTests(unittest.TestCase):
     def test_reject_unreviewed_and_unbounded(self):
         now=datetime.now(timezone.utc)
         a=self.approval(now)
-        self.assertEqual(request_for(a,now)['charge_dc_w'],300)
-        for bad in ({'mapping':'unknown'},{'charge_dc_w':5000},{'charge_dc_w':True},{'wait_timeout_s':60},
+        self.assertEqual(request_for(a,now)['charge_ac_w'],300)
+        for bad in ({'mapping':'unknown'},{'charge_ac_w':5000},{'charge_ac_w':True},{'wait_timeout_s':60},{'exec_duration_s':0},{'charge_dc_w':100},
                     {'operator_confirmed':False},{'ev_disconnected_confirmed':False},{'expires_at':now.isoformat()},{'register':160}):
             with self.subTest(bad=bad),self.assertRaises(ValueError):request_for({**a,**bad},now)
     def test_one_shot_uncertain_no_retry_or_replay(self):

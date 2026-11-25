@@ -155,3 +155,5 @@ preflight noc 13.11. se zatím neověřila.
 |---|---|---|
 | EEPROM-01 | [CI tripwire](../scripts/test_no_eeprom_contract.py), [TCP loopback](../scripts/test_mode8_transport_loopback.py) | Pouze reviewované call sites; nový nebo neznámý zápis fail, A0 FC16 fixed, hardware lock false. Nejde o důkaz všech vendor zápisů. |
 | ACT-01/EVC-01 | [Audit a kritéria](ACTUATOR_AUDIT_20261125.md) | Fyzická kvalifikace pending; žádný Mode1 ani EVC povel. |
+
+| ACT-01 Mode1 source | [Service/CI](../scripts/test_hec_mode8_pilot.py), [TCP](../scripts/test_mode8_transport_loopback.py), [CLI](../priority_shadow/tests/test_live_pilot_070.py) | Exact positive AC words, fixed timer fields, no nonzero PV, no legacy/foreign mode or arbitrary write, hard lock, ACK/readback distinction, no retry. Hardware remains pending. |

@@ -1,3 +1,8 @@
+## 25.11.2026 – Mode1 source candidate and absolute EEPROM ban
+Baseline db661fc CI PASS. User prohibited all EEPROM writes, no exception. Source-only conversion to Mode1, positive AC absorption, 10+10s, night-only PV=0, exact allowlist, no foreign mode stop, no renewal. Retain old module filename for import compatibility, distinct new service/approval identity; old Mode8 preserved in history and installed locked module. [Contract](../ACTUATOR_AUDIT_20261125.md). No HA install or hardware qualification.
+
+---
+
 ## 25.11.2026 – ACT-01 / EEPROM-01 / EVC-01
 Baseline 519376b. Mode6 recovery nasazen 13:52 se zámkem. Návrh dynamické změny DC limitu odmítnut podle explicitní EEPROM značky V001.00; EVC HTTP 0x668 rovněž zakázán. Mode1 A0 primární kandidát, nikoli fyzicky ověřená implementace. Vendor KB HTTP500 a EVC PDF screenshot cache miss; textové důkazy a instalovaný zdroj zachovány. [Audit](../ACTUATOR_AUDIT_20261125.md). První kandidát měnil i workflow; GitHub update_ref 2x vrátil interní chybu, větev zůstala na baseline. Změna workflow odstraněna, test je součástí existujícího CI vstupu test_hec_mode8_pilot.py. Dokumentace a CI regrese pouze, runtime beze změny.
 

@@ -12,7 +12,7 @@ obnova Modbus později; neměnit FAST 1s / MEDIUM+DEFAULT 5s.
 Jistič 3×25 A, 5s logická smyčka, bez nového HW.
 [0.7.0 pilot a blokátory LIVE-01/02](LIVE_PILOT_070_20261124.md).
 Starý LIVE v1 zůstává pouze archiv.
-ACT-01/EEPROM-01/EVC-01: [audit a závazné rozhodnutí](ACTUATOR_AUDIT_20261125.md). Mode1 primární kandidát, Mode8 uzamčený fallback návrh. Zákaz dynamických EEPROM/NVM/unknown zápisů; EVC 0x668 zakázán, 0x628 nekvalifikován. Fyzické řízení stále NO-GO.
+ACT-01/EEPROM-01/EVC-01: [audit a závazné rozhodnutí](ACTUATOR_AUDIT_20261125.md). Mode1 implementován jako zdrojový ruční pilot, dosud nenasazen; Mode8 zůstává uzamčen v běžící instalaci. Absolutní zákaz EEPROM/NVM/unknown zápisů; EVC 0x668 zakázán, 0x628 nekvalifikován. Fyzické řízení stále NO-GO.
 
 ## Rozcestník pro AI
 

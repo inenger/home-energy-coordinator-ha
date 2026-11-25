@@ -16,7 +16,7 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.now=datetime.now(timezone.utc)
         a=self.approved=dict(request_id=str(uuid.uuid4()),hub_name='test',mapping=m.MAPPING,
-                             charge_dc_w=300,wait_timeout_s=10,operator_confirmed=True,ev_disconnected_confirmed=True,
+                             charge_ac_w=300,exec_duration_s=10,wait_timeout_s=10,operator_confirmed=True,ev_disconnected_confirmed=True,
                              expires_at=(self.now+timedelta(seconds=30)).isoformat())
         self.req={**a,'send_before':(self.now+timedelta(seconds=5)).isoformat()}
         self.states={}
@@ -31,10 +31,11 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
         self.client=SimpleNamespace(write_registers=AsyncMock())
         self.transport=SimpleNamespace(_request_lock=asyncio.Lock(),_unit=Mock(return_value=self.client),
                                        is_connected=Mock(return_value=True),backoff_remaining=0)
-        self.input_mode=0;self.holding_mode=0;self.run_mode=2;self.battery_power=0;self.work_mode=2;self.protocol=100
+        self.input_mode=0;self.holding_mode=0;self.run_mode=2;self.battery_power=0;self.work_mode=2;self.protocol=100;self.pv_words=[0,0]
         async def input_read(unit,address,count):
             if address==0x09:
                 v=[0]*20;v[0]=self.run_mode;v[0x14-9]=2360;v[0x16-9]=self.battery_power;v[0x1c-9]=40
+            elif address==0x32:v=self.pv_words
             else:v=[self.input_mode]
             return SimpleNamespace(isError=lambda:False,registers=v)
         async def holding_read(unit,address,count):
@@ -44,7 +45,7 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
                   async_read_input_registers=AsyncMock(side_effect=input_read),
                   async_read_holding_registers=AsyncMock(side_effect=holding_read),
                   _core_recovery_transport=Mock(return_value=self.transport),
-                  _encode_multi_write_payload=Mock(return_value=[8,1,15000,0,0xfed4,0xffff,10,0xa0]))
+                  _encode_multi_write_payload=Mock(return_value=[1,1,300,0,0,0,10,10]))
         self.consume=AsyncMock()
         self.current=self.now
         async def mock_frame(unit,values,guard):
@@ -62,13 +63,13 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
     async def test_one_complete_candidate_and_no_repeat(self):
         r=await self.execute()
         self.hub._encode_multi_write_payload.assert_called_once_with(
-            [('_uint16',8),('_uint16',1),('_uint32',15000),('_int32',-300),('_uint16',10),('_uint16',160)])
-        self.client.write_registers.assert_awaited_once_with(0xa0,[8,1,15000,0,65236,65535,10,160])
+            [('_uint16',1),('_uint16',1),('_int32',300),('_int32',0),('_uint16',10),('_uint16',10)])
+        self.client.write_registers.assert_awaited_once_with(0xa0,[1,1,300,0,0,0,10,10])
         self.consume.assert_awaited_once()
         self.assertEqual(r['status'],'modbus_call_returned')
         self.assertFalse(r['physical_response_verified'])
     async def test_reject_big_endian_word_order_before_dispatch(self):
-        self.hub._encode_multi_write_payload.return_value=[8,1,0,15000,65535,65236,10,160]
+        self.hub._encode_multi_write_payload.return_value=[1,1,0,300,0,0,10,10]
         with self.assertRaisesRegex(ValueError,'wire words'):
             await self.execute()
         self.consume.assert_not_awaited()
@@ -77,9 +78,7 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIs(m.HARDWARE_DISPATCH_QUALIFIED,False)
         for w in (100,200,300):
             words=m.expected_words(w)
-            self.assertEqual(words[2:4],[15000,0])
-            self.assertEqual((words[5]<<16|words[4])-2**32,-w)
-            self.assertEqual(words[6:],[10,160])
+            self.assertEqual(words,[1,1,w,0,0,0,10,10])
     async def test_reject_partial_phase_or_high_current_or_stale(self):
         e=m.PHASES[1];old=self.states[e]
         for s in (None,SimpleNamespace(state='18.1',attributes={'unit_of_measurement':'A'},last_reported=self.now),
@@ -134,20 +133,24 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(TimeoutError):await self.execute()
         self.client.write_registers.assert_awaited_once();self.consume.assert_awaited_once()
     async def test_mismatched_approval_never_writes(self):
-        self.req['charge_dc_w']=200
+        self.req['charge_ac_w']=200
         with self.assertRaises(ValueError):await self.execute()
         self.client.write_registers.assert_not_awaited()
     async def test_invalid_pv_or_ev_blocks(self):
-        for eid, value in ((m.PV,'1000.1'),(m.EV,'100.1')):
+        for eid, value in ((m.PV,'1'),(m.EV,'100.1')):
             self.states[eid].state=value
             with self.assertRaises(ValueError):await self.execute()
             self.states[eid].state='0'
         self.client.write_registers.assert_not_awaited()
-    async def test_pv_at_new_limit_allows_only_synthetic_single_shot(self):
-        self.states[m.PV].state='1000'
+    async def test_zero_pv_allows_only_synthetic_single_shot(self):
+        self.states[m.PV].state='0'
         await self.execute()
         self.client.write_registers.assert_awaited_once()
         self.assertIs(m.HARDWARE_DISPATCH_QUALIFIED,False)
+    async def test_direct_pv_readback_blocks_even_if_ha_zero(self):
+        self.pv_words=[1,0]
+        with self.assertRaisesRegex(ValueError,'physical PV'):await self.execute()
+        self.client.write_registers.assert_not_awaited();self.consume.assert_not_awaited()
     async def test_invalid_pv_even_below_limit_blocks(self):
         for value in ('-1','nan','inf','unknown'):
             self.states[m.PV].state=value
@@ -171,16 +174,56 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
         self.transport.is_connected.return_value=False
         with self.assertRaises(ValueError):await self.execute()
         self.client.write_registers.assert_not_awaited()
+    async def test_ack_and_matching_registers_still_not_physical_qualification(self):
+        after=dict(protocol=100,vpp_mode=1,work_mode=2,words=m.expected_words(300))
+        with patch.object(m,'recovery_readback',AsyncMock(return_value=after)) as readback:
+            r=await self.execute()
+        readback.assert_awaited_once_with(self.hub)
+        self.assertTrue(r['command_readback_matches'])
+        self.assertFalse(r['physical_response_verified'])
+        self.client.write_registers.assert_awaited_once()
+    async def test_post_read_failure_does_not_retry(self):
+        with patch.object(m,'recovery_readback',AsyncMock(side_effect=OSError)):
+            r=await self.execute()
+        self.assertFalse(r['command_readback_matches'])
+        self.assertEqual(r['readback_error'],'OSError')
+        self.client.write_registers.assert_awaited_once()
+    async def test_registered_services_are_locked_before_any_access(self):
+        import sys
+        from types import ModuleType
+        core=ModuleType('homeassistant.core')
+        core.SupportsResponse=SimpleNamespace(ONLY='only')
+        exceptions=ModuleType('homeassistant.exceptions')
+        class HAError(Exception):pass
+        exceptions.HomeAssistantError=HAError
+        hass=Mock()
+        with patch.dict(sys.modules,{'homeassistant.core':core,'homeassistant.exceptions':exceptions}):
+            m.register(hass,'solax_modbus')
+            calls=hass.services.async_register.call_args_list
+            self.assertEqual([c.args[1] for c in calls],['hec_mode1_pilot','hec_mode1_stop'])
+            for c in calls:
+                with self.assertRaisesRegex(HAError,'Hardware dispatch locked'):
+                    await c.args[2](Mock())
+        hass.async_add_executor_job.assert_not_called()
+
+    async def test_bad_timing_sign_and_legacy_request_rejected(self):
+        for bad in ({'exec_duration_s':9},{'exec_duration_s':True},{'wait_timeout_s':0},
+                    {'charge_ac_w':-100},{'charge_ac_w':False},{'charge_dc_w':100},
+                    {'mapping':'mode8-a6-wait-timeout-a7-next-motion-v00100-candidate-v3'}):
+            self.req={**self.approved,**bad,'send_before':(self.now+timedelta(seconds=5)).isoformat()}
+            with self.assertRaises(ValueError):await self.execute()
+        self.client.write_registers.assert_not_awaited();self.consume.assert_not_awaited()
+
 class StopTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.now=datetime.now(timezone.utc)
         self.used=dict(request_id=str(uuid.uuid4()),hub_name='test',mapping=m.MAPPING,
-                       charge_dc_w=100,wait_timeout_s=10,operator_confirmed=True,
+                       charge_ac_w=100,exec_duration_s=10,wait_timeout_s=10,operator_confirmed=True,
                        ev_disconnected_confirmed=True,expires_at=(self.now+timedelta(seconds=20)).isoformat())
         self.req=dict(request_id=self.used['request_id'],hub_name='test',operator_confirmed=True,
                       send_before=(self.now+timedelta(seconds=5)).isoformat())
         self.current=self.now
-        self.active=dict(protocol=100,vpp_mode=8,words=m.expected_words(100),work_mode=2,battery_w_raw_signed=-100)
+        self.active=dict(protocol=100,vpp_mode=1,words=m.expected_words(100),work_mode=2,battery_w_raw_signed=-100)
         self.disabled=dict(protocol=100,vpp_mode=0,words=[0]*8,work_mode=2,battery_w_raw_signed=0)
         self.client=Mock()
         self.transport=SimpleNamespace(_request_lock=asyncio.Lock(),_unit=Mock(return_value=self.client),
@@ -240,50 +283,19 @@ class StopTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaisesRegex(ValueError,'does not match'):
                 await self.execute()
         self.send.assert_not_called()
-    async def test_mode6_requires_explicit_operator_recovery(self):
-        mode6={**self.active,'vpp_mode':6,'words':[6,10,160]}
-        self.read.side_effect=[mode6]
-        with self.assertRaisesRegex(ValueError,'does not match'):await self.execute()
+    async def test_foreign_mode6_or_mode8_never_stopped(self):
+        for mode,words in ((6,[6,10,160]),(8,[8,1,15000,0,65436,65535,10,160])):
+            self.read.side_effect=[{**self.active,'vpp_mode':mode,'words':words}]
+            with self.assertRaisesRegex(ValueError,'does not match'):await self.execute()
         self.send.assert_not_called()
+    async def test_old_mode6_override_field_rejected(self):
         self.req['mode6_recovery_confirmed']=True
-        self.read.side_effect=[mode6,self.disabled]
-        r=await self.execute()
-        self.assertEqual(r['status'],'disabled_verified')
-        self.assertEqual(r['recovery_scope'],'operator_confirmed_mode6_recovery')
-        self.send.assert_awaited_once()
-        self.assertEqual(self.send.call_args.args[1],[0])
-        self.assertEqual(self.send.call_args.kwargs,{'disable':True})
-    async def test_mode6_confirmation_cannot_override_other_mode_or_invalid_readback(self):
-        self.req['mode6_recovery_confirmed']=True
-        for bad in ({'vpp_mode':7,'words':[7,10,160]},
-                    {'vpp_mode':6,'words':[8,10,160]},
-                    {'vpp_mode':6,'words':[6,10,999]},
-                    {'vpp_mode':6,'words':[6]},
-                    {'vpp_mode':6,'words':[6,10,160],'protocol':102},
-                    {'vpp_mode':6,'words':[6,10,160],'work_mode':1}):
-            self.read.side_effect=[{**self.active,**bad}]
-            with self.assertRaises(ValueError):await self.execute()
+        with self.assertRaisesRegex(ValueError,'wrong stop fields'):await self.execute()
         self.send.assert_not_called()
-    async def test_mode6_still_requires_recent_matching_approval(self):
-        self.req['mode6_recovery_confirmed']=True
-        self.used['expires_at']=(self.now-timedelta(seconds=121)).isoformat()
-        with self.assertRaisesRegex(ValueError,'expired'):await self.execute()
+    async def test_mode1_timing_mismatch_blocks_stop(self):
+        self.used['exec_duration_s']=9
+        with self.assertRaisesRegex(ValueError,'timing'):await self.execute()
         self.send.assert_not_called()
-    async def test_mode6_lost_ack_never_repeats(self):
-        self.req['mode6_recovery_confirmed']=True
-        self.read.side_effect=[{**self.active,'vpp_mode':6,'words':[6,10,161]},self.disabled]
-        self.send.side_effect=TimeoutError
-        r=await self.execute()
-        self.assertFalse(r['ack'])
-        self.assertTrue(r['physical_response_verified'])
-        self.send.assert_awaited_once()
-    async def test_mode6_ack_without_exit_is_not_success(self):
-        self.req['mode6_recovery_confirmed']=True
-        mode6={**self.active,'vpp_mode':6,'words':[6,10,160]}
-        self.read.side_effect=[mode6,mode6]
-        r=await self.execute()
-        self.assertEqual(r['status'],'recovery_unverified')
-        self.send.assert_awaited_once()
     async def test_no_ownership_or_stale_deadline(self):
         self.req['request_id']=str(uuid.uuid4())
         with self.assertRaises(ValueError):await self.execute()
@@ -320,7 +332,7 @@ class ReadbackTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(hub.async_read_holding_registers.call_args_list[1].kwargs['count'],len(words))
         return r
     async def test_documented_read_lengths(self):
-        for mode,words in ((0,[0]),(6,[6,10,160]),(8,m.expected_words(100))):
+        for mode,words in ((0,[0]),(6,[6,10,160]),(1,m.expected_words(100)),(8,[8,1,15000,0,65436,65535,10,160])):
             r=await self.check(mode,words)
             self.assertEqual(r['words'],words)
     async def test_incoherent_readback_rejected(self):
