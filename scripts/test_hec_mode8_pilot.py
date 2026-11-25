@@ -27,18 +27,18 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
         for eid,v,u in [(m.BREAKER,25,'A'),(m.SOC,40,'%'),(m.POWER,0,'W'),(m.PV,0,'W'),
                         (m.EV,0,'W'),(m.REPEAT,0,'s')]:add(eid,v,u)
         for eid,v in [(m.MODE,'Disabled'),(m.REMOTE,'Disabled'),(m.HEALTH,'Healthy'),
-                      (m.RUN,'Normal Mode'),(m.WORK,'Back Up Mode'),(m.PARALLEL,'Free'),(m.FIRMWARE,m.QUALIFICATION_FIRMWARE),(m.HARDWARE,'Gen4'),(m.EV_MODE,'Stop'),(m.EV_STATUS,'Available'),(m.EV_CABLE,'off')]:add(eid,v)
+                      (m.RUN,'Normal Mode'),(m.WORK,'Back Up Mode'),(m.PARALLEL,'Free'),(m.FIRMWARE,m.QUALIFICATION_FIRMWARE),(m.PROTOCOL,100),(m.HARDWARE,'Gen4'),(m.EV_MODE,'Stop'),(m.EV_STATUS,'Available'),(m.EV_CABLE,'off')]:add(eid,v)
         self.client=SimpleNamespace(write_registers=AsyncMock())
         self.transport=SimpleNamespace(_request_lock=asyncio.Lock(),_unit=Mock(return_value=self.client),
                                        is_connected=Mock(return_value=True),backoff_remaining=0)
-        self.input_mode=0;self.holding_mode=0;self.run_mode=2;self.battery_power=0;self.work_mode=2
+        self.input_mode=0;self.holding_mode=0;self.run_mode=2;self.battery_power=0;self.work_mode=2;self.protocol=100
         async def input_read(unit,address,count):
             if address==0x09:
                 v=[0]*20;v[0]=self.run_mode;v[0x14-9]=2360;v[0x16-9]=self.battery_power;v[0x1c-9]=40
             else:v=[self.input_mode]
             return SimpleNamespace(isError=lambda:False,registers=v)
         async def holding_read(unit,address,count):
-            return SimpleNamespace(isError=lambda:False,registers=[self.work_mode if address==0x1f else self.holding_mode])
+            return SimpleNamespace(isError=lambda:False,registers=[self.protocol if address==0x82 else self.work_mode if address==0x1f else self.holding_mode])
         self.hub=SimpleNamespace(_poll_data_lock=asyncio.Lock(),_lock=asyncio.Lock(),_stopping=False,
                   data={'_repeatUntil':{}},_modbus_addr=1,
                   async_read_input_registers=AsyncMock(side_effect=input_read),
@@ -101,6 +101,16 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
         self.states[m.FIRMWARE].state='different'
         with self.assertRaises(ValueError):await self.execute()
         self.client.write_registers.assert_not_awaited()
+    async def test_protocol_mismatch_blocks_at_ha_and_physical_read(self):
+        self.states[m.PROTOCOL].state='102'
+        with self.assertRaisesRegex(ValueError,'Modbus document version'):
+            await self.execute()
+        self.states[m.PROTOCOL].state='100'
+        self.protocol=102
+        with self.assertRaisesRegex(ValueError,'physical Modbus protocol'):
+            await self.execute()
+        self.client.write_registers.assert_not_awaited()
+        self.consume.assert_not_awaited()
     async def test_duplicate_frames_do_not_authorize(self):
         async def no_new(_):self.current+=timedelta(seconds=1)
         with self.assertRaises(ValueError):await self.execute(pause=no_new)

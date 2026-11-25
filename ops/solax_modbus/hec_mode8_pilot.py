@@ -10,7 +10,7 @@ import math
 from pathlib import Path
 import uuid
 
-MAPPING = 'mode8-a6-wait-timeout-a7-next-motion-v00102-candidate-v2'
+MAPPING = 'mode8-a6-wait-timeout-a7-next-motion-v00100-candidate-v3'
 ARM_FILE = Path('/config/.hec-mode8-pilot-approval.json')
 PHASES = tuple('sensor.solax_inverter_solax_grid_current_l'+str(i) for i in (1,2,3))
 MODE = 'sensor.solax_inverter_solax_remotecontrol_readback_mode'
@@ -31,6 +31,8 @@ BREAKER = 'number.solax_main_breaker_current_limit'
 FIRMWARE = 'sensor.solax_inverter_solax_software_version'
 HARDWARE = 'sensor.solax_inverter_solax_hardware_version'
 QUALIFICATION_FIRMWARE = 'DSP 1.62 ARM 1.60-1.09'
+PROTOCOL = 'sensor.solax_inverter_solax_modbus_protocol_version'
+QUALIFICATION_PROTOCOL = 100
 # A documented candidate is not proof for this firmware. Do not arm real HA service
 # until the manufacturer-confirmed mapping/recovery and separate hardware review.
 HARDWARE_DISPATCH_QUALIFIED = False
@@ -74,7 +76,7 @@ def candidate_payload(charge_dc_w):
             ('_int32',-charge_dc_w),('_uint16',10),('_uint16',0xA0)]
 
 def expected_words(charge_dc_w):
-    """Independent V001.02 LSW-first encoding contract, not device qualification."""
+    """Independent V001.00 LSW-first encoding contract, not device qualification."""
     candidate_payload(charge_dc_w)
     unsigned = (-charge_dc_w) & 0xffffffff
     return [8,1,PILOT_PV_LIMIT_W & 0xffff,PILOT_PV_LIMIT_W >> 16,
@@ -103,6 +105,8 @@ def check_states(get_state, now):
     if (max(phase_times)-min(phase_times)).total_seconds()>2:raise ValueError('incoherent phase reports')
     if state(FIRMWARE).state!=QUALIFICATION_FIRMWARE or state(HARDWARE).state!='Gen4':
         raise ValueError('different firmware or hardware; mapping review required')
+    if state(PROTOCOL).state!=str(QUALIFICATION_PROTOCOL):
+        raise ValueError('different or unverified Modbus document version')
     number(BREAKER,'A',25,25)
     # These stable HA states are cross-checks only; read inverter registers live below.
     number(SOC,'%',15,90)
@@ -140,6 +144,8 @@ async def physical_preflight(hub):
     # Stable HA states can be hours old despite healthy polling. Never fake
     # freshness; read the pinned Gen4 register mapping from the actual hub.
     unit=hub._modbus_addr
+    if registers(await hub.async_read_holding_registers(unit=unit,address=0x82,count=1),1)!=[QUALIFICATION_PROTOCOL]:
+        raise ValueError('physical Modbus protocol version mismatch')
     response=await hub.async_read_input_registers(unit=unit,address=0x09,count=20)
     v=registers(response,20)
     if v[0]!=2 or not 1000<=signed16(v[0x14-0x09])<=5000 or abs(signed16(v[0x16-0x09]))>100 or not 15<=v[0x1C-0x09]<=90:

@@ -126,7 +126,7 @@ def capabilities(states):
         'blocking_reasons':['no_actuator_adapter','wire_mapping_not_verified','power_boundary_not_verified','timeout_not_physically_verified'],
         'mode8_documented_power_boundary':'battery DC port; conversion efficiency unverified',
         'mode8_documented_wait_timeout_register':'0xA6', 'mode8_documented_next_motion_register':'0xA7',
-        'mapping_review':'V001.02 table: A6 WaitTimeout, A7 NextMotion; legacy KB differs; firmware-specific applicability and native expiry unverified; no packet emitted',
+        'mapping_review':'V001.00 pp. 68-70 and V001.02 agree: A6 WaitTimeout, A7 NextMotion; device protocol 100 read 25.11; native expiry unverified; no packet emitted',
         'forbidden_dynamic_targets':[legacy.CURRENT,legacy.MODE,legacy.FORCE,'unknown_storage_class']}
 
 

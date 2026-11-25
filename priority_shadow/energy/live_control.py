@@ -8,7 +8,7 @@ from .collector import NoRedirect, read_token, DATA
 from .core import instant
 from .ram_control import peak_window_errors, validate_intent
 
-MAPPING = 'mode8-a6-wait-timeout-a7-next-motion-v00102-candidate-v2'
+MAPPING = 'mode8-a6-wait-timeout-a7-next-motion-v00100-candidate-v3'
 SERVICE = '/api/services/solax_modbus/hec_mode8_pilot?return_response'
 READBACK = 'sensor.solax_inverter_solax_remotecontrol_readback_mode'
 TARGET = 'sensor.solax_inverter_solax_remotecontrol_mode_8_battery_power_target_readback'
@@ -19,7 +19,8 @@ MEASUREMENTS = (READBACK, TARGET, WAIT_TIMEOUT, NEXT_MOTION, 'sensor.solax_batte
                 'sensor.solax_battery_capacity', 'sensor.solax_api_charge_power_total',
                 'sensor.solax_pv_power_total', 'sensor.solax_inverter_communication_health',
                 'sensor.solax_run_mode', 'select.solax_charger_use_mode',
-                'sensor.solax_inverter_solax_software_version','sensor.solax_api_charging_status',
+                'sensor.solax_inverter_solax_software_version','sensor.solax_inverter_solax_modbus_protocol_version',
+                'sensor.solax_api_charging_status',
                 'select.solax_api_charger_use_mode','binary_sensor.tesla_model_y_juniper_nabijeci_kabel',
                 *('sensor.solax_measured_power_l'+str(i) for i in (1,2,3)),
                 *('sensor.solax_inverter_solax_grid_current_l'+str(i) for i in (1,2,3)))
