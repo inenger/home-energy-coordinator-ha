@@ -4,7 +4,7 @@
 - PV limit pilotu 1000 W nasazen 09:50; stabilní sběr a SOC plán potvrzeny 09:58.
 - Transport: tmodbus 1.1.0 při device busy opakuje FC16, ověřeno na izolovaném localhost serveru. Ztráta odpovědi bez opakování, ale výsledek neznámý.
 - V001.00 p.59 popisuje disable přes A0, zatímco instalovaná integrace používá 7C. Nezaměňovat; fyzicky neověřeno. LCD System ON/OFF dostupné, chování při VPP nepotvrzeno.
-- Další krok: jednorázový transport bez busy retry a ověřená lokální obnova, samostatná autorizace. [Pilot](docs/LIVE_PILOT_070_20261124.md).
+- Single-frame transport opraven ve zdroji, 9/9 reálných loopback a 18/18 service testů PASS; v HA zatím nenasazen. Další krok: schválené nasazení se zámkem a ověřená lokální obnova, samostatná autorizace. [Pilot](docs/LIVE_PILOT_070_20261124.md).
 
 ---
 

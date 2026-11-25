@@ -7,6 +7,8 @@ import asyncio
 from datetime import datetime, timezone
 import json
 import math
+import time
+from importlib.metadata import version
 from pathlib import Path
 import uuid
 
@@ -157,9 +159,59 @@ async def physical_preflight(hub):
     if registers(await hub.async_read_holding_registers(unit=unit,address=0x1A0,count=1),1)!=[0]:
         raise ValueError('physical Mode8 readback not confirmed disabled')
 
+async def single_frame_write(unit, values, guard):
+    """Pinned shared TCP transport; one FC16, no retry/reconnect or policy mutation.
+
+    Private upstream APIs are deliberately version-gated. Unknown transports fail
+    closed. Keep the Core pacer and smart transport lock, but bypass the smart
+    retry loop for this one PDU. The caller supplies the final pre-send guard.
+    A failed/cancelled response is still an unknown physical outcome.
+    """
+    from modbus_connection.tmodbus import ModbusConnection, TmodbusUnit
+    from tmodbus.transport import AsyncSmartTransport, AsyncTcpTransport
+    from tmodbus.pdu import WriteMultipleRegistersPDU
+
+    if (version('modbus-connection'), version('tmodbus')) != ('4.12.8', '1.1.0'):
+        raise ValueError('unreviewed Modbus dependency versions')
+    if type(unit) is not TmodbusUnit or type(unit._conn) is not ModbusConnection:
+        raise ValueError('unreviewed Core Modbus unit')
+    if values not in [expected_words(w) for w in (100,200,300)]:
+        raise ValueError('unexpected pilot payload')
+    conn=unit._conn
+    unit_id=unit._unit_id
+    if type(unit_id) is not int or not 1<=unit_id<=247:
+        raise ValueError('invalid unicast unit')
+    pdu=WriteMultipleRegistersPDU(0xA0,values)
+    async with conn._pacer.paced(unit_id):
+        if conn._closed or not conn.connected:
+            raise ValueError('Core connection unavailable')
+        client=unit._client
+        smart=client.transport
+        if (type(smart) is not AsyncSmartTransport or smart.auto_reconnect
+                or type(smart.base_transport) is not AsyncTcpTransport):
+            raise ValueError('unreviewed Core TCP transport')
+        async with smart._communication_lock:
+            if smart._last_request_finished_at is not None:
+                gap=smart.wait_between_requests-(time.monotonic()-smart._last_request_finished_at)
+                if gap>0:await asyncio.sleep(gap)
+            base=smart.base_transport
+            if (conn._closed or not conn.connected or unit._client is not client
+                    or smart._must_reconnect or not base.is_open()):
+                raise ValueError('Core TCP connection changed or unavailable')
+            # All pacing waits and locks are complete. No retry loop, reconnect
+            # or scheduling point between the guard and TCP protocol send.
+            guard()
+            try:
+                count=await base.send_and_receive(unit_id,pdu)
+                if count!=len(values):
+                    raise ValueError('unexpected FC16 response count')
+            finally:
+                smart._last_request_finished_at=time.monotonic()
+
+
 async def one_shot(hub, request, approved, get_state, consume, clock=utcnow, pause=asyncio.sleep):
-    """Shared hub locks, one Core-unit write invocation; no integration retry.
-    Core transport cancellation/physical expiry remain HW qualification items.
+    """Shared hub locks, one version-pinned TCP frame, no automatic retry.
+    Physical expiry and recovery remain HW qualification items.
     """
     remaining=validate_request(request,approved,clock())
     first=check_states(get_state,clock())
@@ -196,7 +248,14 @@ async def one_shot(hub, request, approved, get_state, consume, clock=utcnow, pau
                     if getattr(hub,'_stopping',True):raise ValueError('hub stopping')
                     # A response failure is ambiguous; never try the write again.
                     client=transport._unit(hub._modbus_addr)
-                    await client.write_registers(0xA0,values)
+                    def final_guard():
+                        validate_request(request,approved,clock())
+                        check_states(get_state,clock())
+                        if (getattr(hub,'_stopping',True) or not transport.is_connected()
+                                or transport.backoff_remaining
+                                or any(x!=0 for x in hub.data.get('_repeatUntil',{'missing':1}).values())):
+                            raise ValueError('hub stopped, disconnected or repeat state changed')
+                    await single_frame_write(client,values,final_guard)
     return {'request_id':request['request_id'],'status':'modbus_call_returned',
             'address':0xA0,'register_count':8,'requested_dc_w':request['charge_dc_w'],
             'automatic_retry':False,'physical_response_verified':False}

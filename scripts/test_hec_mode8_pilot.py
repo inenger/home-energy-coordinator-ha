@@ -6,7 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 import unittest
 import uuid
-from unittest.mock import AsyncMock,Mock
+from unittest.mock import AsyncMock,Mock,patch
 
 path=Path(__file__).resolve().parents[1]/'ops/solax_modbus/hec_mode8_pilot.py'
 spec=importlib.util.spec_from_file_location('pilot_candidate',path)
@@ -47,6 +47,12 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
                   _encode_multi_write_payload=Mock(return_value=[8,1,15000,0,0xfed4,0xffff,10,0xa0]))
         self.consume=AsyncMock()
         self.current=self.now
+        async def mock_frame(unit,values,guard):
+            guard()
+            await unit.write_registers(0xA0,values)
+        self.frame_patch=patch.object(m,'single_frame_write',side_effect=mock_frame)
+        self.frame=self.frame_patch.start()
+        self.addCleanup(self.frame_patch.stop)
     async def advance(self,delay):
         self.current+=timedelta(seconds=delay)
         for s in self.states.values():
@@ -150,6 +156,16 @@ class PilotServiceTests(unittest.IsolatedAsyncioTestCase):
     async def test_stale_pv_blocks(self):
         self.states[m.PV].last_reported=self.now-timedelta(seconds=4)
         with self.assertRaises(ValueError):await self.execute()
+        self.client.write_registers.assert_not_awaited()
+    async def test_final_guard_rechecks_after_transport_queue(self):
+        async def delayed_frame(unit,values,guard):
+            self.current+=timedelta(seconds=6)
+            guard()
+            await unit.write_registers(0xA0,values)
+        self.frame.side_effect=delayed_frame
+        with self.assertRaisesRegex(ValueError,'expired'):
+            await self.execute()
+        self.consume.assert_awaited_once()
         self.client.write_registers.assert_not_awaited()
     async def test_disconnected_blocks_without_reconnect(self):
         self.transport.is_connected.return_value=False

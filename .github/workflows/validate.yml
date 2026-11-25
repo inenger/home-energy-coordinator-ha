@@ -65,3 +65,8 @@ jobs:
         run: python scripts/robustness/test_gate_policy.py
       - name: Repeated production recovery gate
         run: python scripts/verify_robustness.py --repetitions 3
+      - name: Pinned Mode 8 transport loopback (no HA or inverter)
+        run: |
+          python -m venv /tmp/hec-mode8-loopback
+          /tmp/hec-mode8-loopback/bin/python -m pip install modbus-connection==4.12.8 tmodbus==1.1.0 tenacity==9.1.2 serialx==1.15.1 typing-extensions==4.15.0
+          /tmp/hec-mode8-loopback/bin/python scripts/test_mode8_transport_loopback.py
