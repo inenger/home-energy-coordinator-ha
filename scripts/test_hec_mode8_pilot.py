@@ -240,6 +240,50 @@ class StopTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaisesRegex(ValueError,'does not match'):
                 await self.execute()
         self.send.assert_not_called()
+    async def test_mode6_requires_explicit_operator_recovery(self):
+        mode6={**self.active,'vpp_mode':6,'words':[6,10,160]}
+        self.read.side_effect=[mode6]
+        with self.assertRaisesRegex(ValueError,'does not match'):await self.execute()
+        self.send.assert_not_called()
+        self.req['mode6_recovery_confirmed']=True
+        self.read.side_effect=[mode6,self.disabled]
+        r=await self.execute()
+        self.assertEqual(r['status'],'disabled_verified')
+        self.assertEqual(r['recovery_scope'],'operator_confirmed_mode6_recovery')
+        self.send.assert_awaited_once()
+        self.assertEqual(self.send.call_args.args[1],[0])
+        self.assertEqual(self.send.call_args.kwargs,{'disable':True})
+    async def test_mode6_confirmation_cannot_override_other_mode_or_invalid_readback(self):
+        self.req['mode6_recovery_confirmed']=True
+        for bad in ({'vpp_mode':7,'words':[7,10,160]},
+                    {'vpp_mode':6,'words':[8,10,160]},
+                    {'vpp_mode':6,'words':[6,10,999]},
+                    {'vpp_mode':6,'words':[6]},
+                    {'vpp_mode':6,'words':[6,10,160],'protocol':102},
+                    {'vpp_mode':6,'words':[6,10,160],'work_mode':1}):
+            self.read.side_effect=[{**self.active,**bad}]
+            with self.assertRaises(ValueError):await self.execute()
+        self.send.assert_not_called()
+    async def test_mode6_still_requires_recent_matching_approval(self):
+        self.req['mode6_recovery_confirmed']=True
+        self.used['expires_at']=(self.now-timedelta(seconds=121)).isoformat()
+        with self.assertRaisesRegex(ValueError,'expired'):await self.execute()
+        self.send.assert_not_called()
+    async def test_mode6_lost_ack_never_repeats(self):
+        self.req['mode6_recovery_confirmed']=True
+        self.read.side_effect=[{**self.active,'vpp_mode':6,'words':[6,10,161]},self.disabled]
+        self.send.side_effect=TimeoutError
+        r=await self.execute()
+        self.assertFalse(r['ack'])
+        self.assertTrue(r['physical_response_verified'])
+        self.send.assert_awaited_once()
+    async def test_mode6_ack_without_exit_is_not_success(self):
+        self.req['mode6_recovery_confirmed']=True
+        mode6={**self.active,'vpp_mode':6,'words':[6,10,160]}
+        self.read.side_effect=[mode6,mode6]
+        r=await self.execute()
+        self.assertEqual(r['status'],'recovery_unverified')
+        self.send.assert_awaited_once()
     async def test_no_ownership_or_stale_deadline(self):
         self.req['request_id']=str(uuid.uuid4())
         with self.assertRaises(ValueError):await self.execute()
@@ -265,5 +309,22 @@ class StopTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(json.loads(p.read_text())['kind'],'before_stop')
             self.assertEqual(p.stat().st_mode&0o777,0o600)
             with self.assertRaises(FileExistsError):m.create_stop_journal(p)
+
+class ReadbackTests(unittest.IsolatedAsyncioTestCase):
+    async def check(self,mode,words,mode_after=None):
+        def reply(v):return SimpleNamespace(isError=lambda:False,registers=v)
+        hub=SimpleNamespace(_modbus_addr=1,
+            async_read_holding_registers=AsyncMock(side_effect=[reply([100]),reply(words),reply([2])]),
+            async_read_input_registers=AsyncMock(side_effect=[reply([mode]),reply([0]),reply([mode if mode_after is None else mode_after])]))
+        r=await m.recovery_readback(hub)
+        self.assertEqual(hub.async_read_holding_registers.call_args_list[1].kwargs['count'],len(words))
+        return r
+    async def test_documented_read_lengths(self):
+        for mode,words in ((0,[0]),(6,[6,10,160]),(8,m.expected_words(100))):
+            r=await self.check(mode,words)
+            self.assertEqual(r['words'],words)
+    async def test_incoherent_readback_rejected(self):
+        for mode,words,after in ((6,[8,10,160],6),(6,[6,10,160],0)):
+            with self.assertRaisesRegex(ValueError,'transitioning'):await self.check(mode,words,after)
 
 if __name__=='__main__':unittest.main()

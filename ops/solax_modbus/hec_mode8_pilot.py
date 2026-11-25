@@ -262,8 +262,11 @@ async def one_shot(hub, request, approved, get_state, consume, clock=utcnow, pau
             'automatic_retry':False,'physical_response_verified':False}
 
 def validate_stop(request, used, now):
-    if set(request)!={'request_id','hub_name','send_before','operator_confirmed'}:
+    fields={'request_id','hub_name','send_before','operator_confirmed'}
+    if set(request) not in (fields,fields|{'mode6_recovery_confirmed'}):
         raise ValueError('wrong stop fields')
+    if 'mode6_recovery_confirmed' in request and request['mode6_recovery_confirmed'] is not True:
+        raise ValueError('explicit Mode6 recovery confirmation required')
     if (request['operator_confirmed'] is not True
             or request['request_id']!=used['request_id']
             or request['hub_name']!=used['hub_name']
@@ -285,9 +288,15 @@ async def recovery_readback(hub):
     unit=hub._modbus_addr
     protocol=registers(await hub.async_read_holding_registers(unit=unit,address=0x82,count=1),1)[0]
     mode=registers(await hub.async_read_input_registers(unit=unit,address=0x100,count=1),1)[0]
-    words=registers(await hub.async_read_holding_registers(unit=unit,address=0x1A0,count=8),8)
+    # V001.00 defines different lengths: disabled=1, Mode6=3, Mode8=8.
+    # Never compare stale Mode8 target words after a transition to Mode6.
+    length={0:1,6:3,8:8}.get(mode,1)
+    words=registers(await hub.async_read_holding_registers(unit=unit,address=0x1A0,count=length),length)
     work=registers(await hub.async_read_holding_registers(unit=unit,address=0x1F,count=1),1)[0]
     power=signed16(registers(await hub.async_read_input_registers(unit=unit,address=0x16,count=1),1)[0])
+    mode_after=registers(await hub.async_read_input_registers(unit=unit,address=0x100,count=1),1)[0]
+    if mode!=words[0] or mode!=mode_after:
+        raise ValueError('inconsistent or transitioning VPP readback')
     return {'protocol':protocol,'vpp_mode':mode,'words':words,'work_mode':work,'battery_w_raw_signed':power}
 
 def recovery_disabled(x):
@@ -320,9 +329,19 @@ async def stop_pilot(hub, request, used, get_state, log, clock=utcnow):
                     result={**outcome,'status':'already_disabled','physical_response_verified':True,'readback':before}
                     await log('stop_result',**result)
                     return result
-                if (before['protocol']!=QUALIFICATION_PROTOCOL or before['vpp_mode']!=8
-                        or before['words']!=expected_words(used['charge_dc_w']) or before['work_mode']!=2):
-                    raise ValueError('active mode does not match owned pilot; no stop write')
+                if before['protocol']!=QUALIFICATION_PROTOCOL or before['work_mode']!=2:
+                    raise ValueError('active mode does not match qualified installation; no stop write')
+                if before['vpp_mode']==8 and before['words']==expected_words(used['charge_dc_w']):
+                    scope='matching_mode8'
+                elif (before['vpp_mode']==6 and len(before['words'])==3
+                      and before['words'][0]==6 and before['words'][2] in (0xA0,0xA1)
+                      and request.get('mode6_recovery_confirmed') is True):
+                    # Mode6 does not carry the original pilot's power or ID.
+                    # This is explicit operator-authorized recovery, NOT proven ownership.
+                    scope='operator_confirmed_mode6_recovery'
+                else:
+                    raise ValueError('active mode does not match owned pilot or confirmed Mode6; no stop write')
+                outcome['recovery_scope']=scope
                 transport=hub._core_recovery_transport()
                 if transport is None:raise ValueError('Core transport unavailable')
                 async with hub._lock:
@@ -333,7 +352,7 @@ async def stop_pilot(hub, request, used, get_state, log, clock=utcnow):
                                 raise ValueError('transport unavailable')
                         final_guard()
                         # The service's exclusive journal is durable before any write.
-                        await log('disable_requested',address=0xA0,words=[0])
+                        await log('disable_requested',address=0xA0,words=[0],recovery_scope=scope)
                         attempted=True
                         try:
                             await single_frame_write(transport._unit(hub._modbus_addr),[0],final_guard,disable=True)
