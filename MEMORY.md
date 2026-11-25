@@ -1,3 +1,24 @@
+# Aktuální stav – 25.11.2026
+
+- RPi 0.7.0 observe_only, služba Mode8 nainstalována, fyzická blokace false; žádný fyzický povel. Main 0.6.39.
+- PV limit pilotu 1000 W nasazen 09:50; stabilní sběr a SOC plán potvrzeny 09:58.
+- Transport: tmodbus 1.1.0 při device busy opakuje FC16, ověřeno na izolovaném localhost serveru. Ztráta odpovědi bez opakování, ale výsledek neznámý.
+- V001.00 p.59 popisuje disable přes A0, zatímco instalovaná integrace používá 7C. Nezaměňovat; fyzicky neověřeno. LCD System ON/OFF dostupné, chování při VPP nepotvrzeno.
+- Single-frame transport ad556a1 nasazen 10:47 se zámkem, CI PASS. Explicitní stop 17af0a1 nasazen 11:28, CI PASS; Mode6 recovery 519376b nasazen 13:52, CI PASS, 36/36 service a 12/12 loopback PASS; fyzické ukončení a lokální obnova za aktivního VPP neověřeny. EPS částečné; uživatel nechce další LCD cyklus ani kontakt s výrobcem. Fyzický test samostatná autorizace. [Pilot](docs/LIVE_PILOT_070_20261124.md).
+
+- **Absolutní zákaz EEPROM/NVM a neověřených zápisů** včetně EVC. [ACT-01/EEPROM-01/EVC-01](docs/ACTUATOR_AUDIT_20261125.md): Mode1 A0 jednorázový kandidát implementován pouze ve zdroji, Mode8 zachován v historii a instalován se zámkem, fyzický NO-GO. HTTP EVC 0x668 zakázán pro všechny akce projektu, 0x628 pouze kandidát. Žádná změna produkce.
+
+---
+
+# Historický stav – 24.11.2026
+
+- RPi běží 0.6.39 observe_only, nasazení potvrzeno 24.11. 08:37.
+- Noční výpadek Modbus způsoben ztrátou Ethernet carrier, ne důkazem přetížení polling. 1s/5s beze změny.
+- Kandidát 0.7.0 pouze jednorázový ruční test přes stávající HA; automatický live zakázán.
+- [LIVE pilot](docs/LIVE_PILOT_070_20261124.md), LIVE-01/02 neuzavřeno. Žádný nový hardware; nenainstalováno, žádný fyzický povel.
+
+---
+
 # Aktuální stav – 23.11.2026
 
 - GitHub **zdroj 0.6.39**: PEAK-03 fail-closed ochrana při chybějícím,

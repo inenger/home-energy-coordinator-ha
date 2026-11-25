@@ -125,8 +125,8 @@ def capabilities(states):
         'firmware_support_verified':False,'physical_control_ready':False,'eeprom_writes':0,
         'blocking_reasons':['no_actuator_adapter','wire_mapping_not_verified','power_boundary_not_verified','timeout_not_physically_verified'],
         'mode8_documented_power_boundary':'battery DC port; conversion efficiency unverified',
-        'mode8_documented_duration_register':'0xA6', 'mode8_documented_next_motion_register':'0xA7',
-        'mapping_review':'Mode8 direct labels for 0xA6/0xA7 must be reconciled with readback Timeout/NextMotion 0x1A6/0x1A7; no packet emitted',
+        'mode8_documented_wait_timeout_register':'0xA6', 'mode8_documented_next_motion_register':'0xA7',
+        'mapping_review':'V001.00 pp. 68-70 and V001.02 agree: A6 WaitTimeout, A7 NextMotion; device protocol 100 read 25.11; native expiry unverified; no packet emitted',
         'forbidden_dynamic_targets':[legacy.CURRENT,legacy.MODE,legacy.FORCE,'unknown_storage_class']}
 
 

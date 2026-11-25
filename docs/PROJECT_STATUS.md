@@ -1,39 +1,25 @@
-# Aktuální stav projektu – 23.11.2026
+# Aktuální stav projektu – 25.11.2026
 
-<!-- shadow-version: 0.6.39 -->
+<!-- shadow-version: 0.7.0 -->
 
-**Zdroj na GitHubu:** `priority_shadow 0.6.39` – PEAK-03 fail-closed
-ověření předaného 1s fázového highwater i při chybějících metadatech.
-**Na Raspberry Pi stále běží 0.6.38 `observe_only`**. Nový zdroj
-není nasazen, žádný hardware nebyl změněn. Původní
-`energy_coordinator 0.5.4` je samostatný balíček.
-
-**Provozní konfigurace:** jistič 3×25 A, SolaX FAST 1 s,
-MEDIUM+DEFAULT 5 s, HEC v 03–05 modeluje 5s logické řízení
-bez fyzických povelů. LIVE je vypnuté a původní experiment
-[archivován jako nenasaditelný text](history/retired_live_v1_20261113.yaml.txt).
-Před LIVE zůstávají blokátory LIVE-01/LIVE-02.
-
-**Poslední úplná ověřená noc:** 22.–23.11. v 03–05 SEČ,
-1 440/1 440 logických cyklů, 1 441/1 441 transportních bloků,
-žádná ztráta evidence a žádné fyzické povely.
-Jednou `PEAK-02` zablokovalo virtuální výkon při 3,562s stáří
-fázových reportů. Modbus FAST vykazoval 806/6417 nadperiodových cyklů,
-ale nejsou to automaticky neúspěšná čtení; bez důvodu
-neměnit periodu. [Audit a meze důkazu](NIGHT_AUDIT_0638_20261123.md).
-
-**Audit repozitáře 23.11.:** PEAK-03 opraveno v 0.6.39 ve zdroji
-a cílených regresích, historický LIVE přemístěn mimo instalační YAML,
-doložen reprodukovatelný SolaX patch pro custom integraci
-2026.11.04; lokalizační test Node je portable bez oslabení na plném ICU.
-GitHub CI a případné nasazení 0.6.39 je samostatný krok.
+**Zdroj na GitHubu:** kandidát 0.7.0 v oddělené větvi; main 0.6.39.
+**Na Raspberry Pi stále běží 0.7.0 `observe_only`** od 25.11. 08:15; pilotní služba instalována a tvrdě blokována. PV limit pilotu 1000 W načten 09:50; 09:58 sběr, SOC plán a monitoring OK, 102/102 dávek, bez ztrát a fyzických povelů. Původní energy_coordinator 0.5.4 je samostatný balíček.
+LIVE-01/07: busy retry v tmodbus prokázán localhost testem; single-frame oprava ad556a1 nasazena 10:47, CI PASS; explicitní stop 17af0a1 nasazen 11:28, CI PASS; Mode6 recovery 519376b nasazen 13:52, CI PASS, 36/36 service a 12/12 loopback PASS; odlišná dokumentovaná disable cesta A0 a integrační 7C; nezávislá lokální obnova a expirace nejsou ověřeny. Fyzický test NO-GO.
+0.6.39 nasazena 24.11., ověřeny health, ACK a nulové akce.
+03–05 audit: 1440 cyklů, 1441/1441 transportních bloků, 18 neověřených
+fázových oken bezpečně nulových. Výpadek Ethernet carrier 65,54s,
+obnova Modbus později; neměnit FAST 1s / MEDIUM+DEFAULT 5s.
+Jistič 3×25 A, 5s logická smyčka, bez nového HW.
+[0.7.0 pilot a blokátory LIVE-01/02](LIVE_PILOT_070_20261124.md).
+Starý LIVE v1 zůstává pouze archiv.
+ACT-01/EEPROM-01/EVC-01: [audit a závazné rozhodnutí](ACTUATOR_AUDIT_20261125.md). Mode1 implementován jako zdrojový ruční pilot, dosud nenasazen; Mode8 zůstává uzamčen v běžící instalaci. Absolutní zákaz EEPROM/NVM/unknown zápisů; EVC 0x668 zakázán, 0x628 nekvalifikován. Fyzické řízení stále NO-GO.
 
 ## Rozcestník pro AI
 
 | Potřeba | Autoritativní zdroj |
 |---|---|
 | Vstupní pravidla a aktuální stav | [AGENTS](../AGENTS.md), [MEMORY](../MEMORY.md), tento dokument |
-| Funkční zdroj a konfigurace | [priority_shadow](../priority_shadow/), [config 0.6.39](../priority_shadow/config.yaml) |
+| Funkční zdroj a konfigurace | [priority_shadow](../priority_shadow/), [config 0.7.0](../priority_shadow/config.yaml) |
 | Otevřené problémy a bezpečnostní omezení | [KNOWN_ISSUES](KNOWN_ISSUES.md) |
 | Protipříklad a regresní test | [TEST_MATRIX](TEST_MATRIX.md) |
 | Nasazení, zálohy, rollback | [RELEASE_RUNBOOK](RELEASE_RUNBOOK.md) |

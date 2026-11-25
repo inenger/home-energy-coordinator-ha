@@ -115,7 +115,7 @@ def main():
         finish_native_backup(root=DATA.parent)
     optionfile=Path('/data/options.json')
     opts=json.loads(optionfile.read_text()) if optionfile.exists()else {}
-    if opts.get('mode','observe_only')!='observe_only':raise ValueError('Only observe_only is supported')
+    if opts.get('mode','observe_only') not in ('observe_only','live_test'):raise ValueError('Only observe_only or manual live_test is supported')
     # Privileged, operator-requested, one-shot SQLite migration executes while
     # all evidence writers are STOPPED. A failure must not produce a partial swap.
     from .offline_compaction import run as run_offline_compaction
@@ -149,7 +149,9 @@ def main():
     monitor=MonitorBridge({'ha_base_url':'http://supervisor/core','token_file':None}).start()
     client=SnapshotCollector(ReadOnlyHA('http://supervisor/core'),period=2.5,night_period=1.,
                              failure_path=DATA/'collection-failure.json',defer_failure_persistence=True).start()
-    try:run_loop(client,evidence,monitor,STOP)
+    try:
+        if opts.get("mode")=="live_test":run_loop(client,evidence,monitor,STOP,pilot_mode="live_test")
+        else:run_loop(client,evidence,monitor,STOP)
     finally:
         client.close();evidence.close();monitor.close()
 

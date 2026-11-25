@@ -1,0 +1,7 @@
+--- a/__init__.py
++++ b/__init__.py
+@@ -371,2 +371,4 @@
+     hass.services.async_register(DOMAIN, "stop_hub", _svc_stop_hub)
++    from .hec_mode8_pilot import register as register_hec_pilot
++    register_hec_pilot(hass, DOMAIN)
+     # _LOGGER.debug("solax data %d", hass.data)

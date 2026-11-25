@@ -9,6 +9,7 @@ protipříkladů; důkaz dnešního runtime musí procházet produkční entrypo
 
 | Oblast / vada | Spustitelná regrese | Požadovaný invariant |
 |---|---|---|
+| LIVE-07: manual pilot | [HA service](../scripts/test_hec_mode8_pilot.py), [addon](../priority_shadow/tests/test_live_pilot_070.py) | Single-shot, no automatic retry, fresh phase data and explicit approval; no hardware proof. |
 | RET-01: dlouhodobá evidence proti 2 GiB limitu | [audit a stav SQL](DEEP_AUDIT_0631_20261112.md) | Před kvótou alarm, immutable archive/restore + SHA a úplné denní počty. |
 | RET-04: 7d raw retence v 366d analytice | [Audit readerů](FIELD_RETENTION_DEEP_DIVE_20261112.md) | Ve full replay s raw smazanými po 7d fungují calibration 45d, shadow 21d, EV 60d, energy 366d, phase 7d a UI summaries bez falešné interpolace. Pending nikdy nemaže časová retence. |
 | DATA-07: field-level canonical frame & projection | [Private 2,935 paths and public policy CSV](FIELD_RETENTION_POLICY_MATRIX_20261112.csv) | 24 RAM source fields byte-identical with priority (all pairs); original full canonical SOC hash verified after version reference hydration; 3 scenarios retain differences when not identical; no change of phase or stale behavior. |
@@ -147,3 +148,12 @@ preflight noc 13.11. se zatím neověřila.
 | MODBUS-PATCH-01 | [Version-locked original-vs-patched SHA](../ops/solax_modbus/README.md) | [Static 4-hunk test](../scripts/test_solax_patch_contract.py) and on-RPi dry-run of patch against exact vendor original |
 | DOC-DRIFT-02 | [Canonical current source/deployment status](PROJECT_STATUS.md) | [Documentation CI gate](../scripts/verify_documentation.py) and [counterexample test](../scripts/test_documentation_contract.py) |
 | QA-01 | cs-CZ ICU absent on some RPi Node builds | [JS test](../scripts/test_deep_fixes_0613.mjs): strict 2,5 when cs-CZ supported; transparent 2.5 branch otherwise |
+
+## 25.11.2026 – EEPROM a volba aktuátoru
+
+| Nález | Regrese | Akceptace |
+|---|---|---|
+| EEPROM-01 | [CI tripwire](../scripts/test_no_eeprom_contract.py), [TCP loopback](../scripts/test_mode8_transport_loopback.py) | Pouze reviewované call sites; nový nebo neznámý zápis fail, A0 FC16 fixed, hardware lock false. Nejde o důkaz všech vendor zápisů. |
+| ACT-01/EVC-01 | [Audit a kritéria](ACTUATOR_AUDIT_20261125.md) | Fyzická kvalifikace pending; žádný Mode1 ani EVC povel. |
+
+| ACT-01 Mode1 source | [Service/CI](../scripts/test_hec_mode8_pilot.py), [TCP](../scripts/test_mode8_transport_loopback.py), [CLI](../priority_shadow/tests/test_live_pilot_070.py) | Exact positive AC words, fixed timer fields, no nonzero PV, no legacy/foreign mode or arbitrary write, hard lock, ACK/readback distinction, no retry. Hardware remains pending. |

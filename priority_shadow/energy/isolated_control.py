@@ -543,7 +543,7 @@ class MonitorBridge:
         for q in (self.inbox,self.output):q.cancel_join_thread();q.close()
         return not alive
 
-def run_loop(client,evidence,monitor,stop,clock=utcnow,monotonic=time.monotonic):
+def run_loop(client,evidence,monitor,stop,clock=utcnow,monotonic=time.monotonic,pilot_mode="observe_only"):
     """Produkční smyčka: cache → stav v RAM → neblokující předání výsledků."""
     memory=None;last_success=None;pending_at=None;pending_generation=None
     try:
@@ -608,6 +608,9 @@ def run_loop(client,evidence,monitor,stop,clock=utcnow,monotonic=time.monotonic)
                 'control_state_backend':'private_memory','disk_io_in_control_thread':False,
                 'analytics_in_control_process':False,'monitoring_http_in_control_thread':False,
                 'collection_http_in_control_thread':False,'collection_worker':client.snapshot()}
+            if pilot_mode=='live_test':
+                from .live_control import preview
+                result['live_test']=preview(journal,at,pilot_mode)
             rows=memory.delta()
             accepted=evidence.submit(rows,states,result,pending_generation)
             if accepted:pending_at=None

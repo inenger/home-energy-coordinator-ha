@@ -1,3 +1,12 @@
+## 0.7.0 – Mode1 source candidate (25.11.2026)
+- Replace candidate Mode8 actuator with locked Mode1 AC one-shot; separate execution/wait, PV=0, exact volatile command allowlist. Absolute EEPROM/NVM/unknown writes prohibited.
+- Source and tests only; installed RPi still previous locked Mode8 0.7.0 observe_only. [Audit](../docs/ACTUATOR_AUDIT_20261125.md).
+
+## 0.7.0 – supervised LIVE pilot candidate (24.11.2026)
+- Default observe_only; live_test diagnostic preview plus separate explicit one-shot CLI.
+- Pinned HA service candidate, shared hub locks, expiring single-use approval, preflight and private audit.
+- No automated actuation, no hardware qualification or deployment. [Contract](../docs/LIVE_PILOT_070_20261124.md).
+
 ## 0.6.39 – PEAK-03 + repo consistency (23.11.2026)
 
 - Fail closed when phase peak metadata are absent, malformed or partial;
