@@ -22,6 +22,9 @@ MEASUREMENTS = (READBACK, TARGET, WAIT_TIMEOUT, NEXT_MOTION, 'sensor.solax_batte
                 'sensor.solax_inverter_solax_software_version','sensor.solax_inverter_solax_modbus_protocol_version',
                 'sensor.solax_api_charging_status',
                 'select.solax_api_charger_use_mode','binary_sensor.tesla_model_y_juniper_nabijeci_kabel',
+                'number.solax_main_breaker_current_limit','sensor.solax_remotecontrol_autorepeat_remaining',
+                'sensor.solax_inverter_solax_hardware_version','select.solax_parallel_setting',
+                'sensor.solax_modbus_power_control',
                 *('sensor.solax_measured_power_l'+str(i) for i in (1,2,3)),
                 *('sensor.solax_inverter_solax_grid_current_l'+str(i) for i in (1,2,3)))
 
